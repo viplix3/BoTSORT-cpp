@@ -39,7 +39,7 @@ void KalmanFilter::_init_kf_matrices(double dt) {
     }
 }
 
-KF_DATA_MEASUREMENT_SPACE KalmanFilter::init(const DET_VEC &measurement) {
+KF_DATA_STATE_SPACE KalmanFilter::init(const DET_VEC &measurement) {
     constexpr float init_velocity = 0.0;
     KF_STATE_SPACE_VEC mean_state_space;
 

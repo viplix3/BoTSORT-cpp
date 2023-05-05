@@ -20,7 +20,7 @@ public:
      * @param det Detection [x, y, w, h]
      * @return KF_DATA_MEASUREMENT_SPACE Kalman filter state space data [mean, covariance]
      */
-    KF_DATA_MEASUREMENT_SPACE init(const DET_VEC &det);
+    KF_DATA_STATE_SPACE init(const DET_VEC &det);
 
     void predict(KF_STATE_SPACE_VEC &mean, KF_STATE_SPACE_MATRIX &covariance);
     KF_DATA_MEASUREMENT_SPACE project(const KF_DATA_STATE_SPACE &state);
