@@ -22,26 +22,17 @@ KalmanFilter::KalmanFilter(double dt = 1.0) {
 }
 
 void KalmanFilter::_init_kf_matrices(double dt) {
-    /**
-     * this is a 4x8 matrix that maps the 8-dimensional state space vector [x, y, w, h, vx, vy, vw, vh]
-     * to the 4-dimensional measurement space vector [x, y, w, h]
-     */
     _measurement_matrix = Eigen::MatrixXf::Identity(KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM);
 
-
-    /**
-     * this is a 8x8 matrix that defines the state transition function
-     * it maps the current state space vector to the next state space vector
-     */
     _state_transition_matrix = Eigen::MatrixXf::Identity(KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM);
     for (uint8_t i = 0; i < 4; i++) {
         _state_transition_matrix(i, i + 4) = dt;
     }
 }
 
-KF_DATA_STATE_SPACE KalmanFilter::init(const DET_VEC &measurement) {
+KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
     constexpr float init_velocity = 0.0;
-    KF_STATE_SPACE_VEC mean_state_space;
+    KFStateSpaceVec mean_state_space;
 
     for (uint8_t i = 0; i < KALMAN_STATE_SPACE_DIM; i++) {
         if (i < 4) {
@@ -51,7 +42,7 @@ KF_DATA_STATE_SPACE KalmanFilter::init(const DET_VEC &measurement) {
         }
     }
 
-    KF_STATE_SPACE_VEC std;
+    KFStateSpaceVec std;
     for (uint8_t i = 0; i < KALMAN_STATE_SPACE_DIM; i++) {
         if (i < 4) {
             std(i) = 2 * _std_weight_position * measurement(i % 2 == 0 ? 2 : 3);
@@ -59,12 +50,12 @@ KF_DATA_STATE_SPACE KalmanFilter::init(const DET_VEC &measurement) {
             std(i) = 10 * _std_weight_velocity * measurement(i % 2 == 0 ? 2 : 3);
         }
     }
-    KF_STATE_SPACE_VEC std_squared = std.array().square();
-    KF_STATE_SPACE_MATRIX covariance = std_squared.asDiagonal();
+    KFStateSpaceVec std_squared = std.array().square();
+    KFStateSpaceMatrix covariance = std_squared.asDiagonal();
     return std::make_pair(mean_state_space, covariance);
 }
 
-void KalmanFilter::predict(KF_STATE_SPACE_VEC &mean, KF_STATE_SPACE_MATRIX &covariance) {
+void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance) {
 }
 
 }// namespace byte_kalman

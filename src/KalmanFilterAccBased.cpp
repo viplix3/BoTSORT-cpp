@@ -28,17 +28,12 @@ KalmanFilter::KalmanFilter(double dt = 1.0) {
 }
 
 void KalmanFilter::_init_kf_matrices(double dt) {
-    /**
-     * this is a 4x8 matrix that maps the 8-dimensional state space vector []
-     * to the 4-dimensional measurement space vector []
-     */
+    // This is a 4x8 matrix that maps the 8-dimensional state space vector [x, y, w, h, vx, vy, vw, vh]
+    // to the 4-dimensional measurement space vector [x, y, w, h]
     _measurement_matrix = Eigen::MatrixXf::Identity(KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM);
 
-
-    /**
-     * this is a 8x8 matrix that defines the state transition function
-     * it maps the current state space vector to the next state space vector
-     */
+    // This is an 8x8 matrix that defines the state transition function.
+    // It maps the current state space vector to the next state space vector.
     _state_transition_matrix = Eigen::MatrixXf::Identity(KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM);
     for (uint8_t i = 0; i < 4; i++) {
         _state_transition_matrix(i, i + 4) = _velocity_coupling_factor * dt;
@@ -46,10 +41,8 @@ void KalmanFilter::_init_kf_matrices(double dt) {
         _state_transition_matrix(i + 4, i + 4) = std::pow(0.5, (dt / _velocity_half_life));
     }
 
-    /**
-     * this is a 8x8 matrix that defines the process noise covariance matrix
-     * this takes into account acceleration and jerk for modeling the process noise
-     */
+    // This is an 8x8 matrix that defines the process noise covariance matrix.
+    // This takes into account acceleration and jerk for modeling the process noise.
     _process_noise_covariance = Eigen::MatrixXf::Identity(KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM);
     for (uint8_t i = 0; i < 4; i++) {
         _process_noise_covariance(i, i) = std::pow(dt, 4) / 4 + std::pow(dt, 2);
@@ -59,9 +52,9 @@ void KalmanFilter::_init_kf_matrices(double dt) {
     }
 }
 
-KF_DATA_STATE_SPACE KalmanFilter::init(const DET_VEC &measurement) {
+KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
     constexpr float init_velocity = 0.0;
-    KF_STATE_SPACE_VEC mean_state_space;
+    KFStateSpaceVec mean_state_space;
 
     for (uint8_t i = 0; i < KALMAN_STATE_SPACE_DIM; i++) {
         if (i < 4) {
@@ -71,7 +64,7 @@ KF_DATA_STATE_SPACE KalmanFilter::init(const DET_VEC &measurement) {
         }
     }
 
-    KF_STATE_SPACE_VEC std;
+    KFStateSpaceVec std;
     for (uint8_t i = 0; i < KALMAN_STATE_SPACE_DIM; i++) {
         if (i < 4) {
             std(i) = std::max(_init_pos_weight * _std_factor_detection * measurement(i % 2 == 0 ? 2 : 3), _min_std_detection);
@@ -79,12 +72,9 @@ KF_DATA_STATE_SPACE KalmanFilter::init(const DET_VEC &measurement) {
             std(i) = std::max(_init_vel_weight * _std_factor_detection * measurement(i % 2 == 0 ? 2 : 3), _min_std_detection);
         }
     }
-    KF_STATE_SPACE_VEC std_squared = std.array().square();
-    KF_STATE_SPACE_MATRIX covariance = std_squared.asDiagonal();
+    KFStateSpaceVec std_squared = std.array().square();
+    KFStateSpaceMatrix covariance = std_squared.asDiagonal();
     return std::make_pair(mean_state_space, covariance);
-}
-
-void KalmanFilter::predict(KF_STATE_SPACE_VEC &mean, KF_STATE_SPACE_MATRIX &covariance) {
 }
 
 }// namespace kalman_modified
