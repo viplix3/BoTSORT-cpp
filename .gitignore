@@ -1,0 +1,37 @@
+*.o
+*.d
+*.lst
+*.hex
+*.elf
+*.map
+*.mraw
+
+# build directories
+/configs/*/*/build
+/configs/*/.dep
+
+# editors and IDEs
+.cproject
+.project
+.cache
+language.settings.xml
+*.sw[po]
+.idea
+docs_api
+docs/UserManual/_book
+build*
+cmake-build-*
+docs/DeveloperManual/_book
+*.ulg
+*.pyc
+*~
+\#*\#
+
+params.txt*
+manet.txt*
+*mission.dat*
+
+*.user
+configs/posix/gate/config.json
+
+*.user
