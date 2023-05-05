@@ -40,14 +40,9 @@ private:
      */
     void _init_kf_matrices(double dt);
 
-    float _init_pos_weight, _init_vel_weight;
-    float _std_factor_acceleration, _std_offset_acceleration;
-    float _std_factor_detection, _min_std_detection;
-    float _velocity_coupling_factor;
-    uint8_t _velocity_half_life;
+    float _std_weight_position, _std_weight_velocity;
 
     Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _state_transition_matrix;
     Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _measurement_matrix;
-    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _process_noise_covariance;
 };
 }// namespace byte_kalman
