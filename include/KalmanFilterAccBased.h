@@ -2,7 +2,7 @@
 
 #include "DataType.h"
 
-namespace byte_kalman {
+namespace kalman_modified {
 class KalmanFilter {
 public:
     static const double chi2inv95[10];
@@ -20,7 +20,7 @@ public:
      * @param det Detection [x, y, w, h]
      * @return KF_DATA_MEASUREMENT_SPACE Kalman filter state space data [mean, covariance]
      */
-    KF_DATA_MEASUREMENT_SPACE init(const DET_VEC &det);
+    KF_DATA_STATE_SPACE init(const DET_VEC &det);
 
     void predict(KF_STATE_SPACE_VEC &mean, KF_STATE_SPACE_MATRIX &covariance);
     KF_DATA_MEASUREMENT_SPACE project(const KF_DATA_STATE_SPACE &state);
@@ -50,4 +50,4 @@ private:
     Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _measurement_matrix;
     Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _process_noise_covariance;
 };
-}// namespace byte_kalman
+}// namespace kalman_modified

@@ -1,7 +1,7 @@
-#include "KalmanFilter.h"
+#include "KalmanFilterAccBased.h"
 #include <eigen3/Eigen/Cholesky>
 
-namespace byte_kalman {
+namespace kalman_modified {
 const double KalmanFilter::chi2inv95[10] = {
         0,
         3.8415,
@@ -59,7 +59,7 @@ void KalmanFilter::_init_kf_matrices(double dt) {
     }
 }
 
-KF_DATA_MEASUREMENT_SPACE KalmanFilter::init(const DET_VEC &measurement) {
+KF_DATA_STATE_SPACE KalmanFilter::init(const DET_VEC &measurement) {
     constexpr float init_velocity = 0.0;
     KF_STATE_SPACE_VEC mean_state_space;
 
@@ -87,4 +87,4 @@ KF_DATA_MEASUREMENT_SPACE KalmanFilter::init(const DET_VEC &measurement) {
 void KalmanFilter::predict(KF_STATE_SPACE_VEC &mean, KF_STATE_SPACE_MATRIX &covariance) {
 }
 
-}// namespace byte_kalman
+}// namespace kalman_modified
