@@ -1,9 +1,0 @@
-{
-    "editor.formatOnSave": true,
-    "[cpp]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "xaver.clang-format",
-        "editor.tabSize": 4
-    },
-    "clang-format.style": "file",
-}
