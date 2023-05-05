@@ -5,10 +5,10 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 
-constexpr int DET_ELEMENTS = 6;
-constexpr int FEATURE_DIM = 128;
-constexpr int KALMAN_STATE_SPACE_DIM = 8;
-constexpr int KALMAN_MEASUREMENT_SPACE_DIM = 4;
+constexpr uint8_t DET_ELEMENTS = 6;
+constexpr uint8_t FEATURE_DIM = 128;
+constexpr uint8_t KALMAN_STATE_SPACE_DIM = 8;
+constexpr uint8_t KALMAN_MEASUREMENT_SPACE_DIM = 4;
 
 
 // Object Detection
