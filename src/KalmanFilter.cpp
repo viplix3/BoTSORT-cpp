@@ -42,12 +42,13 @@ KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
         }
     }
 
+    float w = measurement(2), h = measurement(3);
     KFStateSpaceVec std;
     for (uint8_t i = 0; i < KALMAN_STATE_SPACE_DIM; i++) {
         if (i < 4) {
-            std(i) = 2 * _std_weight_position * measurement(i % 2 == 0 ? 2 : 3);
+            std(i) = 2 * _std_weight_position * (i % 2 == 0 ? w : h);
         } else {
-            std(i) = 10 * _std_weight_velocity * measurement(i % 2 == 0 ? 2 : 3);
+            std(i) = 10 * _std_weight_velocity * (i % 2 == 0 ? w : h);
         }
     }
     KFStateSpaceVec std_squared = std.array().square();

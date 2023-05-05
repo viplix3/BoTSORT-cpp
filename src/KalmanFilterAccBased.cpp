@@ -64,12 +64,13 @@ KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
         }
     }
 
+    float w = measurement(2), h = measurement(3);
     KFStateSpaceVec std;
     for (uint8_t i = 0; i < KALMAN_STATE_SPACE_DIM; i++) {
         if (i < 4) {
-            std(i) = std::max(_init_pos_weight * _std_factor_detection * measurement(i % 2 == 0 ? 2 : 3), _min_std_detection);
+            std(i) = std::max(_init_pos_weight * _std_factor_detection * (i % 2 == 0 ? w : h), _min_std_detection);
         } else {
-            std(i) = std::max(_init_vel_weight * _std_factor_detection * measurement(i % 2 == 0 ? 2 : 3), _min_std_detection);
+            std(i) = std::max(_init_vel_weight * _std_factor_detection * (i % 2 == 0 ? w : h), _min_std_detection);
         }
     }
     KFStateSpaceVec std_squared = std.array().square();
