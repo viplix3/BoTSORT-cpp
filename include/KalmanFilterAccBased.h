@@ -5,7 +5,17 @@
 namespace kalman_modified {
 class KalmanFilter {
 public:
-    static const double chi2inv95[10];
+    static constexpr double chi2inv95[10] = {
+            0,
+            3.8415,
+            5.9915,
+            7.8147,
+            9.4877,
+            11.070,
+            12.592,
+            14.067,
+            15.507,
+            16.919};
 
     /**
      * @brief Construct a new Kalman Filter object.
@@ -37,7 +47,7 @@ public:
      * @param covariance Kalman Filter state space covariance.
      * @return KFDataMeasurementSpace Kalman Filter measurement space data [mean, covariance]. 
      */
-    KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance);
+    KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, bool motion_compensated = false);
 
     /**
      * @brief Update the Kalman Filter state space data (mean, covariance) given the measurement (detection).
