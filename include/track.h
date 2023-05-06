@@ -16,7 +16,7 @@ public:
     ~Track();
 
     std::vector<float> static tlbr_to_tlwh(const std::vector<float> &tlbr);
-    void static multi_predict(std::vector<STrack *> &stracks, const byte_kalman::KalmanFilter &kalman_filter);
+    void static multi_predict(std::vector<Track *> &tracks, const byte_kalman::KalmanFilter &kalman_filter);
     void to_tlwh_inplace();
     void to_tlbr_inplace();
 
@@ -28,8 +28,8 @@ public:
     int end_frame();
 
     void activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id);
-    void re_activate(STrack &new_track, int frame_id, bool new_id = false);
-    void update(STrack &new_track, int frame_id);
+    void re_activate(Track &new_track, int frame_id, bool new_id = false);
+    void update(Track &new_track, int frame_id);
 
     bool is_activated;
     int track_id;
