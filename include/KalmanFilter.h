@@ -22,10 +22,43 @@ public:
      */
     KFDataStateSpace init(const DetVec &det);
 
+    /**
+     * @brief Predict the next Kalman Filter state space data (mean, covariance) given the current state space data.
+     * 
+     * @param mean Current Kalman Filter state space mean.
+     * @param covariance Current Kalman Filter state space covariance.
+     */
     void predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance);
+
+    /**
+     * @brief Project the Kalman Filter state space data (mean, covariance) to measurement space.
+     * 
+     * @param mean Kalman Filter state space mean.
+     * @param covariance Kalman Filter state space covariance.
+     * @return KFDataMeasurementSpace Kalman Filter measurement space data [mean, covariance]. 
+     */
     KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance);
+
+    /**
+     * @brief Update the Kalman Filter state space data (mean, covariance) given the measurement (detection).
+     * 
+     * @param mean Kalman Filter state space mean.
+     * @param covariance Kalman Filter state space covariance.
+     * @param measurement Detection [x, y, w, h].
+     * @return KFDataStateSpace Updated Kalman Filter state space data [mean, covariance].
+     */
     KFDataStateSpace update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement);
 
+
+    /**
+     * @brief Compute the gating distance between the Kalman Filter state space data (mean, covariance) and the 
+     * measurements (detections) using the Mahalanobis distance.
+     * 
+     * @param mean Kalman Filter state space mean.
+     * @param covariance Kalman Filter state space covariance.
+     * @param measurements Detections [x, y, w, h].
+     * @return Eigen::Matrix<float, 1, Eigen::Dynamic> Gating distance.
+     */
     Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance(
             const KFStateSpaceVec &mean,
             const KFStateSpaceMatrix &covariance,
@@ -41,7 +74,7 @@ private:
 
     float _std_weight_position, _std_weight_velocity;
 
-    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _state_transition_matrix;
-    Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _measurement_matrix;
+    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM> _state_transition_matrix;
+    Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM> _measurement_matrix;
 };
 }// namespace byte_kalman
