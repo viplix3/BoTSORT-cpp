@@ -10,8 +10,12 @@ KalmanFilter::KalmanFilter(double dt = 1.0) {
 }
 
 void KalmanFilter::_init_kf_matrices(double dt) {
+    // This is a 4x8 matrix that maps the 8-dimensional state space vector [x, y, w, h, vx, vy, vw, vh]
+    // to the 4-dimensional measurement space vector [x, y, w, h]
     _measurement_matrix.setIdentity();
 
+    // This is an 8x8 matrix that defines the state transition function.
+    // It maps the current state space vector to the next state space vector.
     _state_transition_matrix.setIdentity();
     for (size_t i = 0; i < 4; i++) {
         _state_transition_matrix(i, i + 4) = dt;
