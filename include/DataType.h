@@ -48,11 +48,11 @@ using KFDataStateSpace = std::pair<KFStateSpaceVec, KFStateSpaceMatrix>;
 /**
  * @brief Kalman Filter measurement space vector with KALMAN_MEASUREMENT_SPACE_DIM elements.
  */
-using KFMeasSpaceVec = Eigen::Matrix<float, 1, KALMAN_MEASUREMENT_SPACE_DIM, Eigen::RowMajor>;
+using KFMeasSpaceVec = Eigen::Matrix<float, 1, KALMAN_MEASUREMENT_SPACE_DIM>;
 /**
  * @brief Kalman Filter measurement space matrix with KALMAN_MEASUREMENT_SPACE_DIM rows and columns.
  */
-using KFMeasSpaceMatrix = Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_MEASUREMENT_SPACE_DIM, Eigen::RowMajor>;
+using KFMeasSpaceMatrix = Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_MEASUREMENT_SPACE_DIM>;
 /**
  * @brief Kalman Filter measurement space data containing a mean vector and a covariance matrix.
  */
