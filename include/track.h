@@ -10,10 +10,10 @@ enum TrackState {
     Removed
 };
 
-class STrack {
+class Track {
 public:
-    STrack(std::vector<float> tlwh_, float score);
-    ~STrack();
+    Track(std::vector<float> tlwh_, float score);
+    ~Track();
 
     std::vector<float> static tlbr_to_tlwh(const std::vector<float> &tlbr);
     void static multi_predict(std::vector<STrack *> &stracks, const byte_kalman::KalmanFilter &kalman_filter);
