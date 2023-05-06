@@ -23,7 +23,7 @@ public:
     KFDataStateSpace init(const DetVec &det);
 
     void predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance);
-    KFDataMeasurementSpace project(const KFDataStateSpace &state);
+    KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, bool motion_compensated = false);
     KFDataStateSpace update(const KFDataStateSpace &state, const DetVec &measurement);
 
     Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance(
@@ -43,6 +43,7 @@ private:
     float _init_pos_weight, _init_vel_weight;
     float _std_factor_acceleration, _std_offset_acceleration;
     float _std_factor_detection, _min_std_detection;
+    float _std_factor_motion_compensated_detection, _min_std_motion_compensated_detection;
     float _velocity_coupling_factor;
     uint8_t _velocity_half_life;
 
