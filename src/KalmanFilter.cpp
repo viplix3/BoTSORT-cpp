@@ -22,75 +22,49 @@ KalmanFilter::KalmanFilter(double dt = 1.0) {
 }
 
 void KalmanFilter::_init_kf_matrices(double dt) {
-    _measurement_matrix = Eigen::MatrixXf::Identity(KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM);
+    _measurement_matrix.setIdentity();
 
-    _state_transition_matrix = Eigen::MatrixXf::Identity(KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM);
-    for (uint8_t i = 0; i < 4; i++) {
+    _state_transition_matrix.setIdentity();
+    for (size_t i = 0; i < 4; i++) {
         _state_transition_matrix(i, i + 4) = dt;
     }
 }
 
 KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
     constexpr float init_velocity = 0.0;
-    KFStateSpaceVec mean_state_space;
 
-    for (uint8_t i = 0; i < KALMAN_STATE_SPACE_DIM; i++) {
-        if (i < 4) {
-            mean_state_space(i) = measurement(i);
-        } else {
-            mean_state_space(i) = init_velocity;
-        }
-    }
+    KFStateSpaceVec mean_state_space;
+    mean_state_space.head<4>() = measurement.head<4>();
+    mean_state_space.tail<4>().setConstant(init_velocity);
+
 
     float w = measurement(2), h = measurement(3);
-    KFStateSpaceVec std;
-    for (uint8_t i = 0; i < KALMAN_STATE_SPACE_DIM; i++) {
-        if (i < 4) {
-            std(i) = 2 * _std_weight_position * (i % 2 == 0 ? w : h);
-        } else {
-            std(i) = 10 * _std_weight_velocity * (i % 2 == 0 ? w : h);
-        }
-    }
-    KFStateSpaceVec std_squared = std.array().square();
-    KFStateSpaceMatrix covariance = std_squared.asDiagonal();
-    return std::make_pair(mean_state_space, covariance);
+    KFStateSpaceVec std_dev;
+    std_dev.head<4>() = 2 * _std_weight_position * (Eigen::Vector4f(w, h, w, h).array());
+    std_dev.tail<4>() = 10 * _std_weight_velocity * (Eigen::Vector4f(w, h, w, h).array());
+
+    KFStateSpaceMatrix covariance = std_dev.array().square().matrix().asDiagonal();
+    return {mean_state_space, covariance};
 }
 
 void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance) {
-    Eigen::VectorXf std_pos(KALMAN_MEASUREMENT_SPACE_DIM);
-    std_pos << _std_weight_position * mean(2),
-            _std_weight_position * mean(3),
-            _std_weight_position * mean(2),
-            _std_weight_position * mean(3);
-
-    Eigen::VectorXf std_vel(4);
-    std_vel << _std_weight_velocity * mean(2),
-            _std_weight_velocity * mean(3),
-            _std_weight_velocity * mean(2),
-            _std_weight_velocity * mean(3);
-
-    Eigen::VectorXf std_combined;
-    std_combined.block(0, 0, 4, 1) = std_pos;
-    std_combined.block(4, 0, 4, 1) = std_vel;
-    std_combined = std_combined.array().square();
-    KFStateSpaceMatrix motion_cov = std_combined.asDiagonal();
+    Eigen::VectorXf std_combined(KALMAN_STATE_SPACE_DIM);
+    std_combined.head<4>().setConstant(_std_weight_position);
+    std_combined.tail<4>().setConstant(_std_weight_velocity);
+    std_combined = std_combined.array() * Eigen::VectorXf(mean(2), mean(3), mean(2), mean(3), mean(2), mean(3), mean(2), mean(3)).array();
+    KFStateSpaceMatrix motion_cov = std_combined.array().square().matrix().asDiagonal();
 
     mean = _state_transition_matrix * mean;
     covariance = _state_transition_matrix * covariance * _state_transition_matrix.transpose() + motion_cov;
 }
 
 KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance) {
-    Eigen::VectorXf innovation_cov(KALMAN_MEASUREMENT_SPACE_DIM);
-    innovation_cov << _std_weight_position * mean(2),
-            _std_weight_position * mean(3),
-            _std_weight_position * mean(2),
-            _std_weight_position * mean(3);
-    innovation_cov = innovation_cov.array().square();
-    innovation_cov = innovation_cov.asDiagonal();
+    KFMeasSpaceVec innovation_cov = (_std_weight_position * Eigen::Vector4f(mean(2), mean(3), mean(2), mean(3))).array().square().matrix();
+    KFMeasSpaceMatrix innovation_cov_diag = innovation_cov.asDiagonal();
 
     KFMeasSpaceVec mean_updated = _measurement_matrix * mean;
-    KFMeasSpaceMatrix covariance_updated = _measurement_matrix * covariance * _measurement_matrix.transpose() + innovation_cov;
-    return std::make_pair(mean_updated, covariance_updated);
+    KFMeasSpaceMatrix covariance_updated = _measurement_matrix * covariance * _measurement_matrix.transpose() + innovation_cov_diag;
+    return {mean_updated, covariance_updated};
 }
 
 KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement) {
@@ -104,7 +78,7 @@ KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean, const KFState
 
     KFStateSpaceVec mean_updated = mean + innovation * kalman_gain.transpose();
     KFStateSpaceMatrix covariance_updated = covariance - kalman_gain * projected_covariance * kalman_gain.transpose();
-    return std::make_pair(mean_updated, covariance_updated);
+    return {mean_updated, covariance_updated};
 }
 
 Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
@@ -115,16 +89,14 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
     KFMeasSpaceVec projected_mean = projected.first;
     KFMeasSpaceMatrix projected_covariance = projected.second;
 
-    KFMeasSpaceVec diff(measurements.size(), 4);
-    for (uint8_t i = 0; i < measurements.size(); i++) {
+    Eigen::MatrixXf diff(measurements.size(), 4);
+    for (size_t i = 0; i < measurements.size(); i++) {
         diff.row(i) = measurements[i] - projected_mean;
     }
 
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> cholesky_factor = projected_covariance.llt().matrixL();
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mahalanobis_distance = cholesky_factor.triangularView<Eigen::Lower>().solve(diff).transpose();
-    Eigen::Matrix<float, 1, Eigen::Dynamic> distance;
+    Eigen::MatrixXf cholesky_factor = projected_covariance.llt().matrixL();
+    Eigen::MatrixXf mahalanobis_distance = cholesky_factor.triangularView<Eigen::Lower>().solve(diff).transpose();
 
-    auto mahalanobis_distance_squared = mahalanobis_distance.array().square().matrix();
-    return mahalanobis_distance_squared.rowwise().sum();
+    return mahalanobis_distance.array().square().matrix().rowwise().sum();
 }
 }// namespace byte_kalman
