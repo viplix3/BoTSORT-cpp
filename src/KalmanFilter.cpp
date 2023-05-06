@@ -57,6 +57,26 @@ KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
 }
 
 void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance) {
+    Eigen::VectorXf std_pos(4);
+    std_pos << _std_weight_position * mean(2),
+            _std_weight_position * mean(3),
+            _std_weight_position * mean(2),
+            _std_weight_position * mean(3);
+
+    Eigen::VectorXf std_vel(4);
+    std_vel << _std_weight_velocity * mean(2),
+            _std_weight_velocity * mean(3),
+            _std_weight_velocity * mean(2),
+            _std_weight_velocity * mean(3);
+
+    Eigen::VectorXf std_combined;
+    std_combined.block(0, 0, 4, 1) = std_pos;
+    std_combined.block(4, 0, 4, 1) = std_vel;
+    std_combined = std_combined.array().square();
+    KFStateSpaceMatrix motion_cov = std_combined.asDiagonal();
+
+    mean = _state_transition_matrix * mean;
+    covariance = _state_transition_matrix * covariance * _state_transition_matrix.transpose() + motion_cov;
 }
 
 }// namespace byte_kalman
