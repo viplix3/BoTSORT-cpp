@@ -78,4 +78,12 @@ KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
     return std::make_pair(mean_state_space, covariance);
 }
 
+void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance) {
+    float std = _std_factor_acceleration * std::max(mean(2), mean(3)) + _std_offset_acceleration;
+    KFMeasSpaceMatrix motion_cov = std::pow(std, 2) * _process_noise_covariance;
+
+    mean = _state_transition_matrix * mean;
+    covariance = _state_transition_matrix * covariance * _state_transition_matrix.transpose() + motion_cov;
+}
+
 }// namespace kalman_modified
