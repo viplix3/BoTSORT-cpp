@@ -41,7 +41,7 @@ public:
     int tracklet_len;
     int start_frame;
 
-    KF_STATE_SPACE_VEC mean;
-    KF_STATE_SPACE_MATRIX covariance;
+    KFStateSpaceVec mean;
+    KFStateSpaceMatrix covariance;
     float score;
 };
