@@ -5,7 +5,17 @@
 namespace byte_kalman {
 class KalmanFilter {
 public:
-    static const double chi2inv95[10];
+    static constexpr double chi2inv95[10] = {
+            0,
+            3.8415,
+            5.9915,
+            7.8147,
+            9.4877,
+            11.070,
+            12.592,
+            14.067,
+            15.507,
+            16.919};
 
     /**
      * @brief Construct a new Kalman Filter object.

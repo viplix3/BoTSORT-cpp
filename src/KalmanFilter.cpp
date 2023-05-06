@@ -2,18 +2,6 @@
 #include <eigen3/Eigen/Cholesky>
 
 namespace byte_kalman {
-const double KalmanFilter::chi2inv95[10] = {
-        0,
-        3.8415,
-        5.9915,
-        7.8147,
-        9.4877,
-        11.070,
-        12.592,
-        14.067,
-        15.507,
-        16.919};
-
 KalmanFilter::KalmanFilter(double dt = 1.0) {
     _init_kf_matrices(dt);
 
@@ -48,13 +36,14 @@ KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
 }
 
 void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance) {
-    Eigen::VectorXf std_combined(KALMAN_STATE_SPACE_DIM);
-    std_combined.head<4>().setConstant(_std_weight_position);
-    std_combined.tail<4>().setConstant(_std_weight_velocity);
-    std_combined = std_combined.array() * Eigen::VectorXf(mean(2), mean(3), mean(2), mean(3), mean(2), mean(3), mean(2), mean(3)).array();
+    Eigen::VectorXf std_combined;
+    std_combined.resize(KALMAN_STATE_SPACE_DIM);
+    std_combined << mean(2), mean(3), mean(2), mean(3), mean(2), mean(3), mean(2), mean(3);
+    std_combined.head<4>().array() *= _std_weight_position;
+    std_combined.tail<4>().array() *= _std_weight_velocity;
     KFStateSpaceMatrix motion_cov = std_combined.array().square().matrix().asDiagonal();
 
-    mean = _state_transition_matrix * mean;
+    mean = _state_transition_matrix * mean.transpose();
     covariance = _state_transition_matrix * covariance * _state_transition_matrix.transpose() + motion_cov;
 }
 
@@ -62,7 +51,7 @@ KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const 
     KFMeasSpaceVec innovation_cov = (_std_weight_position * Eigen::Vector4f(mean(2), mean(3), mean(2), mean(3))).array().square().matrix();
     KFMeasSpaceMatrix innovation_cov_diag = innovation_cov.asDiagonal();
 
-    KFMeasSpaceVec mean_updated = _measurement_matrix * mean;
+    KFMeasSpaceVec mean_updated = _measurement_matrix * mean.transpose();
     KFMeasSpaceMatrix covariance_updated = _measurement_matrix * covariance * _measurement_matrix.transpose() + innovation_cov_diag;
     return {mean_updated, covariance_updated};
 }
