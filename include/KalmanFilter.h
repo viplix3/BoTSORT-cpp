@@ -24,7 +24,7 @@ public:
 
     void predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance);
     KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance);
-    KFDataStateSpace update(const KFDataStateSpace &state, const DetVec &measurement);
+    KFDataStateSpace update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement);
 
     Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance(
             const KFStateSpaceVec &mean,

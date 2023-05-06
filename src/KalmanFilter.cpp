@@ -93,5 +93,19 @@ KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const 
     return std::make_pair(mean_updated, covariance_updated);
 }
 
+KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement) {
+    KFDataMeasurementSpace projected = project(mean, covariance);
+    KFMeasSpaceVec projected_mean = projected.first;
+    KFMeasSpaceMatrix projected_covariance = projected.second;
+
+    Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM> B = (covariance * _measurement_matrix.transpose()).transpose();
+    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_MEASUREMENT_SPACE_DIM> kalman_gain = (projected_covariance.llt().solve(B)).transpose();
+    Eigen::Matrix<float, 1, KALMAN_MEASUREMENT_SPACE_DIM> innovation = measurement - projected_mean;
+
+    KFStateSpaceVec mean_updated = mean + innovation * kalman_gain.transpose();
+    KFStateSpaceMatrix covariance_updated = covariance - kalman_gain * projected_covariance * kalman_gain.transpose();
+    return std::make_pair(mean_updated, covariance_updated);
+}
+
 
 }// namespace byte_kalman
