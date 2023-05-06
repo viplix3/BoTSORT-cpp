@@ -57,7 +57,7 @@ KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
 }
 
 void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance) {
-    Eigen::VectorXf std_pos(4);
+    Eigen::VectorXf std_pos(KALMAN_MEASUREMENT_SPACE_DIM);
     std_pos << _std_weight_position * mean(2),
             _std_weight_position * mean(3),
             _std_weight_position * mean(2),
@@ -78,5 +78,20 @@ void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance
     mean = _state_transition_matrix * mean;
     covariance = _state_transition_matrix * covariance * _state_transition_matrix.transpose() + motion_cov;
 }
+
+KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance) {
+    Eigen::VectorXf innovation_cov(KALMAN_MEASUREMENT_SPACE_DIM);
+    innovation_cov << _std_weight_position * mean(2),
+            _std_weight_position * mean(3),
+            _std_weight_position * mean(2),
+            _std_weight_position * mean(3);
+    innovation_cov = innovation_cov.array().square();
+    innovation_cov = innovation_cov.asDiagonal();
+
+    KFMeasSpaceVec mean_updated = _measurement_matrix * mean;
+    KFMeasSpaceMatrix covariance_updated = _measurement_matrix * covariance * _measurement_matrix.transpose() + innovation_cov;
+    return std::make_pair(mean_updated, covariance_updated);
+}
+
 
 }// namespace byte_kalman
