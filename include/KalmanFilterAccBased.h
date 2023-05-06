@@ -29,8 +29,7 @@ public:
     Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance(
             const KFStateSpaceVec &mean,
             const KFStateSpaceMatrix &covariance,
-            const std::vector<DetVec> &measurements,
-            bool only_position = false);
+            const std::vector<DetVec> &measurements);
 
 private:
     /**

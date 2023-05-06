@@ -121,4 +121,25 @@ KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean, const KFState
     return std::make_pair(mean_updated, covariance_updated);
 }
 
+Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
+        const KFStateSpaceVec &mean,
+        const KFStateSpaceMatrix &covariance,
+        const std::vector<DetVec> &measurements) {
+    KFDataMeasurementSpace projected = this->project(mean, covariance);
+    KFMeasSpaceVec projected_mean = projected.first;
+    KFMeasSpaceMatrix projected_covariance = projected.second;
+
+    KFMeasSpaceVec diff(measurements.size(), 4);
+    for (uint8_t i = 0; i < measurements.size(); i++) {
+        diff.row(i) = measurements[i] - projected_mean;
+    }
+
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> cholesky_factor = projected_covariance.llt().matrixL();
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mahalanobis_distance = cholesky_factor.triangularView<Eigen::Lower>().solve(diff).transpose();
+    Eigen::Matrix<float, 1, Eigen::Dynamic> distance;
+
+    auto mahalanobis_distance_squared = mahalanobis_distance.array().square().matrix();
+    return mahalanobis_distance_squared.rowwise().sum();
+}
+
 }// namespace kalman_modified
