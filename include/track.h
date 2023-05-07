@@ -12,13 +12,13 @@ enum TrackState {
 
 class Track {
 public:
-    Track(std::vector<float> tlwh_, float score);
+    Track(std::vector<float> tlwh, float score, uint8_t class_id);
     ~Track();
 
     std::vector<float> static tlbr_to_tlwh(const std::vector<float> &tlbr);
     void static multi_predict(std::vector<Track *> &tracks, const byte_kalman::KalmanFilter &kalman_filter);
-    void to_tlwh_inplace();
-    void to_tlbr_inplace();
+
+    void update_track_tlwh();
 
     std::vector<float> tlwh_to_xyah(std::vector<float> tlwh);
 
@@ -35,13 +35,19 @@ public:
     int track_id;
     int state;
 
-    std::vector<float> _tlwh;
-    std::vector<float> tlwh;
     int frame_id;
     int tracklet_len;
     int start_frame;
 
+    std::vector<float> det_tlwh;
+
     KFStateSpaceVec mean;
     KFStateSpaceMatrix covariance;
-    float score;
+
+private:
+    std::vector<float> _tlwh;
+    float _score;
+    uint8_t _class_id;
+
+    byte_kalman::KalmanFilter kalman_filter;
 };
