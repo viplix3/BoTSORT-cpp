@@ -81,7 +81,7 @@ struct AssociationData {
 /**
  * @brief Cost matrix for linear assignment with dynamic rows and columns.
  */
-using CostMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using CostMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 
 // Result
 /**
