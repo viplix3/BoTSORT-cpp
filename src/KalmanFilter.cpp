@@ -2,7 +2,7 @@
 #include <eigen3/Eigen/Cholesky>
 
 namespace byte_kalman {
-KalmanFilter::KalmanFilter(double dt = 1.0) {
+KalmanFilter::KalmanFilter(double dt) {
     _init_kf_matrices(dt);
 
     _std_weight_position = 1.0 / 20;
