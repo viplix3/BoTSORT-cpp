@@ -17,6 +17,20 @@ public:
             15.507,
             16.919};
 
+private:
+    float _init_pos_weight, _init_vel_weight;
+    float _std_factor_acceleration, _std_offset_acceleration;
+    float _std_factor_detection, _min_std_detection;
+    float _std_factor_motion_compensated_detection, _min_std_motion_compensated_detection;
+    float _velocity_coupling_factor;
+    uint8_t _velocity_half_life;
+
+    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _state_transition_matrix;
+    Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _measurement_matrix;
+    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _process_noise_covariance;
+
+
+public:
     /**
      * @brief Construct a new Kalman Filter object.
      * 
@@ -81,16 +95,5 @@ private:
      * @param dt Time interval between consecutive measurements (dt = 1/FPS).
      */
     void _init_kf_matrices(double dt);
-
-    float _init_pos_weight, _init_vel_weight;
-    float _std_factor_acceleration, _std_offset_acceleration;
-    float _std_factor_detection, _min_std_detection;
-    float _std_factor_motion_compensated_detection, _min_std_motion_compensated_detection;
-    float _velocity_coupling_factor;
-    uint8_t _velocity_half_life;
-
-    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _state_transition_matrix;
-    Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _measurement_matrix;
-    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM, Eigen::RowMajor> _process_noise_covariance;
 };
 }// namespace kalman_modified

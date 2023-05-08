@@ -13,6 +13,34 @@ enum TrackState {
 
 class Track {
 public:
+    bool is_activated;
+    int track_id;
+    int state;
+
+    int frame_id;
+    int tracklet_len;
+    int start_frame;
+
+    std::vector<float> det_tlwh;
+
+    KFStateSpaceVec mean;
+    KFStateSpaceMatrix covariance;
+
+private:
+    std::vector<float> _tlwh;
+    std::vector<std::pair<uint8_t, float>> _class_hist;
+    float _score;
+    uint8_t _class_id;
+    static constexpr float _alpha = 0.9;
+
+    int _feat_history_size;
+    FeatureVector _curr_feat, _smooth_feat;
+    std::deque<FeatureVector> _feat_history;
+
+    byte_kalman::KalmanFilter _kalman_filter;
+
+
+public:
     /**
      * @brief Construct a new Track object
      * 
@@ -97,33 +125,7 @@ public:
      */
     void update(Track &new_track, int frame_id);
 
-    bool is_activated;
-    int track_id;
-    int state;
-
-    int frame_id;
-    int tracklet_len;
-    int start_frame;
-
-    std::vector<float> det_tlwh;
-
-    KFStateSpaceVec mean;
-    KFStateSpaceMatrix covariance;
-
 private:
-    std::vector<float> _tlwh;
-    std::vector<std::pair<uint8_t, float>> _class_hist;
-    float _score;
-    uint8_t _class_id;
-    static constexpr float _alpha = 0.9;
-
-    int _feat_history_size;
-    FeatureVector _curr_feat, _smooth_feat;
-    std::deque<FeatureVector> _feat_history;
-
-
-    byte_kalman::KalmanFilter _kalman_filter;
-
     /**
      * @brief Updates visual feature vector and feature history
      * Done by using a weighted average of the current feature vector and the previous feature vector

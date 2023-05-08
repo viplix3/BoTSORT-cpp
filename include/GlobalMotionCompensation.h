@@ -2,6 +2,7 @@
 
 #include "DataType.h"
 
+#include <map>
 #include <string>
 
 #include <opencv2/core.hpp>
@@ -16,6 +17,11 @@ enum GMC_Method {
     SparseOptFlow
 };
 
+std::map<std::string, GMC_Method> GMC_Method_Map = {
+        {"orb", ORB},
+        {"sift", SIFT},
+        {"ecc", ECC},
+        {"sparseOptFlow", SparseOptFlow}};
 
 class GMC_Algorithm {
 public:
@@ -24,15 +30,16 @@ public:
 };
 
 class ORB_GMC : public GMC_Algorithm {
-public:
-    ORB_GMC(int downscale);
-    void apply(const cv::Mat &frame, std::vector<float> &detections) override;
-
 private:
     cv::Ptr<cv::FastFeatureDetector> _detector = cv::FastFeatureDetector::create(20);
     cv::Ptr<cv::ORB> _extractor = cv::ORB::create();
     cv::BFMatcher _matcher = cv::BFMatcher(cv::NORM_HAMMING);
     int _downscale;
+
+
+public:
+    ORB_GMC(int downscale);
+    void apply(const cv::Mat &frame, std::vector<float> &detections) override;
 };
 
 class SIFT_GMC : public GMC_Algorithm {
@@ -45,31 +52,34 @@ private:
 };
 
 class ECC_GMC : public GMC_Algorithm {
+private:
+    int _downscale;
+
+
 public:
     ECC_GMC(int downscale = 2);
     virtual void apply(const cv::Mat &frame, std::vector<float> &detections) override;
-
-private:
-    int _downscale;
 };
 
 class SparseOptFlow_GMC : public GMC_Algorithm {
+private:
+    int _downscale;
+
+
 public:
     SparseOptFlow_GMC(int downscale = 2);
     virtual void apply(const cv::Mat &frame, std::vector<float> &detections) override;
-
-private:
-    int _downscale;
 };
 
 
 class GlobalMotionCompensation {
+private:
+    std::unique_ptr<GMC_Algorithm> _gmc_algorithm;
+
+
 public:
     GlobalMotionCompensation(GMC_Method method, int downscale = 2);
     ~GlobalMotionCompensation();
 
     void apply(const cv::Mat &frame, std::vector<float> &detections);
-
-private:
-    std::unique_ptr<GMC_Algorithm> _gmc_algorithm;
 };
