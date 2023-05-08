@@ -36,13 +36,18 @@ void ORB_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {
         height /= _downscale;
         cv::resize(frame, frame, cv::Size(width, height));
     }
+
+    // TODO: Complete this
 }
 
 
 SIFT_GMC::SIFT_GMC(int downscale) : _downscale(downscale) {}
+void SIFT_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {}
 
 
 ECC_GMC::ECC_GMC(int downscale) : _downscale(downscale) {}
+void ECC_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {}
 
 
 SparseOptFlow_GMC::SparseOptFlow_GMC(int downscale) : _downscale(downscale) {}
+void SparseOptFlow_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {}
