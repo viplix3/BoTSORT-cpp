@@ -2,9 +2,12 @@
 
 #include "DataType.h"
 
+#include <string>
+
 #include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>
-#include <string>
+#include <opencv2/imgproc.hpp>
+
 
 enum GMC_Method {
     ORB = 0,

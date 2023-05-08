@@ -22,8 +22,27 @@ void GlobalMotionCompensation::apply(const cv::Mat &frame, std::vector<float> &d
 
 ORB_GMC::ORB_GMC(int downscale) : _downscale(downscale) {}
 
+void ORB_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {
+    // Initialization
+    int height = frame.rows;
+    int width = frame.cols;
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+
+    Eigen::MatrixXf H = Eigen::MatrixXf::Identity(2, 3);
+
+    // Downscale
+    if (_downscale > 1) {
+        width /= _downscale;
+        height /= _downscale;
+        cv::resize(frame, frame, cv::Size(width, height));
+    }
+}
+
+
 SIFT_GMC::SIFT_GMC(int downscale) : _downscale(downscale) {}
 
+
 ECC_GMC::ECC_GMC(int downscale) : _downscale(downscale) {}
+
 
 SparseOptFlow_GMC::SparseOptFlow_GMC(int downscale) : _downscale(downscale) {}
