@@ -74,7 +74,6 @@ void Track::re_activate(Track &new_track, int frame_id, bool new_id) {
     _update_tracklet_tlwh_inplace();
 }
 
-
 void Track::predict() {
     _kalman_filter.predict(mean, covariance);
     _update_tracklet_tlwh_inplace();
