@@ -140,5 +140,16 @@ private:
      */
     void _update_tracklet_tlwh_inplace();
 
+    /**
+     * @brief Update the class_id for the given tracklet on the basis of the frequency of the class_id in the class history
+     * The history maintains a list of (class_id, score) pairs.
+     * If a particular class_id occurs with a higher score, multiple times, it is more likely to be the correct class_id
+     * If a particular class_id occurs with a lower score, multiple times, it is less likely to be the correct class_id
+     * 
+     * The frequency of the class_id is calculated as the sum of the scores of the class_id in the history
+     * 
+     * @param class_id Current class_id for the bounding box
+     * @param score Current score for the bounding box
+     */
     void _update_class_id(uint8_t class_id, float score);
 };
