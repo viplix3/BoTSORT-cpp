@@ -1,9 +1,9 @@
 #include "track.h"
 
-Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat, int feat_history_size) {
-    // Save the detection in the det_tlwh vector
-    det_tlwh.resize(DET_ELEMENTS);
-    det_tlwh.assign(tlwh.begin(), tlwh.end());
+Track::Track(std::vector<float> xywh, float score, uint8_t class_id, std::optional<FeatureVector> feat, int feat_history_size) {
+    // Save the detection in the det_xywh vector
+    det_xywh.resize(DET_ELEMENTS);
+    det_xywh.assign(xywh.begin(), xywh.end());
 
     _score = score;
     _class_id = class_id;
@@ -26,12 +26,12 @@ void Track::activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id) {
     _kalman_filter = kalman_filter;
     track_id = next_id();
 
-    // Create DetVec from det_tlwh
-    DetVec det_tlwh;
-    det_tlwh << _tlwh[0], _tlwh[1], _tlwh[2], _tlwh[3];
+    // Create DetVec from det_xywh
+    DetVec bbox_xywh;
+    bbox_xywh << det_xywh[0], det_xywh[1], det_xywh[2], det_xywh[3];
 
     // Initialize the Kalman filter
-    KFDataStateSpace state_space = _kalman_filter.init(det_tlwh);
+    KFDataStateSpace state_space = _kalman_filter.init(bbox_xywh);
     mean = state_space.first;
     covariance = state_space.second;
 
@@ -41,6 +41,10 @@ void Track::activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id) {
     this->frame_id = frame_id;
     start_frame = frame_id;
 }
+
+void Track::re_activate(Track &new_track, int frame_id, bool new_id = false) {
+}
+
 
 void Track::_update_features(FeatureVector &feat) {
     feat /= feat.norm();

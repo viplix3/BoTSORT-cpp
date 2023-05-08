@@ -13,7 +13,7 @@ enum TrackState {
 
 class Track {
 public:
-    Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat = std::nullopt, int feat_history_size = 50);
+    Track(std::vector<float> xywh, float score, uint8_t class_id, std::optional<FeatureVector> feat = std::nullopt, int feat_history_size = 50);
     ~Track();
 
     int next_id();
@@ -35,7 +35,7 @@ public:
     int tracklet_len;
     int start_frame;
 
-    std::vector<float> det_tlwh;
+    std::vector<float> det_xywh;
 
     KFStateSpaceVec mean;
     KFStateSpaceMatrix covariance;
