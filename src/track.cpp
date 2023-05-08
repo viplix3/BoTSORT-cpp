@@ -73,8 +73,6 @@ void Track::re_activate(Track &new_track, int frame_id, bool new_id) {
 
 void Track::predict() {
     _kalman_filter.predict(mean, covariance);
-    frame_id += 1;
-    tracklet_len += 1;
     _update_tracklet_tlwh_inplace();
 }
 
@@ -83,7 +81,6 @@ void Track::multi_predict(std::vector<Track *> &tracks, const byte_kalman::Kalma
         tracks[i]->predict();
     }
 }
-
 
 void Track::_update_features(FeatureVector &feat) {
     feat /= feat.norm();
