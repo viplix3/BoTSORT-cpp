@@ -66,6 +66,13 @@ public:
     void activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id);
 
 
+    /**
+     * @brief Re-activates an old track with the new track data
+     * 
+     * @param new_track New track object to be used to reactive the old track
+     * @param frame_id Current frame-id
+     * @param new_id Whether to assign a new ID to the track (default: false)
+     */
     void re_activate(Track &new_track, int frame_id, bool new_id = false);
     void static multi_predict(std::vector<Track *> &tracks, const byte_kalman::KalmanFilter &kalman_filter);
     void update(Track &new_track, int frame_id);

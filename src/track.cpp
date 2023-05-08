@@ -53,6 +53,20 @@ void Track::re_activate(Track &new_track, int frame_id, bool new_id) {
     KFDataStateSpace state_space = _kalman_filter.update(mean, covariance, new_track_bbox);
     mean = state_space.first;
     covariance = state_space.second;
+
+    if (new_track._curr_feat.size() > 0) {
+        _update_features(new_track._curr_feat);
+    }
+
+    if (new_id) {
+        track_id = next_id();
+    }
+
+    tracklet_len = 0;
+    state = TrackState::Tracked;
+    is_activated = true;
+    _score = new_track._score;
+    this->frame_id = frame_id;
     _update_tracklet_tlwh_inplace();
 }
 
