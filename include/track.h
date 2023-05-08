@@ -22,7 +22,7 @@ public:
      * @param feat (Optional) Detection feature vector
      * @param feat_history_size Size of the feature history (default: 50)
      */
-    Track(std::vector<float> xywh, float score, uint8_t class_id, std::optional<FeatureVector> feat = std::nullopt, int feat_history_size = 50);
+    Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat = std::nullopt, int feat_history_size = 50);
     ~Track();
 
     /**
@@ -78,7 +78,7 @@ public:
     int tracklet_len;
     int start_frame;
 
-    std::vector<float> det_xywh;
+    std::vector<float> det_tlwh;
 
     KFStateSpaceVec mean;
     KFStateSpaceMatrix covariance;
@@ -97,4 +97,18 @@ private:
     byte_kalman::KalmanFilter _kalman_filter;
 
     void _update_features(FeatureVector &feat);
+
+    /**
+     * @brief Populate a DetVec bbox object (xywh) from the detection bounding box (tlwh)
+     * 
+     * @param bbox_xywh DetVec bbox object (xywh) to be populated
+     * @param tlwh Detection bounding box (tlwh)
+     */
+    void _populate_DetVec_xywh(DetVec &bbox_xywh, const std::vector<float> &tlwh);
+
+    /**
+     * @brief Update the tracklet bounding box (stored as tlwh) inplace accoding to the tracker state
+     * 
+     */
+    void _update_tracklet_tlwh_inplace();
 };
