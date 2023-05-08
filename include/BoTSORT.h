@@ -46,4 +46,15 @@ public:
             uint8_t frame_rate = 30,
             float lambda = 0.985);
     ~BoTSORT();
+
+private:
+    std::vector<Track *> joint_tracks(std::vector<Track *> &tracks_list_a, std::vector<Track> &tracks_list_b);
+    std::vector<Track> joint_tracks(std::vector<Track> &tracks_list_a, std::vector<Track> &tracks_list_b);
+
+    std::vector<Track> sub_tracks(std::vector<Track> &tracks_list_a, std::vector<Track> &tracks_list_b);
+    void remove_duplicate_tracks(
+            std::vector<Track> &result_tracks_a,
+            std::vector<Track> &result_tracks_b,
+            std::vector<Track> &tracks_list_a,
+            std::vector<Track> &tracks_list_b);
 };
