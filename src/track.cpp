@@ -6,7 +6,7 @@ Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::option
     det_tlwh.assign(tlwh.begin(), tlwh.end());
 
     _score = score;
-    _class_id = class_id;
+    _class_id = -1;
 
     tracklet_len = 0;
     is_activated = false;
@@ -16,6 +16,8 @@ Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::option
         _feat_history_size = feat_history_size;
         _update_features(*feat);
     }
+
+    _update_class_id(class_id, score);
     _update_tracklet_tlwh_inplace();
 }
 
@@ -67,6 +69,8 @@ void Track::re_activate(Track &new_track, int frame_id, bool new_id) {
     is_activated = true;
     _score = new_track._score;
     this->frame_id = frame_id;
+
+    _update_class_id(new_track._class_id, new_track._score);
     _update_tracklet_tlwh_inplace();
 }
 
@@ -80,6 +84,29 @@ void Track::multi_predict(std::vector<Track *> &tracks, const byte_kalman::Kalma
     for (size_t i = 0; i < tracks.size(); i++) {
         tracks[i]->predict();
     }
+}
+
+void Track::update(Track &new_track, int frame_id) {
+
+    DetVec new_track_bbox;
+    _populate_DetVec_xywh(new_track_bbox, new_track._tlwh);
+
+    KFDataStateSpace state_space = _kalman_filter.update(mean, covariance, new_track_bbox);
+
+    if (new_track._curr_feat.size() > 0) {
+        _update_features(new_track._curr_feat);
+    }
+
+    mean = state_space.first;
+    covariance = state_space.second;
+    state = TrackState::Tracked;
+    is_activated = true;
+    _score = new_track._score;
+    tracklet_len++;
+    this->frame_id = frame_id;
+
+    _update_class_id(new_track._class_id, new_track._score);
+    _update_tracklet_tlwh_inplace();
 }
 
 void Track::_update_features(FeatureVector &feat) {
@@ -135,4 +162,30 @@ void Track::_update_tracklet_tlwh_inplace() {
     // If the tracklet is not new, update the tlwh using the Kalman filter
     // mean. KF mean contains xywh, so need to convert
     _tlwh = {mean(0) - mean(2) / 2, mean(1) - mean(3) / 2, mean(2), mean(3)};
+}
+
+void Track::_update_class_id(uint8_t class_id, float score) {
+    if (_class_hist.size() > 0) {
+        int max_freq = 0;
+        bool found = false;
+
+        for (auto &class_hist: _class_hist) {
+            if (class_hist.first == class_id) {
+                class_hist.second += score;
+                found = true;
+            }
+            if (class_hist.second > max_freq) {
+                max_freq = class_hist.second;
+                _class_id = class_hist.first;
+            }
+        }
+
+        if (!found) {
+            _class_hist.push_back({class_id, score});
+            _class_id = class_id;
+        }
+    } else {
+        _class_hist.push_back({class_id, score});
+        _class_id = class_id;
+    }
 }

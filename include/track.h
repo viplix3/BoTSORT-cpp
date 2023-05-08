@@ -88,6 +88,13 @@ public:
      * @param kalman_filter Kalman filter object for the tracks
      */
     void static multi_predict(std::vector<Track *> &tracks, const byte_kalman::KalmanFilter &kalman_filter);
+
+    /**
+     * @brief Update the track state using the new detection
+     * 
+     * @param new_track New track object to be used to update the old track
+     * @param frame_id Current frame-id
+     */
     void update(Track &new_track, int frame_id);
 
     bool is_activated;
@@ -105,6 +112,7 @@ public:
 
 private:
     std::vector<float> _tlwh;
+    std::vector<std::pair<uint8_t, float>> _class_hist;
     float _score;
     uint8_t _class_id;
     static constexpr float _alpha = 0.9;
@@ -131,4 +139,6 @@ private:
      * 
      */
     void _update_tracklet_tlwh_inplace();
+
+    void _update_class_id(uint8_t class_id, float score);
 };
