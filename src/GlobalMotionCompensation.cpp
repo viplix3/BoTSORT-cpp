@@ -19,3 +19,11 @@ GlobalMotionCompensation::~GlobalMotionCompensation() {}
 void GlobalMotionCompensation::apply(const cv::Mat &frame, std::vector<float> &detections) {
     _gmc_algorithm->apply(frame, detections);
 }
+
+ORB_GMC::ORB_GMC(int downscale) : _downscale(downscale) {}
+
+SIFT_GMC::SIFT_GMC(int downscale) : _downscale(downscale) {}
+
+ECC_GMC::ECC_GMC(int downscale) : _downscale(downscale) {}
+
+SparseOptFlow_GMC::SparseOptFlow_GMC(int downscale) : _downscale(downscale) {}
