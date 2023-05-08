@@ -74,6 +74,19 @@ public:
      * @param new_id Whether to assign a new ID to the track (default: false)
      */
     void re_activate(Track &new_track, int frame_id, bool new_id = false);
+
+    /**
+     * @brief Predict the next state of the track using the Kalman filter
+     * 
+     */
+    void predict();
+
+    /**
+     * @brief Predict the next state of multiple tracks using the Kalman filter
+     * 
+     * @param tracks Tracks on which to perform the prediction step
+     * @param kalman_filter Kalman filter object for the tracks
+     */
     void static multi_predict(std::vector<Track *> &tracks, const byte_kalman::KalmanFilter &kalman_filter);
     void update(Track &new_track, int frame_id);
 
