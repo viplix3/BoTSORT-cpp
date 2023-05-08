@@ -124,6 +124,12 @@ private:
 
     byte_kalman::KalmanFilter _kalman_filter;
 
+    /**
+     * @brief Updates visual feature vector and feature history
+     * Done by using a weighted average of the current feature vector and the previous feature vector
+     * 
+     * @param feat Current feature vector
+     */
     void _update_features(FeatureVector &feat);
 
     /**
