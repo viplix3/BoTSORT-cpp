@@ -51,7 +51,7 @@ private:
     std::deque<FeatureVector> _feat_history;
 
 
-    byte_kalman::KalmanFilter kalman_filter;
+    byte_kalman::KalmanFilter _kalman_filter;
 
     void _update_features(FeatureVector &feat);
 };

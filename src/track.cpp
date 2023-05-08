@@ -22,6 +22,26 @@ Track::~Track() {
     // Nothing to do here
 }
 
+void Track::activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id) {
+    _kalman_filter = kalman_filter;
+    track_id = next_id();
+
+    // Create DetVec from det_tlwh
+    DetVec det_tlwh;
+    det_tlwh << _tlwh[0], _tlwh[1], _tlwh[2], _tlwh[3];
+
+    // Initialize the Kalman filter
+    KFDataStateSpace state_space = _kalman_filter.init(det_tlwh);
+    mean = state_space.first;
+    covariance = state_space.second;
+
+    if (frame_id == 1) {
+        is_activated = true;
+    }
+    this->frame_id = frame_id;
+    start_frame = frame_id;
+}
+
 void Track::_update_features(FeatureVector &feat) {
     feat /= feat.norm();
     _curr_feat = feat;
