@@ -12,9 +12,9 @@
 
 enum GMC_Method {
     ORB = 0,
-    SIFT,
     ECC,
-    SparseOptFlow
+    SparseOptFlow,
+    OptFlowModified,
 };
 
 extern std::map<const char *, GMC_Method> GMC_method_map;
@@ -39,13 +39,13 @@ public:
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
-class SIFT_GMC : public GMC_Algorithm {
+class OptFlowModified_GMC : public GMC_Algorithm {
 private:
     uint8_t _downscale;
 
 
 public:
-    SIFT_GMC(uint8_t downscale = 2);
+    OptFlowModified_GMC(uint8_t downscale = 2);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
