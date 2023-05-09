@@ -25,7 +25,7 @@ BoTSORT::BoTSORT(
     _frame_id = 0;
     _buffer_size = static_cast<uint8_t>(_frame_rate / 30.0 * _track_buffer);
     _max_time_lost = _buffer_size;
-    _kalman_filter = std::make_unique<byte_kalman::KalmanFilter>(static_cast<double>(1.0 / _frame_rate));
+    _kalman_filter = std::make_shared<KalmanFilter>(static_cast<double>(1.0 / _frame_rate));
 
 
     // Re-ID module, load visual feature extractor here
@@ -76,8 +76,16 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
 
     ////////////////// Step 2: First association, with high score detection boxes //////////////////
+
+    // Merge currently tracked tracks and lost tracks
     std::vector<Track *> tracks_pool;
     tracks_pool = _merge_track_lists(tracked_tracks, _lost_tracks);
+
+    // Predict the location of the tracks with KF (even for lost tracks)
+    Track::multi_predict(tracks_pool, *_kalman_filter);
+
+    // Estimate camera motion and apply camera motion compensation
+    HomographyMatrix H = _gmc_algo->apply(frame, detections);
 
     // Added for code compilation
     return std::vector<Track>();
