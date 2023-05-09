@@ -1,10 +1,13 @@
 #pragma once
 
 #include <cstdint>
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
 #include <utility>
 #include <vector>
+
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
+#include <opencv2/core.hpp>
+
 
 constexpr uint8_t DET_ELEMENTS = 4;
 constexpr uint8_t FEATURE_DIM = 128;
@@ -20,6 +23,18 @@ using DetVec = Eigen::Matrix<float, 1, DET_ELEMENTS>;
  * @brief Detection matrix with dynamic rows and DET_ELEMENTS columns.
  */
 using DetMatrix = Eigen::Matrix<float, Eigen::Dynamic, DET_ELEMENTS>;
+/**
+ * @brief Struct representing a detection
+ * 
+ * cv::Rect_<float> bbox_tlwh: Bounding box of the detection in the format (top left x, top left y, width, height)
+ * int class_id: Class ID of the detection
+ * float confidence: Confidence score of the detection
+ */
+struct Detection {
+    cv::Rect_<float> bbox_tlwh;
+    int class_id;
+    float confidence;
+};
 
 // Re-ID Features
 /**
@@ -57,6 +72,13 @@ using KFMeasSpaceMatrix = Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KAL
  * @brief Kalman Filter measurement space data containing a mean vector and a covariance matrix.
  */
 using KFDataMeasurementSpace = std::pair<KFMeasSpaceVec, KFMeasSpaceMatrix>;
+
+// Camera Motion Compensation
+/**
+ * @brief 3x3 homography matrix.
+ * 
+ */
+using HomographyMatrix = Eigen::Matrix<float, 3, 3>;
 
 // Tracker
 /**

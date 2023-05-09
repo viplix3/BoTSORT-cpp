@@ -7,18 +7,6 @@
 
 #include <string>
 
-/**
- * @brief Struct representing a detection
- * 
- * cv::Rect_<float> bbox_tlwh: Bounding box of the detection in the format (top left x, top left y, width, height)
- * int class_id: Class ID of the detection
- * float confidence: Confidence score of the detection
- */
-struct Detection {
-    cv::Rect_<float> bbox_tlwh;
-    int class_id;
-    float confidence;
-};
 
 class BoTSORT {
 public:
@@ -39,7 +27,7 @@ private:
     std::vector<Track *> _lost_tracks;
     std::vector<Track *> _removed_tracks;
 
-    std::unique_ptr<byte_kalman::KalmanFilter> _kalman_filter;
+    std::shared_ptr<KalmanFilter> _kalman_filter;
     std::unique_ptr<GlobalMotionCompensation> _gmc_algo;
     std::unique_ptr<ReIDModel> _reid_model;
 
