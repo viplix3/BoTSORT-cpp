@@ -28,43 +28,44 @@ public:
 
 class ORB_GMC : public GMC_Algorithm {
 private:
+    uint8_t _downscale;
     cv::Ptr<cv::FastFeatureDetector> _detector = cv::FastFeatureDetector::create(20);
     cv::Ptr<cv::ORB> _extractor = cv::ORB::create();
     cv::BFMatcher _matcher = cv::BFMatcher(cv::NORM_HAMMING);
-    int _downscale;
 
 
 public:
-    ORB_GMC(int downscale);
+    ORB_GMC(uint8_t downscale);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 class SIFT_GMC : public GMC_Algorithm {
-public:
-    SIFT_GMC(int downscale = 2);
-    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
-
 private:
-    int _downscale;
+    uint8_t _downscale;
+
+
+public:
+    SIFT_GMC(uint8_t downscale = 2);
+    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 class ECC_GMC : public GMC_Algorithm {
 private:
-    int _downscale;
+    uint8_t _downscale;
 
 
 public:
-    ECC_GMC(int downscale = 2);
+    ECC_GMC(uint8_t downscale = 2);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 class SparseOptFlow_GMC : public GMC_Algorithm {
 private:
-    int _downscale;
+    uint8_t _downscale;
 
 
 public:
-    SparseOptFlow_GMC(int downscale = 2);
+    SparseOptFlow_GMC(uint8_t downscale = 2);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
@@ -75,7 +76,7 @@ private:
 
 
 public:
-    GlobalMotionCompensation(GMC_Method method, int downscale = 2);
+    GlobalMotionCompensation(GMC_Method method, uint8_t downscale = 2);
     ~GlobalMotionCompensation() = default;
 
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections);
