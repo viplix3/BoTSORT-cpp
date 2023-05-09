@@ -30,8 +30,8 @@ BoTSORT::BoTSORT(
     _kalman_filter = byte_kalman::KalmanFilter(static_cast<double>(1.0 / _frame_rate));
 
 
-    // Re-ID module
-    auto model = ReIDModel(_model_weights, _fp16_inference);// Load DL MODEL here
+    // Re-ID module, load visual feature extractor here
+    auto _reid_model = ReIDModel(_model_weights, _fp16_inference);
 
 
     // Global motion compensation module
@@ -39,3 +39,36 @@ BoTSORT::BoTSORT(
 }
 
 BoTSORT::~BoTSORT() = default;
+
+std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
+    ////////////////// Step 1: Create tracks for detections //////////////////
+    _frame_id++;
+
+    std::vector<Track> detections_high_conf;
+    std::vector<Track> detections_low_conf;
+
+    if (detections.size() > 0) {
+        for (Detection &detection: const_cast<std::vector<Detection> &>(detections)) {
+            detection.bbox_tlwh.x = std::max(0.0f, detection.bbox_tlwh.x);
+            detection.bbox_tlwh.y = std::max(0.0f, detection.bbox_tlwh.y);
+            detection.bbox_tlwh.width = std::min(static_cast<float>(frame.cols - 1), detection.bbox_tlwh.width);
+            detection.bbox_tlwh.height = std::min(static_cast<float>(frame.rows - 1), detection.bbox_tlwh.height);
+
+            FeatureVector embedding = _extract_features(frame, detection.bbox_tlwh);
+            std::vector<float> tlwh = {detection.bbox_tlwh.x, detection.bbox_tlwh.y, detection.bbox_tlwh.width, detection.bbox_tlwh.height};
+            Track track = Track(tlwh, detection.confidence, detection.class_id, embedding);
+
+            if (detection.confidence >= _track_high_thresh) {
+                detections_high_conf.push_back(track);
+            } else {
+                detections_low_conf.push_back(track);
+            }
+        }
+    }
+}
+
+FeatureVector BoTSORT::_extract_features(const cv::Mat &frame, const cv::Rect_<float> &bbox_tlwh) {
+    cv::Mat patch = frame(bbox_tlwh);
+    cv::Mat patch_resized;
+    return _reid_model->extract_features(patch_resized);
+}
