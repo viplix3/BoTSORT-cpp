@@ -39,12 +39,13 @@ BoTSORT::BoTSORT(
 }
 
 std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
-    ////////////////// Step 1: Create tracks for detections //////////////////
     _frame_id++;
 
+    ////////////////// Step 1: Create tracks for detections //////////////////
+
+    // For all detections, extract features, create tracks and classify on the segregate of confidence
     std::vector<Track> detections_high_conf;
     std::vector<Track> detections_low_conf;
-
     if (detections.size() > 0) {
         for (Detection &detection: const_cast<std::vector<Detection> &>(detections)) {
             detection.bbox_tlwh.x = std::max(0.0f, detection.bbox_tlwh.x);
@@ -64,7 +65,7 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
         }
     }
 
-    // Add new detections to the list of tracks
+    // Segregate tracks in unconfirmed and tracked tracks
     std::vector<Track *> unconfirmed_tracks, tracked_tracks;
     for (Track *track: _tracked_tracks) {
         if (!track->is_activated) {
