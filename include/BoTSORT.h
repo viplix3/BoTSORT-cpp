@@ -5,15 +5,15 @@
 
 #include <string>
 
-struct Object {
-    cv::Rect_<float> bbox;
+struct Detection {
+    cv::Rect_<float> bbox_tlwh;
     int class_id;
     float confidence;
 };
 
 class BoTSORT {
 public:
-    std::vector<Track> track(const std::vector<Object> &detections, const cv::Mat &frame);
+    std::vector<Track> track(const std::vector<Detection> &detections, const cv::Mat &frame);
 
 private:
     GlobalMotionCompensation _gmc_algo;
@@ -48,11 +48,13 @@ public:
     ~BoTSORT();
 
 private:
-    std::vector<Track *> joint_tracks(std::vector<Track *> &tracks_list_a, std::vector<Track> &tracks_list_b);
-    std::vector<Track> joint_tracks(std::vector<Track> &tracks_list_a, std::vector<Track> &tracks_list_b);
+    FeatureVector _extract_features(const cv::Mat &frame, const cv::Rect_<float> &bbox_tlwh);
 
-    std::vector<Track> sub_tracks(std::vector<Track> &tracks_list_a, std::vector<Track> &tracks_list_b);
-    void remove_duplicate_tracks(
+    std::vector<Track *> _joint_tracks(std::vector<Track *> &tracks_list_a, std::vector<Track> &tracks_list_b);
+    std::vector<Track> _joint_tracks(std::vector<Track> &tracks_list_a, std::vector<Track> &tracks_list_b);
+
+    std::vector<Track> _sub_tracks(std::vector<Track> &tracks_list_a, std::vector<Track> &tracks_list_b);
+    void _remove_duplicate_tracks(
             std::vector<Track> &result_tracks_a,
             std::vector<Track> &result_tracks_b,
             std::vector<Track> &tracks_list_a,
