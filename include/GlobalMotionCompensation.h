@@ -5,7 +5,6 @@
 #include <map>
 #include <string>
 
-#include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -28,44 +27,49 @@ public:
 
 class ORB_GMC : public GMC_Algorithm {
 private:
-    uint8_t _downscale;
-    cv::Ptr<cv::FastFeatureDetector> _detector = cv::FastFeatureDetector::create(20);
-    cv::Ptr<cv::ORB> _extractor = cv::ORB::create();
-    cv::BFMatcher _matcher = cv::BFMatcher(cv::NORM_HAMMING);
+    float _downscale;
+    cv::Ptr<cv::FeatureDetector> _detector;
+    cv::Ptr<cv::DescriptorExtractor> _extractor;
+    cv::Ptr<cv::DescriptorMatcher> _matcher;
+
+    bool _first_frame_initialized = false;
+    cv::Mat _prev_frame;
+    std::vector<cv::KeyPoint> _prev_keypoints;
+    cv::Mat _prev_descriptors;
 
 
 public:
-    ORB_GMC(uint8_t downscale);
+    ORB_GMC(float downscale);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 class OptFlowModified_GMC : public GMC_Algorithm {
 private:
-    uint8_t _downscale;
+    float _downscale;
 
 
 public:
-    OptFlowModified_GMC(uint8_t downscale = 2);
+    OptFlowModified_GMC(float downscale);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 class ECC_GMC : public GMC_Algorithm {
 private:
-    uint8_t _downscale;
+    float _downscale;
 
 
 public:
-    ECC_GMC(uint8_t downscale = 2);
+    ECC_GMC(float downscale);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 class SparseOptFlow_GMC : public GMC_Algorithm {
 private:
-    uint8_t _downscale;
+    float _downscale;
 
 
 public:
-    SparseOptFlow_GMC(uint8_t downscale = 2);
+    SparseOptFlow_GMC(float downscale);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
@@ -76,7 +80,7 @@ private:
 
 
 public:
-    GlobalMotionCompensation(GMC_Method method, uint8_t downscale = 2);
+    GlobalMotionCompensation(GMC_Method method, float downscale = 2.0);
     ~GlobalMotionCompensation() = default;
 
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections);
