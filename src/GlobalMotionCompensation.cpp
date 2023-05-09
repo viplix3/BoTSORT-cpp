@@ -57,7 +57,7 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     mask(roi) = 255;
 
 
-    // Set all the foreground (areas with detections) to 0
+    // Set all the foreground (area with detections) to 0
     // This is to prevent the algorithm from detecting keypoints in the foreground so CMC can work better
     for (const auto &det: detections) {
         cv::Rect tlwh_downscaled(det.bbox_tlwh.x / _downscale, det.bbox_tlwh.y / _downscale,
@@ -76,7 +76,7 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     if (!_first_frame_initialized) {
         /**
          *  If this is the first frame, there is nothing to match
-         *  Just save the keypoints and descriptors, return identity matrix 
+         *  Save the keypoints and descriptors, return identity matrix 
          */
         _first_frame_initialized = true;
         _prev_frame = frame;
@@ -93,7 +93,6 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     std::vector<cv::DMatch> matches;
     std::vector<cv::Point2f> spatial_distances;
     cv::Point2f max_spatial_distance(0.25 * width, 0.25 * height);
-
 
     // TODO: Complete this
     return HomographyMatrix();
