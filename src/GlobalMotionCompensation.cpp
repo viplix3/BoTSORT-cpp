@@ -20,13 +20,13 @@ GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, int downsc
     }
 }
 
-void GlobalMotionCompensation::apply(const cv::Mat &frame, std::vector<float> &detections) {
-    _gmc_algorithm->apply(frame, detections);
+HomographyMatrix GlobalMotionCompensation::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
+    return _gmc_algorithm->apply(frame, detections);
 }
 
 ORB_GMC::ORB_GMC(int downscale) : _downscale(downscale) {}
 
-void ORB_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {
+HomographyMatrix ORB_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
     // Initialization
     int height = frame.rows;
     int width = frame.cols;
@@ -42,16 +42,21 @@ void ORB_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {
     }
 
     // TODO: Complete this
+    return HomographyMatrix();
 }
 
 
 SIFT_GMC::SIFT_GMC(int downscale) : _downscale(downscale) {}
-void SIFT_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {}
-
+HomographyMatrix SIFT_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
+    return HomographyMatrix();
+}
 
 ECC_GMC::ECC_GMC(int downscale) : _downscale(downscale) {}
-void ECC_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {}
-
+HomographyMatrix ECC_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
+    return HomographyMatrix();
+}
 
 SparseOptFlow_GMC::SparseOptFlow_GMC(int downscale) : _downscale(downscale) {}
-void SparseOptFlow_GMC::apply(const cv::Mat &frame, std::vector<float> &detections) {}
+HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
+    return HomographyMatrix();
+}

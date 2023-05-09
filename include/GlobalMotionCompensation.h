@@ -19,10 +19,11 @@ enum GMC_Method {
 
 extern std::map<const char *, GMC_Method> GMC_method_map;
 
+
 class GMC_Algorithm {
 public:
     virtual ~GMC_Algorithm() = default;
-    virtual void apply(const cv::Mat &frame, std::vector<float> &detections) = 0;
+    virtual HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) = 0;
 };
 
 class ORB_GMC : public GMC_Algorithm {
@@ -35,13 +36,13 @@ private:
 
 public:
     ORB_GMC(int downscale);
-    void apply(const cv::Mat &frame, std::vector<float> &detections) override;
+    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 class SIFT_GMC : public GMC_Algorithm {
 public:
     SIFT_GMC(int downscale = 2);
-    virtual void apply(const cv::Mat &frame, std::vector<float> &detections) override;
+    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 
 private:
     int _downscale;
@@ -54,7 +55,7 @@ private:
 
 public:
     ECC_GMC(int downscale = 2);
-    virtual void apply(const cv::Mat &frame, std::vector<float> &detections) override;
+    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 class SparseOptFlow_GMC : public GMC_Algorithm {
@@ -64,7 +65,7 @@ private:
 
 public:
     SparseOptFlow_GMC(int downscale = 2);
-    virtual void apply(const cv::Mat &frame, std::vector<float> &detections) override;
+    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
 
@@ -77,5 +78,5 @@ public:
     GlobalMotionCompensation(GMC_Method method, int downscale = 2);
     ~GlobalMotionCompensation() = default;
 
-    void apply(const cv::Mat &frame, std::vector<float> &detections);
+    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections);
 };
