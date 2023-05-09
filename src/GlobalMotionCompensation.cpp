@@ -2,20 +2,21 @@
 
 std::map<const char *, GMC_Method> GMC_method_map = {
         {"orb", GMC_Method::ORB},
-        {"sift", GMC_Method::SIFT},
         {"ecc", GMC_Method::ECC},
-        {"sparseOptFlow", GMC_Method::SparseOptFlow}};
+        {"sparseOptFlow", GMC_Method::SparseOptFlow},
+        {"optFlowModified", GMC_Method::OptFlowModified},
+};
 
 
 GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, uint8_t downscale) {
     if (method == GMC_Method::ORB) {
         _gmc_algorithm = std::make_unique<ORB_GMC>(downscale);
-    } else if (method == GMC_Method::SIFT) {
-        auto _gmc_algorithm = std::make_unique<SIFT_GMC>(downscale);
     } else if (method == GMC_Method::ECC) {
         auto _gmc_algorithm = std::make_unique<ECC_GMC>(downscale);
     } else if (method == GMC_Method::SparseOptFlow) {
         auto _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(downscale);
+    } else if (method == GMC_Method::OptFlowModified) {
+        auto _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(downscale);
     } else {
         throw std::runtime_error("Unknown global motion compensation method: " + method);
     }
@@ -39,19 +40,11 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame, const std::vector<Detectio
 
     // Downscale
     if (_downscale > 1) {
-        width /= _downscale;
-        height /= _downscale;
+        width /= _downscale, height /= _downscale;
         cv::resize(frame, frame, cv::Size(width, height));
     }
 
     // TODO: Complete this
-    return HomographyMatrix();
-}
-
-
-// SIFT
-SIFT_GMC::SIFT_GMC(uint8_t downscale) : _downscale(downscale) {}
-HomographyMatrix SIFT_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
     return HomographyMatrix();
 }
 
@@ -66,5 +59,12 @@ HomographyMatrix ECC_GMC::apply(const cv::Mat &frame, const std::vector<Detectio
 // Optical Flow
 SparseOptFlow_GMC::SparseOptFlow_GMC(uint8_t downscale) : _downscale(downscale) {}
 HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
+    return HomographyMatrix();
+}
+
+
+// Optical Flow Modified
+OptFlowModified_GMC::OptFlowModified_GMC(uint8_t downscale) : _downscale(downscale) {}
+HomographyMatrix OptFlowModified_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
     return HomographyMatrix();
 }
