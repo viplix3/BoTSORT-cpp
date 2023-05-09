@@ -1,7 +1,9 @@
 #pragma once
 
 #include "GlobalMotionCompensation.h"
+#include "ReID.h"
 #include "track.h"
+
 
 #include <string>
 
@@ -30,18 +32,16 @@ public:
     std::vector<Track> track(const std::vector<Detection> &detections, const cv::Mat &frame);
 
 private:
-    GlobalMotionCompensation _gmc_algo;
-
     uint8_t _track_buffer, _frame_rate, _frame_id, _buffer_size, _max_time_lost;
     float _track_high_thresh, _new_track_thresh, _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
-
-    bool _fp16_inference;
 
     std::vector<Track *> _tracked_tracks;
     std::vector<Track *> _lost_tracks;
     std::vector<Track *> _removed_tracks;
 
-    byte_kalman::KalmanFilter _kalman_filter;
+    std::unique_ptr<byte_kalman::KalmanFilter> _kalman_filter;
+    std::unique_ptr<GlobalMotionCompensation> _gmc_algo;
+    std::unique_ptr<ReIDModel> _reid_model;
 
 
 public:

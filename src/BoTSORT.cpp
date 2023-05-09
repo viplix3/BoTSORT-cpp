@@ -12,8 +12,7 @@ BoTSORT::BoTSORT(
         const char *gmc_method,
         uint8_t frame_rate,
         float lambda)
-    : _fp16_inference(fp16_inference),
-      _track_high_thresh(track_high_thresh),
+    : _track_high_thresh(track_high_thresh),
       _new_track_thresh(new_track_thresh),
       _track_buffer(track_buffer),
       _match_thresh(match_thresh),
@@ -26,20 +25,18 @@ BoTSORT::BoTSORT(
     _frame_id = 0;
     _buffer_size = static_cast<uint8_t>(_frame_rate / 30.0 * _track_buffer);
     _max_time_lost = _buffer_size;
-    _kalman_filter = byte_kalman::KalmanFilter(static_cast<double>(1.0 / _frame_rate));
+    _kalman_filter = std::make_unique<byte_kalman::KalmanFilter>(static_cast<double>(1.0 / _frame_rate));
 
 
     // Re-ID module, load visual feature extractor here
     if (model_weights.has_value()) {
-        auto _reid_model = ReIDModel(model_weights, _fp16_inference);
+        _reid_model = std::make_unique<ReIDModel>(model_weights.value(), fp16_inference);
     }
 
 
     // Global motion compensation module
-    _gmc_algo = GlobalMotionCompensation(GMC_Method_Map[gmc_method]);
+    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GMC_method_map[gmc_method]);
 }
-
-BoTSORT::~BoTSORT() = default;
 
 std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
     ////////////////// Step 1: Create tracks for detections //////////////////
@@ -81,6 +78,9 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     ////////////////// Step 2: First association, with high score detection boxes //////////////////
     std::vector<Track *> tracks_pool;
     tracks_pool = _merge_track_lists(tracked_tracks, _lost_tracks);
+
+    // Added for code compilation
+    return std::vector<Track>();
 }
 
 FeatureVector BoTSORT::_extract_features(const cv::Mat &frame, const cv::Rect_<float> &bbox_tlwh) {
