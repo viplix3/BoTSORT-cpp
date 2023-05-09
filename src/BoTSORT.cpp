@@ -1,7 +1,7 @@
 #include "BoTSORT.h"
 
 BoTSORT::BoTSORT(
-        std::string model_weights,
+        std::optional<const char *> model_weights,
         bool fp16_inference,
         float track_high_thresh,
         float new_track_thresh,
@@ -9,11 +9,10 @@ BoTSORT::BoTSORT(
         float match_thresh,
         float proximity_thresh,
         float appearance_thresh,
-        std::string gmc_method,
+        const char *gmc_method,
         uint8_t frame_rate,
         float lambda)
-    : _model_weights(model_weights),
-      _fp16_inference(fp16_inference),
+    : _fp16_inference(fp16_inference),
       _track_high_thresh(track_high_thresh),
       _new_track_thresh(new_track_thresh),
       _track_buffer(track_buffer),
@@ -31,7 +30,9 @@ BoTSORT::BoTSORT(
 
 
     // Re-ID module, load visual feature extractor here
-    auto _reid_model = ReIDModel(_model_weights, _fp16_inference);
+    if (model_weights.has_value()) {
+        auto _reid_model = ReIDModel(model_weights, _fp16_inference);
+    }
 
 
     // Global motion compensation module
@@ -65,10 +66,44 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
             }
         }
     }
+
+    // Add new detections to the list of tracks
+    std::vector<Track *> unconfirmed_tracks, tracked_tracks;
+    for (Track *track: _tracked_tracks) {
+        if (!track->is_activated) {
+            unconfirmed_tracks.push_back(track);
+        } else {
+            tracked_tracks.push_back(track);
+        }
+    }
+
+
+    ////////////////// Step 2: First association, with high score detection boxes //////////////////
+    std::vector<Track *> tracks_pool;
+    tracks_pool = _merge_track_lists(tracked_tracks, _lost_tracks);
 }
 
 FeatureVector BoTSORT::_extract_features(const cv::Mat &frame, const cv::Rect_<float> &bbox_tlwh) {
     cv::Mat patch = frame(bbox_tlwh);
     cv::Mat patch_resized;
     return _reid_model->extract_features(patch_resized);
+}
+
+std::vector<Track *> BoTSORT::_merge_track_lists(std::vector<Track *> &tracks_list_a, std::vector<Track *> &tracks_list_b) {
+    std::map<int, bool> exists;
+    std::vector<Track *> merged_tracks_list;
+
+    for (Track *track: tracks_list_a) {
+        exists[track->track_id] = true;
+        merged_tracks_list.push_back(track);
+    }
+
+    for (Track *track: tracks_list_b) {
+        if (exists.find(track->track_id) == exists.end()) {
+            exists[track->track_id] = true;
+            merged_tracks_list.push_back(track);
+        }
+    }
+
+    return merged_tracks_list;
 }
