@@ -1,5 +1,11 @@
 #include "GlobalMotionCompensation.h"
 
+std::map<const char *, GMC_Method> GMC_method_map = {
+        {"orb", GMC_Method::ORB},
+        {"sift", GMC_Method::SIFT},
+        {"ecc", GMC_Method::ECC},
+        {"sparseOptFlow", GMC_Method::SparseOptFlow}};
+
 GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, int downscale) {
     if (method == GMC_Method::ORB) {
         _gmc_algorithm = std::make_unique<ORB_GMC>(downscale);
@@ -13,8 +19,6 @@ GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, int downsc
         throw std::runtime_error("Unknown global motion compensation method: " + method);
     }
 }
-
-GlobalMotionCompensation::~GlobalMotionCompensation() {}
 
 void GlobalMotionCompensation::apply(const cv::Mat &frame, std::vector<float> &detections) {
     _gmc_algorithm->apply(frame, detections);

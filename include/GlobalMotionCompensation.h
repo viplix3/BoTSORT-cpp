@@ -17,11 +17,7 @@ enum GMC_Method {
     SparseOptFlow
 };
 
-std::map<const char *, GMC_Method> GMC_Method_Map = {
-        {"orb", ORB},
-        {"sift", SIFT},
-        {"ecc", ECC},
-        {"sparseOptFlow", SparseOptFlow}};
+extern std::map<const char *, GMC_Method> GMC_Method_Map;
 
 class GMC_Algorithm {
 public:
@@ -79,7 +75,7 @@ private:
 
 public:
     GlobalMotionCompensation(GMC_Method method, int downscale = 2);
-    ~GlobalMotionCompensation();
+    ~GlobalMotionCompensation() = default;
 
     void apply(const cv::Mat &frame, std::vector<float> &detections);
 };
