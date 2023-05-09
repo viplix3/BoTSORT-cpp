@@ -3,6 +3,8 @@
 #include "KalmanFilter.h"
 #include <deque>
 
+using KalmanFilter = byte_kalman::KalmanFilter;
+
 enum TrackState {
     New = 0,
     Tracked,
@@ -23,9 +25,6 @@ public:
 
     std::vector<float> det_tlwh;
 
-    KFStateSpaceVec mean;
-    KFStateSpaceMatrix covariance;
-
 private:
     std::vector<float> _tlwh;
     std::vector<std::pair<uint8_t, float>> _class_hist;
@@ -37,7 +36,8 @@ private:
     FeatureVector _curr_feat, _smooth_feat;
     std::deque<FeatureVector> _feat_history;
 
-    byte_kalman::KalmanFilter _kalman_filter;
+    KFStateSpaceVec _mean;
+    KFStateSpaceMatrix _covariance;
 
 
 public:
@@ -91,23 +91,25 @@ public:
      * @param kalman_filter Kalman filter object for the track
      * @param frame_id Current frame-id
      */
-    void activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id);
+    void activate(KalmanFilter &kalman_filter, int frame_id);
 
 
     /**
-     * @brief Re-activates an old track with the new track data
+     * @brief Re-activates the track
      * 
-     * @param new_track New track object to be used to reactive the old track
+     * @param kalman_filter Kalman filter object
+     * @param new_track New track object
      * @param frame_id Current frame-id
      * @param new_id Whether to assign a new ID to the track (default: false)
      */
-    void re_activate(Track &new_track, int frame_id, bool new_id = false);
+    void re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame_id, bool new_id = false);
 
     /**
      * @brief Predict the next state of the track using the Kalman filter
      * 
+     * @param kalman_filter Kalman filter class object
      */
-    void predict();
+    void predict(KalmanFilter &kalman_filter);
 
     /**
      * @brief Predict the next state of multiple tracks using the Kalman filter
@@ -115,7 +117,7 @@ public:
      * @param tracks Tracks on which to perform the prediction step
      * @param kalman_filter Kalman filter object for the tracks
      */
-    void static multi_predict(std::vector<Track *> &tracks, const byte_kalman::KalmanFilter &kalman_filter);
+    void static multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter);
 
     /**
      * @brief Update the track state using the new detection
@@ -123,7 +125,7 @@ public:
      * @param new_track New track object to be used to update the old track
      * @param frame_id Current frame-id
      */
-    void update(Track &new_track, int frame_id);
+    void update(KalmanFilter &kalman_filter, Track &new_track, int frame_id);
 
 private:
     /**

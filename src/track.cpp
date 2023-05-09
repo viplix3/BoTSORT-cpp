@@ -25,18 +25,17 @@ Track::~Track() {
     // Nothing to do here
 }
 
-void Track::activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id) {
-    _kalman_filter = kalman_filter;
+void Track::activate(KalmanFilter &kalman_filter, int frame_id) {
     track_id = next_id();
 
     // Create DetVec from det_tlwh
     DetVec detection_bbox;
     _populate_DetVec_xywh(detection_bbox, det_tlwh);
 
-    // Initialize the Kalman filter
-    KFDataStateSpace state_space = _kalman_filter.init(detection_bbox);
-    mean = state_space.first;
-    covariance = state_space.second;
+    // Initialize the Kalman filter matrices
+    KFDataStateSpace state_space = kalman_filter.init(detection_bbox);
+    _mean = state_space.first;
+    _covariance = state_space.second;
 
     if (frame_id == 1) {
         is_activated = true;
@@ -48,13 +47,13 @@ void Track::activate(byte_kalman::KalmanFilter &kalman_filter, int frame_id) {
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::re_activate(Track &new_track, int frame_id, bool new_id) {
+void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame_id, bool new_id) {
     DetVec new_track_bbox;
     _populate_DetVec_xywh(new_track_bbox, new_track._tlwh);
 
-    KFDataStateSpace state_space = _kalman_filter.update(mean, covariance, new_track_bbox);
-    mean = state_space.first;
-    covariance = state_space.second;
+    KFDataStateSpace state_space = kalman_filter.update(_mean, _covariance, new_track_bbox);
+    _mean = state_space.first;
+    _covariance = state_space.second;
 
     if (new_track._curr_feat.size() > 0) {
         _update_features(new_track._curr_feat);
@@ -74,30 +73,30 @@ void Track::re_activate(Track &new_track, int frame_id, bool new_id) {
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::predict() {
-    _kalman_filter.predict(mean, covariance);
+void Track::predict(KalmanFilter &kalman_filter) {
+    kalman_filter.predict(_mean, _covariance);
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::multi_predict(std::vector<Track *> &tracks, const byte_kalman::KalmanFilter &kalman_filter) {
+void Track::multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter) {
     for (size_t i = 0; i < tracks.size(); i++) {
-        tracks[i]->predict();
+        tracks[i]->predict(kalman_filter);
     }
 }
 
-void Track::update(Track &new_track, int frame_id) {
+void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) {
 
     DetVec new_track_bbox;
     _populate_DetVec_xywh(new_track_bbox, new_track._tlwh);
 
-    KFDataStateSpace state_space = _kalman_filter.update(mean, covariance, new_track_bbox);
+    KFDataStateSpace state_space = kalman_filter.update(_mean, _covariance, new_track_bbox);
 
     if (new_track._curr_feat.size() > 0) {
         _update_features(new_track._curr_feat);
     }
 
-    mean = state_space.first;
-    covariance = state_space.second;
+    _mean = state_space.first;
+    _covariance = state_space.second;
     state = TrackState::Tracked;
     is_activated = true;
     _score = new_track._score;
@@ -160,7 +159,7 @@ void Track::_update_tracklet_tlwh_inplace() {
 
     // If the tracklet is not new, update the tlwh using the Kalman filter
     // mean. KF mean contains xywh, so need to convert
-    _tlwh = {mean(0) - mean(2) / 2, mean(1) - mean(3) / 2, mean(2), mean(3)};
+    _tlwh = {_mean(0) - _mean(2) / 2, _mean(1) - _mean(3) / 2, _mean(2), _mean(3)};
 }
 
 void Track::_update_class_id(uint8_t class_id, float score) {
