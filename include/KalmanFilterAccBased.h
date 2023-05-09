@@ -34,9 +34,9 @@ public:
     /**
      * @brief Construct a new Kalman Filter object.
      * 
-     * @param dt Time interval between consecutive measurements (dt = 1/FPS). Defaults to 0.03 (30 FPS)
+     * @param dt Time interval between consecutive measurements (dt = 1/FPS)
      */
-    KalmanFilter(double dt = 0.03);
+    KalmanFilter(double dt);
 
     /**
      * @brief Initialize the Kalman Filter with a measurement (detection).
