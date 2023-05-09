@@ -17,7 +17,7 @@ enum GMC_Method {
     SparseOptFlow
 };
 
-extern std::map<const char *, GMC_Method> GMC_Method_Map;
+extern std::map<const char *, GMC_Method> GMC_method_map;
 
 class GMC_Algorithm {
 public:
