@@ -17,7 +17,7 @@ enum GMC_Method {
     SparseOptFlow
 };
 
-std::map<std::string, GMC_Method> GMC_Method_Map = {
+std::map<const char *, GMC_Method> GMC_Method_Map = {
         {"orb", ORB},
         {"sift", SIFT},
         {"ecc", ECC},
