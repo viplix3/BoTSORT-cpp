@@ -91,7 +91,7 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
     // Match descriptors between the current frame and the previous frame
     std::vector<std::vector<cv::DMatch>> knn_matches;
-    _matcher->knnMatch(descriptors, _prev_descriptors, knn_matches, 2);
+    _matcher->knnMatch(_prev_descriptors, descriptors, knn_matches, 2);
 
 
     // Filter matches on the basis of spatial distance
@@ -137,7 +137,6 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     for (size_t i = 0; i < matches.size(); ++i) {
         cv::Point2f mean_normalized_sd(spatial_distances[i].x - mean_spatial_distance[0], spatial_distances[i].y - mean_spatial_distance[1]);
         if (mean_normalized_sd.x < 2.5 * std_spatial_distance[0] && mean_normalized_sd.y < 2.5 * std_spatial_distance[1]) {
-            good_matches.push_back(matches[i]);
             prev_points.push_back(_prev_keypoints[matches[i].queryIdx].pt);
             curr_points.push_back(keypoints[matches[i].trainIdx].pt);
         }
