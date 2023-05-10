@@ -244,8 +244,78 @@ HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
 // Optical Flow
 SparseOptFlow_GMC::SparseOptFlow_GMC(float downscale) : _downscale(downscale) {}
-HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
-    return HomographyMatrix();
+HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) {
+    // Initialization
+    int height = frame_raw.rows;
+    int width = frame_raw.cols;
+
+    HomographyMatrix H;
+    H.setIdentity();
+
+    cv::Mat frame;
+    cv::cvtColor(frame_raw, frame, cv::COLOR_BGR2GRAY);
+
+
+    // Downscale
+    if (_downscale > 1.0F) {
+        width /= _downscale, height /= _downscale;
+        cv::resize(frame, frame, cv::Size(width, height));
+    }
+
+
+    // Detect keypoints
+    std::vector<cv::Point2f> keypoints;
+    cv::goodFeaturesToTrack(frame, keypoints, _maxCorners, _qualityLevel, _minDistance, cv::noArray(), _blockSize, _useHarrisDetector, _k);
+
+    if (!_first_frame_initialized) {
+        /**
+         *  If this is the first frame, there is nothing to match
+         *  Save the keypoints and descriptors, return identity matrix 
+         */
+        _first_frame_initialized = true;
+        _prev_frame = frame.clone();
+        _prev_keypoints = keypoints;
+        return H;
+    }
+
+
+    // Find correspondences between the previous and current frame
+    std::vector<cv::Point2f> matched_keypoints;
+    std::vector<uchar> status;
+    std::vector<float> err;
+    cv::calcOpticalFlowPyrLK(_prev_frame, frame, _prev_keypoints, matched_keypoints, status, err);
+
+
+    // Keep good matches
+    std::vector<cv::Point2f> prev_points, curr_points;
+    for (size_t i = 0; i < matched_keypoints.size(); i++) {
+        if (status[i]) {
+            prev_points.push_back(_prev_keypoints[i]);
+            curr_points.push_back(matched_keypoints[i]);
+        }
+    }
+
+
+    // Estimate affine matrix
+    if (prev_points.size() > 4) {
+        cv::Mat inliers;
+        cv::Mat affine_matrix = cv::estimateAffinePartial2D(prev_points, curr_points, inliers, cv::RANSAC);
+
+        double inlier_ratio = cv::countNonZero(inliers) / (double) inliers.rows;
+        if (inlier_ratio > _inlier_ratio) {
+            cv2eigen(affine_matrix, H);
+            if (_downscale > 1.0) {
+                H(0, 2) *= _downscale;
+                H(1, 2) *= _downscale;
+            }
+        } else {
+            std::cout << "Warning: Could not estimate affine matrix" << std::endl;
+        }
+    }
+
+    _prev_frame = frame.clone();
+    _prev_keypoints = keypoints;
+    return H;
 }
 
 

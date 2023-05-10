@@ -48,16 +48,6 @@ public:
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
-class OptFlowModified_GMC : public GMC_Algorithm {
-private:
-    float _downscale;
-
-
-public:
-    OptFlowModified_GMC(float downscale);
-    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
-};
-
 class ECC_GMC : public GMC_Algorithm {
 private:
     float _downscale;
@@ -77,9 +67,29 @@ class SparseOptFlow_GMC : public GMC_Algorithm {
 private:
     float _downscale;
 
+    bool _first_frame_initialized = false;
+    cv::Mat _prev_frame;
+    std::vector<cv::Point2f> _prev_keypoints;
+
+    // Parameters
+    int _maxCorners = 1000, _blockSize = 3;
+    double _qualityLevel = 0.01, _k = 0.04, _minDistance = 1.0;
+    bool _useHarrisDetector = false;
+    float _inlier_ratio = 0.05;
+
 
 public:
     SparseOptFlow_GMC(float downscale);
+    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
+};
+
+class OptFlowModified_GMC : public GMC_Algorithm {
+private:
+    float _downscale;
+
+
+public:
+    OptFlowModified_GMC(float downscale);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 

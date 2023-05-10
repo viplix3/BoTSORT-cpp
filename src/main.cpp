@@ -5,8 +5,9 @@
 
 int main() {
 
+    GlobalMotionCompensation gmc(GMC_Method::SparseOptFlow, 2.0);
     // GlobalMotionCompensation gmc(GMC_Method::ORB, 2.0);
-    GlobalMotionCompensation gmc(GMC_Method::ECC, 10.0);
+    // GlobalMotionCompensation gmc(GMC_Method::ECC, 10.0);
 
     // Apply GMC on video and show the result
     cv::VideoCapture cap("/home/vipin/datasets/test_videos/0x100000A9_424_20220427_094317.mp4");
