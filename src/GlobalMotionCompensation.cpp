@@ -322,5 +322,9 @@ HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame_raw, const std::v
 // Optical Flow Modified
 OptFlowModified_GMC::OptFlowModified_GMC(float downscale) : _downscale(downscale) {}
 HomographyMatrix OptFlowModified_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
-    return HomographyMatrix();
+    HomographyMatrix H;
+    H.setIdentity();
+
+    std::cout << "Warning: OptFlowModified_GMC not implemented, returning identity matrix" << std::endl;
+    return H;
 }
