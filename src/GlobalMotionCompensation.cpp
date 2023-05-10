@@ -129,26 +129,16 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     }
 
 
-    // Find mean spatial distance
-    cv::Point2f mean_spatial_distance;
-    mean_spatial_distance = std::accumulate(spatial_distances.begin(), spatial_distances.end(), cv::Point2f(0, 0));
-    mean_spatial_distance.x /= spatial_distances.size(), mean_spatial_distance.y /= spatial_distances.size();
-
-
-    // Find standard deviation of spatial distance
-    cv::Point2f std_spatial_distance;
-    for (const auto &sd: spatial_distances) {
-        std_spatial_distance.x += (sd.x - mean_spatial_distance.x) * (sd.x - mean_spatial_distance.x);
-        std_spatial_distance.y += (sd.y - mean_spatial_distance.y) * (sd.y - mean_spatial_distance.y);
-    }
-
+    // Calculate mean and standard deviation of spatial distances
+    cv::Scalar mean_spatial_distance, std_spatial_distance;
+    cv::meanStdDev(spatial_distances, mean_spatial_distance, std_spatial_distance);
 
     // Get good matches, i.e. points that are within 2.5 standard deviations of the mean spatial distance
     std::vector<cv::DMatch> good_matches;
     std::vector<cv::Point2f> prev_points, curr_points;
     for (size_t i = 0; i < matches.size(); ++i) {
-        cv::Point2f mean_normalized_sd = spatial_distances[i] - mean_spatial_distance;
-        if (mean_normalized_sd.x < 2.5 * std_spatial_distance.x && mean_normalized_sd.y < 2.5 * std_spatial_distance.y) {
+        cv::Point2f mean_normalized_sd(spatial_distances[i].x - mean_spatial_distance[0], spatial_distances[i].y - mean_spatial_distance[1]);
+        if (mean_normalized_sd.x < 2.5 * std_spatial_distance[0] && mean_normalized_sd.y < 2.5 * std_spatial_distance[1]) {
             good_matches.push_back(matches[i]);
             prev_points.push_back(_prev_keypoints[matches[i].queryIdx].pt);
             curr_points.push_back(keypoints[matches[i].trainIdx].pt);
@@ -201,10 +191,6 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     _prev_frame = frame.clone();
     _prev_keypoints = keypoints;
     _prev_descriptors = descriptors.clone();
-
-    std::cout << "Affine matrix: " << std::endl
-              << H << std::endl;
-
     return H;
 }
 
@@ -216,7 +202,39 @@ ECC_GMC::ECC_GMC(float downscale, int max_iterations, int termination_eps)
 }
 
 HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) {
-    return HomographyMatrix();
+    // Initialization
+    int height = frame_raw.rows;
+    int width = frame_raw.cols;
+
+    HomographyMatrix H;
+    H.setIdentity();
+
+    cv::Mat frame;
+    cv::cvtColor(frame_raw, frame, cv::COLOR_BGR2GRAY);
+
+
+    // Downscale
+    if (_downscale > 1) {
+        width /= _downscale, height /= _downscale;
+        cv::GaussianBlur(frame, frame, _gaussian_blur_kernel_size, 0, 0);
+        cv::resize(frame, frame, cv::Size(width, height));
+    }
+
+    if (!_first_frame_initialized) {
+        /**
+         *  If this is the first frame, there is nothing to match
+         *  Save the keypoints and descriptors, return identity matrix
+         */
+        _first_frame_initialized = true;
+        _prev_frame = frame;
+        return H;
+    }
+
+    cv::Mat H_cvMat;
+    cv::findTransformECC(_prev_frame, frame, H_cvMat, cv::MOTION_EUCLIDEAN, _termination_criteria);
+    cv2eigen(H_cvMat, H);
+
+    return H;
 }
 
 
