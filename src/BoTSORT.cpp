@@ -39,11 +39,9 @@ BoTSORT::BoTSORT(
 }
 
 std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
-    _frame_id++;
-
     ////////////////// Step 1: Create tracks for detections //////////////////
-
     // For all detections, extract features, create tracks and classify on the segregate of confidence
+    _frame_id++;
     std::vector<Track> detections_high_conf;
     std::vector<Track> detections_low_conf;
     if (detections.size() > 0) {
@@ -77,7 +75,6 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
 
     ////////////////// Step 2: First association, with high score detection boxes //////////////////
-
     // Merge currently tracked tracks and lost tracks
     std::vector<Track *> tracks_pool;
     tracks_pool = _merge_track_lists(tracked_tracks, _lost_tracks);
