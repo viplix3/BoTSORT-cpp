@@ -47,7 +47,7 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
 
     // Downscale
-    if (_downscale > 1) {
+    if (_downscale > 1.0F) {
         width /= _downscale, height /= _downscale;
         cv::resize(frame, frame, cv::Size(width, height));
     }
@@ -214,7 +214,7 @@ HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
 
     // Downscale
-    if (_downscale > 1) {
+    if (_downscale > 1.0F) {
         width /= _downscale, height /= _downscale;
         cv::GaussianBlur(frame, frame, _gaussian_blur_kernel_size, 0, 0);
         cv::resize(frame, frame, cv::Size(width, height));
