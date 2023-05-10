@@ -6,6 +6,7 @@
 #include <numeric>
 #include <string>
 
+#include <opencv2/core/eigen.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
@@ -42,6 +43,7 @@ private:
 
 public:
     ORB_GMC(float downscale);
+
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
@@ -59,9 +61,14 @@ class ECC_GMC : public GMC_Algorithm {
 private:
     float _downscale;
 
+    bool _first_frame_initialized = false;
+    cv::Mat _prev_frame;
+    cv::Size _gaussian_blur_kernel_size = cv::Size(3, 3);
+    cv::TermCriteria _termination_criteria;
+
 
 public:
-    ECC_GMC(float downscale);
+    ECC_GMC(float downscale, int max_iterations = 5000, int termination_eps = 1e-6);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
