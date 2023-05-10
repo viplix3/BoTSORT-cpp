@@ -78,7 +78,7 @@ using KFDataMeasurementSpace = std::pair<KFMeasSpaceVec, KFMeasSpaceMatrix>;
  * @brief 3x3 homography matrix.
  * 
  */
-using HomographyMatrix = Eigen::Matrix<float, 2, 3>;
+using HomographyMatrix = Eigen::Matrix<float, 3, 3>;
 
 // Tracker
 /**
