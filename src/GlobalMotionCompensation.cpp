@@ -12,11 +12,11 @@ GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, float down
     if (method == GMC_Method::ORB) {
         _gmc_algorithm = std::make_unique<ORB_GMC>(downscale);
     } else if (method == GMC_Method::ECC) {
-        auto _gmc_algorithm = std::make_unique<ECC_GMC>(downscale);
+        _gmc_algorithm = std::make_unique<ECC_GMC>(downscale);
     } else if (method == GMC_Method::SparseOptFlow) {
-        auto _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(downscale);
+        _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(downscale);
     } else if (method == GMC_Method::OptFlowModified) {
-        auto _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(downscale);
+        _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(downscale);
     } else {
         throw std::runtime_error("Unknown global motion compensation method: " + method);
     }
@@ -231,8 +231,12 @@ HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     }
 
     cv::Mat H_cvMat;
-    cv::findTransformECC(_prev_frame, frame, H_cvMat, cv::MOTION_EUCLIDEAN, _termination_criteria);
-    cv2eigen(H_cvMat, H);
+    try {
+        cv::findTransformECC(_prev_frame, frame, H_cvMat, cv::MOTION_EUCLIDEAN, _termination_criteria);
+        cv2eigen(H_cvMat, H);
+    } catch (const cv::Exception &e) {
+        std::cout << "Warning: Could not estimate affine matrix" << std::endl;
+    }
 
     return H;
 }
