@@ -1,7 +1,5 @@
 #include "GlobalMotionCompensation.h"
 
-#define DEBUG
-
 std::map<const char *, GMC_Method> GMC_method_map = {
         {"orb", GMC_Method::ORB},
         {"ecc", GMC_Method::ECC},
@@ -31,7 +29,7 @@ HomographyMatrix GlobalMotionCompensation::apply(const cv::Mat &frame, const std
 
 // ORB
 ORB_GMC::ORB_GMC(float downscale) : _downscale(downscale) {
-    _detector = cv::FastFeatureDetector::create(20);
+    _detector = cv::FastFeatureDetector::create();
     _extractor = cv::ORB::create();
     _matcher = cv::BFMatcher::create(cv::NORM_HAMMING);// Brute Force Matcher
 }
@@ -84,9 +82,9 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
          *  Save the keypoints and descriptors, return identity matrix 
          */
         _first_frame_initialized = true;
-        _prev_frame = frame;
+        _prev_frame = frame.clone();
         _prev_keypoints = keypoints;
-        _prev_descriptors = descriptors;
+        _prev_descriptors = descriptors.clone();
         return H;
     }
 
@@ -124,7 +122,7 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     if (matches.empty()) {
         _prev_frame = frame.clone();
         _prev_keypoints = keypoints;
-        _prev_descriptors = descriptors;
+        _prev_descriptors = descriptors.clone();
         return H;
     }
 
@@ -147,11 +145,13 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
 
     // Find the rigid transformation between the previous and current frame on the basis of the good matches
-    if (prev_points.size() > 4 && prev_points.size() == curr_points.size()) {
+    if (prev_points.size() > 4) {
         cv::Mat inliers;
         cv::Mat affine_matrix = cv::estimateAffinePartial2D(prev_points, curr_points, inliers, cv::RANSAC);
 
-        if (!affine_matrix.empty()) {
+        double inlier_ratio = cv::countNonZero(inliers) / (double) inliers.rows;
+        if (inlier_ratio > _inlier_ratio) {
+            cv2eigen(affine_matrix, H);
             if (_downscale > 1.0) {
                 H(0, 2) *= _downscale;
                 H(1, 2) *= _downscale;

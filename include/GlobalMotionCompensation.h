@@ -39,6 +39,7 @@ private:
     cv::Mat _prev_frame;
     std::vector<cv::KeyPoint> _prev_keypoints;
     cv::Mat _prev_descriptors;
+    float _inlier_ratio = 0.05;
 
 
 public:
