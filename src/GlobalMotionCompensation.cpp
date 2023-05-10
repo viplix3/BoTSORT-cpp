@@ -215,7 +215,7 @@ HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     // Downscale
     if (_downscale > 1.0F) {
         width /= _downscale, height /= _downscale;
-        cv::GaussianBlur(frame, frame, _gaussian_blur_kernel_size, 0, 0);
+        cv::GaussianBlur(frame, frame, _gaussian_blur_kernel_size, 1.5);
         cv::resize(frame, frame, cv::Size(width, height));
     }
 
@@ -225,17 +225,19 @@ HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
          *  Save the keypoints and descriptors, return identity matrix
          */
         _first_frame_initialized = true;
-        _prev_frame = frame;
+        _prev_frame = frame.clone();
         return H;
     }
 
-    cv::Mat H_cvMat;
     try {
-        cv::findTransformECC(_prev_frame, frame, H_cvMat, cv::MOTION_EUCLIDEAN, _termination_criteria);
+        cv::Mat H_cvMat;
+        cv::findTransformECC(_prev_frame, frame, H_cvMat, cv::MOTION_EUCLIDEAN, _termination_criteria, cv::noArray(), 1);
         cv2eigen(H_cvMat, H);
+        _prev_frame = frame.clone();
     } catch (const cv::Exception &e) {
         std::cout << "Warning: Could not estimate affine matrix" << std::endl;
     }
+
 
     return H;
 }
