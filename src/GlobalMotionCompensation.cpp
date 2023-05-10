@@ -160,13 +160,6 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
         cv::Mat affine_matrix = cv::estimateAffinePartial2D(prev_points, curr_points, inliers, cv::RANSAC);
 
         if (!affine_matrix.empty()) {
-            H(0, 0) = affine_matrix.at<double>(0, 0);
-            H(0, 1) = affine_matrix.at<double>(0, 1);
-            H(0, 2) = affine_matrix.at<double>(0, 2);
-            H(1, 0) = affine_matrix.at<double>(1, 0);
-            H(1, 1) = affine_matrix.at<double>(1, 1);
-            H(1, 2) = affine_matrix.at<double>(1, 2);
-
             if (_downscale > 1.0) {
                 H(0, 2) *= _downscale;
                 H(1, 2) *= _downscale;
@@ -175,6 +168,31 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
             std::cout << "Warning: Could not estimate affine matrix" << std::endl;
         }
     }
+
+#ifdef DEBUG
+    cv::Mat matches_img;
+    cv::hconcat(_prev_frame, frame, matches_img);
+    cv::cvtColor(matches_img, matches_img, cv::COLOR_GRAY2BGR);
+
+    int W = _prev_frame.cols;
+
+    for (const auto &m: good_matches) {
+        cv::Point prev_pt = _prev_keypoints[m.queryIdx].pt;
+        cv::Point curr_pt = keypoints[m.trainIdx].pt;
+
+        curr_pt.x += W;
+
+        cv::Scalar color = cv::Scalar::all(rand() % 255);
+        color = cv::Scalar((int) color[0], (int) color[1], (int) color[2]);
+
+        cv::line(matches_img, prev_pt, curr_pt, color, 1, cv::LineTypes::LINE_AA);
+        cv::circle(matches_img, prev_pt, 2, color, -1);
+        cv::circle(matches_img, curr_pt, 2, color, -1);
+    }
+
+    cv::imshow("Matches", matches_img);
+
+#endif
 
 
     // Update previous frame, keypoints and descriptors
