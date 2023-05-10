@@ -1,5 +1,7 @@
 #include "GlobalMotionCompensation.h"
 
+#define DEBUG
+
 std::map<const char *, GMC_Method> GMC_method_map = {
         {"orb", GMC_Method::ORB},
         {"ecc", GMC_Method::ECC},
@@ -54,7 +56,7 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
     // Create a mask, corner regions are ignored
     cv::Mat mask = cv::Mat::zeros(frame.size(), frame.type());
-    cv::Rect roi(width * 0.02, height * 0.02, width * 0.096, height * 0.96);
+    cv::Rect roi(width * 0.02, height * 0.02, width * 0.96, height * 0.96);
     mask(roi) = 255;
 
 
@@ -199,13 +201,21 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     _prev_frame = frame.clone();
     _prev_keypoints = keypoints;
     _prev_descriptors = descriptors.clone();
+
+    std::cout << "Affine matrix: " << std::endl
+              << H << std::endl;
+
     return H;
 }
 
 
 // ECC
-ECC_GMC::ECC_GMC(float downscale) : _downscale(downscale) {}
-HomographyMatrix ECC_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
+ECC_GMC::ECC_GMC(float downscale, int max_iterations, int termination_eps)
+    : _downscale(downscale) {
+    _termination_criteria = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT, max_iterations, termination_eps);
+}
+
+HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) {
     return HomographyMatrix();
 }
 
