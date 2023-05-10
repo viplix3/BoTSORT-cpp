@@ -69,7 +69,7 @@ private:
 
 
 public:
-    ECC_GMC(float downscale, int max_iterations = 5000, int termination_eps = 1e-6);
+    ECC_GMC(float downscale, int max_iterations = 100, int termination_eps = 1e-4);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
