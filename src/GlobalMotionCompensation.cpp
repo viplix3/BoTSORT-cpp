@@ -31,7 +31,7 @@ HomographyMatrix GlobalMotionCompensation::apply(const cv::Mat &frame, const std
 ORB_GMC::ORB_GMC(float downscale) : _downscale(downscale) {
     _detector = cv::FastFeatureDetector::create(20);
     _extractor = cv::ORB::create();
-    _matcher = cv::BFMatcher::create(cv::NORM_HAMMING);
+    _matcher = cv::BFMatcher::create(cv::NORM_HAMMING);// Brute Force Matcher
 }
 
 HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) {
@@ -44,6 +44,7 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
     cv::Mat frame;
     cv::cvtColor(frame_raw, frame, cv::COLOR_BGR2GRAY);
+
 
     // Downscale
     if (_downscale > 1) {
@@ -65,9 +66,11 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
         mask(tlwh_downscaled) = 0;
     }
 
+
     // Detect keypoints in background
     std::vector<cv::KeyPoint> keypoints;
     _detector->detect(frame, keypoints, mask);
+
 
     // Extract descriptors for the detected keypoints
     cv::Mat descriptors;
@@ -85,17 +88,100 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
         return H;
     }
 
+
     // Match descriptors between the current frame and the previous frame
     std::vector<std::vector<cv::DMatch>> knn_matches;
     _matcher->knnMatch(descriptors, _prev_descriptors, knn_matches, 2);
 
-    // Filter matches on the basis of smallest spatial distance
+
+    // Filter matches on the basis of spatial distance
     std::vector<cv::DMatch> matches;
     std::vector<cv::Point2f> spatial_distances;
     cv::Point2f max_spatial_distance(0.25 * width, 0.25 * height);
 
-    // TODO: Complete this
-    return HomographyMatrix();
+    for (const auto &knnMatch: knn_matches) {
+        const auto &m = knnMatch[0];
+        const auto &n = knnMatch[1];
+
+        // Check the distance between the previous and current match for the same keypoint
+        if (m.distance < 0.9 * n.distance) {
+            cv::Point2f prev_keypoint_location = _prev_keypoints[m.queryIdx].pt;
+            cv::Point2f curr_keypoint_location = keypoints[m.trainIdx].pt;
+
+            cv::Point2f distance = prev_keypoint_location - curr_keypoint_location;
+
+            if (cv::abs(distance.x) < max_spatial_distance.x && cv::abs(distance.y) < max_spatial_distance.y) {
+                spatial_distances.push_back(distance);
+                matches.push_back(m);
+            }
+        }
+    }
+
+
+    // If couldn't find any matches, return identity matrix
+    if (matches.empty()) {
+        _prev_frame = frame.clone();
+        _prev_keypoints = keypoints;
+        _prev_descriptors = descriptors;
+        return H;
+    }
+
+
+    // Find mean spatial distance
+    cv::Point2f mean_spatial_distance;
+    mean_spatial_distance = std::accumulate(spatial_distances.begin(), spatial_distances.end(), cv::Point2f(0, 0));
+    mean_spatial_distance.x /= spatial_distances.size(), mean_spatial_distance.y /= spatial_distances.size();
+
+
+    // Find standard deviation of spatial distance
+    cv::Point2f std_spatial_distance;
+    for (const auto &sd: spatial_distances) {
+        std_spatial_distance.x += (sd.x - mean_spatial_distance.x) * (sd.x - mean_spatial_distance.x);
+        std_spatial_distance.y += (sd.y - mean_spatial_distance.y) * (sd.y - mean_spatial_distance.y);
+    }
+
+
+    // Get good matches, i.e. points that are within 2.5 standard deviations of the mean spatial distance
+    std::vector<cv::DMatch> good_matches;
+    std::vector<cv::Point2f> prev_points, curr_points;
+    for (size_t i = 0; i < matches.size(); ++i) {
+        cv::Point2f mean_normalized_sd = spatial_distances[i] - mean_spatial_distance;
+        if (mean_normalized_sd.x < 2.5 * std_spatial_distance.x && mean_normalized_sd.y < 2.5 * std_spatial_distance.y) {
+            good_matches.push_back(matches[i]);
+            prev_points.push_back(_prev_keypoints[matches[i].queryIdx].pt);
+            curr_points.push_back(keypoints[matches[i].trainIdx].pt);
+        }
+    }
+
+
+    // Find the rigid transformation between the previous and current frame on the basis of the good matches
+    if (prev_points.size() > 4 && prev_points.size() == curr_points.size()) {
+        cv::Mat inliers;
+        cv::Mat affine_matrix = cv::estimateAffinePartial2D(prev_points, curr_points, inliers, cv::RANSAC);
+
+        if (!affine_matrix.empty()) {
+            H(0, 0) = affine_matrix.at<double>(0, 0);
+            H(0, 1) = affine_matrix.at<double>(0, 1);
+            H(0, 2) = affine_matrix.at<double>(0, 2);
+            H(1, 0) = affine_matrix.at<double>(1, 0);
+            H(1, 1) = affine_matrix.at<double>(1, 1);
+            H(1, 2) = affine_matrix.at<double>(1, 2);
+
+            if (_downscale > 1.0) {
+                H(0, 2) *= _downscale;
+                H(1, 2) *= _downscale;
+            }
+        } else {
+            std::cout << "Warning: Could not estimate affine matrix" << std::endl;
+        }
+    }
+
+
+    // Update previous frame, keypoints and descriptors
+    _prev_frame = frame.clone();
+    _prev_keypoints = keypoints;
+    _prev_descriptors = descriptors.clone();
+    return H;
 }
 
 

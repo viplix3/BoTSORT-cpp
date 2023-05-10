@@ -3,10 +3,12 @@
 #include "DataType.h"
 
 #include <map>
+#include <numeric>
 #include <string>
 
 #include <opencv2/features2d.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 
 
 enum GMC_Method {
