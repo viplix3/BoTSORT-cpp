@@ -74,6 +74,10 @@ void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame
 }
 
 void Track::predict(KalmanFilter &kalman_filter) {
+    // If the track is not tracked, set the velocity for w and h to 0
+    if (state != TrackState::Tracked)
+        mean(6) = 0, mean(7) = 0;
+
     kalman_filter.predict(mean, covariance);
     _update_tracklet_tlwh_inplace();
 }
@@ -96,13 +100,11 @@ void Track::apply_camera_motion(const HomographyMatrix &H) {
     covariance = R8x8 * covariance * R8x8.transpose();
 }
 
-
-void Track::multi_cmc(std::vector<Track *> &tracks, const HomographyMatrix &H) {
+void Track::multi_gmc(std::vector<Track *> &tracks, const HomographyMatrix &H) {
     for (size_t i = 0; i < tracks.size(); i++) {
         tracks[i]->apply_camera_motion(H);
     }
 }
-
 
 void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) {
 

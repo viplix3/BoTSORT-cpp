@@ -92,7 +92,6 @@ public:
      */
     void activate(KalmanFilter &kalman_filter, int frame_id);
 
-
     /**
      * @brief Re-activates the track
      * 
@@ -131,7 +130,7 @@ public:
      * @param tracks Tracks on which to apply the camera motion
      * @param H Homography matrix
      */
-    void static multi_cmc(std::vector<Track *> &tracks, const HomographyMatrix &H);
+    void static multi_gmc(std::vector<Track *> &tracks, const HomographyMatrix &H);
 
     /**
      * @brief Update the track state using the new detection
