@@ -146,11 +146,11 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     // Find the rigid transformation between the previous and current frame on the basis of the good matches
     if (prev_points.size() > 4) {
         cv::Mat inliers;
-        cv::Mat affine_matrix = cv::estimateAffinePartial2D(prev_points, curr_points, inliers, cv::RANSAC);
+        cv::Mat homography = cv::findHomography(prev_points, curr_points, cv::RANSAC, 3, inliers, _ransac_max_iters, _ransac_conf);
 
         double inlier_ratio = cv::countNonZero(inliers) / (double) inliers.rows;
         if (inlier_ratio > _inlier_ratio) {
-            cv2eigen(affine_matrix, H);
+            cv2eigen(homography, H);
             if (_downscale > 1.0) {
                 H(0, 2) *= _downscale;
                 H(1, 2) *= _downscale;
@@ -300,11 +300,11 @@ HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame_raw, const std::v
     // Estimate affine matrix
     if (prev_points.size() > 4) {
         cv::Mat inliers;
-        cv::Mat affine_matrix = cv::estimateAffinePartial2D(prev_points, curr_points, inliers, cv::RANSAC);
+        cv::Mat homography = cv::findHomography(prev_points, curr_points, cv::RANSAC, 3, inliers, _ransac_max_iters, _ransac_conf);
 
         double inlier_ratio = cv::countNonZero(inliers) / (double) inliers.rows;
         if (inlier_ratio > _inlier_ratio) {
-            cv2eigen(affine_matrix, H);
+            cv2eigen(homography, H);
             if (_downscale > 1.0) {
                 H(0, 2) *= _downscale;
                 H(1, 2) *= _downscale;

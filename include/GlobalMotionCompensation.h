@@ -39,8 +39,8 @@ private:
     cv::Mat _prev_frame;
     std::vector<cv::KeyPoint> _prev_keypoints;
     cv::Mat _prev_descriptors;
-    float _inlier_ratio = 0.05;
-
+    float _inlier_ratio = 0.5, _ransac_conf = 0.99;
+    int _ransac_max_iters = 500;
 
 public:
     ORB_GMC(float downscale);
@@ -72,10 +72,10 @@ private:
     std::vector<cv::Point2f> _prev_keypoints;
 
     // Parameters
-    int _maxCorners = 1000, _blockSize = 3;
+    int _maxCorners = 1000, _blockSize = 3, _ransac_max_iters = 500;
     double _qualityLevel = 0.01, _k = 0.04, _minDistance = 1.0;
     bool _useHarrisDetector = false;
-    float _inlier_ratio = 0.05;
+    float _inlier_ratio = 0.5, _ransac_conf = 0.99;
 
 
 public:
