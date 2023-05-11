@@ -26,3 +26,21 @@ CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vec
 
     return cost_matrix;
 }
+
+
+CostMatrix fuse_motion(KalmanFilter &KF,
+                       CostMatrix &cost_matrix,
+                       std::vector<Track *> tracks,
+                       std::vector<Track *> detections,
+                       bool only_position) {
+    if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0) {
+        return cost_matrix;
+    }
+
+    uint8_t gating_dim = (only_position == true) ? 2 : 4;
+    const double gating_threshold = KalmanFilter::chi2inv95[gating_dim];
+
+    for (size_t i = 0; i < tracks.size(); i++) {
+        KF.gating_distance(tracks[i]->mean, tracks[i]->covariance, detections, only_position);
+    }
+}
