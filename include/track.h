@@ -24,6 +24,7 @@ public:
     int start_frame;
 
     std::vector<float> det_tlwh;
+    FeatureVector curr_feat, smooth_feat;
 
 private:
     std::vector<float> _tlwh;
@@ -33,7 +34,6 @@ private:
     static constexpr float _alpha = 0.9;
 
     int _feat_history_size;
-    FeatureVector _curr_feat, _smooth_feat;
     std::deque<FeatureVector> _feat_history;
 
     KFStateSpaceVec _mean;

@@ -55,8 +55,8 @@ void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame
     _mean = state_space.first;
     _covariance = state_space.second;
 
-    if (new_track._curr_feat.size() > 0) {
-        _update_features(new_track._curr_feat);
+    if (new_track.curr_feat.size() > 0) {
+        _update_features(new_track.curr_feat);
     }
 
     if (new_id) {
@@ -111,8 +111,8 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
 
     KFDataStateSpace state_space = kalman_filter.update(_mean, _covariance, new_track_bbox);
 
-    if (new_track._curr_feat.size() > 0) {
-        _update_features(new_track._curr_feat);
+    if (new_track.curr_feat.size() > 0) {
+        _update_features(new_track.curr_feat);
     }
 
     _mean = state_space.first;
@@ -129,19 +129,19 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
 
 void Track::_update_features(FeatureVector &feat) {
     feat /= feat.norm();
-    _curr_feat = feat;
+    curr_feat = feat;
 
     if (_feat_history.size() == 0) {
-        _smooth_feat = feat;
+        smooth_feat = feat;
     } else {
-        _smooth_feat = _alpha * _smooth_feat + (1 - _alpha) * feat;
+        smooth_feat = _alpha * smooth_feat + (1 - _alpha) * feat;
     }
 
     if (_feat_history.size() == _feat_history_size) {
         _feat_history.pop_front();
     }
     _feat_history.push_back(feat);
-    _smooth_feat /= _smooth_feat.norm();
+    smooth_feat /= smooth_feat.norm();
 }
 
 int Track::next_id() {
