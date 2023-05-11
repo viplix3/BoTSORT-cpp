@@ -98,10 +98,16 @@ KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean, const KFState
 Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
         const KFStateSpaceVec &mean,
         const KFStateSpaceMatrix &covariance,
-        const std::vector<DetVec> &measurements) {
+        const std::vector<DetVec> &measurements,
+        bool only_position) {
     KFDataMeasurementSpace projected = this->project(mean, covariance);
     KFMeasSpaceVec projected_mean = projected.first;
     KFMeasSpaceMatrix projected_covariance = projected.second;
+
+    if (only_position) {
+        projected_mean.tail<4>().setZero();
+        projected_covariance.bottomRightCorner<2, 2>().setZero();
+    }
 
     Eigen::MatrixXf diff(measurements.size(), 4);
     for (size_t i = 0; i < measurements.size(); i++) {
