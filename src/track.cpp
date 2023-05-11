@@ -84,6 +84,26 @@ void Track::multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_fil
     }
 }
 
+void Track::apply_camera_motion(const HomographyMatrix &H) {
+    Eigen::MatrixXf R = H.block(0, 0, 2, 2);
+    Eigen::VectorXf t = H.block(0, 2, 2, 1);
+
+    Eigen::Matrix<float, 8, 8> R8x8 = Eigen::Matrix<float, 8, 8>::Identity();
+    R8x8.block(0, 0, 2, 2) = R;
+
+    _mean = R8x8 * _mean.transpose();
+    _mean.head(2) += t;
+    _covariance = R8x8 * _covariance * R8x8.transpose();
+}
+
+
+void Track::multi_cmc(std::vector<Track *> &tracks, const HomographyMatrix &H) {
+    for (size_t i = 0; i < tracks.size(); i++) {
+        tracks[i]->apply_camera_motion(H);
+    }
+}
+
+
 void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) {
 
     DetVec new_track_bbox;

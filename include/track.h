@@ -120,6 +120,21 @@ public:
     void static multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter);
 
     /**
+     * @brief Apply camera motion to the track
+     * 
+     * @param H Homography matrix
+     */
+    void apply_camera_motion(const HomographyMatrix &H);
+
+    /**
+     * @brief Apply camera motion to multiple tracks
+     * 
+     * @param tracks Tracks on which to apply the camera motion
+     * @param H Homography matrix
+     */
+    void static multi_cmc(std::vector<Track *> &tracks, const HomographyMatrix &H);
+
+    /**
      * @brief Update the track state using the new detection
      * 
      * @param new_track New track object to be used to update the old track

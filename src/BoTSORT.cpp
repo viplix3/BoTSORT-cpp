@@ -84,6 +84,8 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
     // Estimate camera motion and apply camera motion compensation
     HomographyMatrix H = _gmc_algo->apply(frame, detections);
+    Track::multi_cmc(tracks_pool, H);
+
 
     // Added for code compilation
     return std::vector<Track>();
