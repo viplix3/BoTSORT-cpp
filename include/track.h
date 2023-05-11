@@ -25,6 +25,8 @@ public:
 
     std::vector<float> det_tlwh;
     FeatureVector curr_feat, smooth_feat;
+    KFStateSpaceVec mean;
+    KFStateSpaceMatrix covariance;
 
 private:
     std::vector<float> _tlwh;
@@ -36,15 +38,12 @@ private:
     int _feat_history_size;
     std::deque<FeatureVector> _feat_history;
 
-    KFStateSpaceVec _mean;
-    KFStateSpaceMatrix _covariance;
-
 
 public:
     /**
      * @brief Construct a new Track object
      * 
-     * @param xywh Detection bounding box (xmid, ymid, width, height)
+     * @param tlwh Detection bounding box in the format [top-left-x, top-left-y, width, height]
      * @param score Detection score
      * @param class_id Detection class ID
      * @param feat (Optional) Detection feature vector

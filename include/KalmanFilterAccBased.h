@@ -41,7 +41,7 @@ public:
     /**
      * @brief Initialize the Kalman Filter with a measurement (detection).
      * 
-     * @param det Detection [x, y, w, h].
+     * @param det Detection [x-center, y-center, width, height].
      * @return KFDataStateSpace Kalman filter state space data [mean, covariance].
      */
     KFDataStateSpace init(const DetVec &det);
@@ -68,7 +68,7 @@ public:
      * 
      * @param mean Kalman Filter state space mean.
      * @param covariance Kalman Filter state space covariance.
-     * @param measurement Detection [x, y, w, h].
+     * @param measurement Detection [x-center, y-center, width, height].
      * @return KFDataStateSpace Updated Kalman Filter state space data [mean, covariance].
      */
     KFDataStateSpace update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement);
@@ -80,7 +80,7 @@ public:
      * 
      * @param mean Kalman Filter state space mean.
      * @param covariance Kalman Filter state space covariance.
-     * @param measurements Detections [x, y, w, h].
+     * @param measurements Detections [x-center, y-center, width, height].
      * @return Eigen::Matrix<float, 1, Eigen::Dynamic> Gating distance.
      */
     Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance(

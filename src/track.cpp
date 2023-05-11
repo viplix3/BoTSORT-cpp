@@ -34,8 +34,8 @@ void Track::activate(KalmanFilter &kalman_filter, int frame_id) {
 
     // Initialize the Kalman filter matrices
     KFDataStateSpace state_space = kalman_filter.init(detection_bbox);
-    _mean = state_space.first;
-    _covariance = state_space.second;
+    mean = state_space.first;
+    covariance = state_space.second;
 
     if (frame_id == 1) {
         is_activated = true;
@@ -51,9 +51,9 @@ void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame
     DetVec new_track_bbox;
     _populate_DetVec_xywh(new_track_bbox, new_track._tlwh);
 
-    KFDataStateSpace state_space = kalman_filter.update(_mean, _covariance, new_track_bbox);
-    _mean = state_space.first;
-    _covariance = state_space.second;
+    KFDataStateSpace state_space = kalman_filter.update(mean, covariance, new_track_bbox);
+    mean = state_space.first;
+    covariance = state_space.second;
 
     if (new_track.curr_feat.size() > 0) {
         _update_features(new_track.curr_feat);
@@ -74,7 +74,7 @@ void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame
 }
 
 void Track::predict(KalmanFilter &kalman_filter) {
-    kalman_filter.predict(_mean, _covariance);
+    kalman_filter.predict(mean, covariance);
     _update_tracklet_tlwh_inplace();
 }
 
@@ -91,9 +91,9 @@ void Track::apply_camera_motion(const HomographyMatrix &H) {
     Eigen::Matrix<float, 8, 8> R8x8 = Eigen::Matrix<float, 8, 8>::Identity();
     R8x8.block(0, 0, 2, 2) = R;
 
-    _mean = R8x8 * _mean.transpose();
-    _mean.head(2) += t;
-    _covariance = R8x8 * _covariance * R8x8.transpose();
+    mean = R8x8 * mean.transpose();
+    mean.head(2) += t;
+    covariance = R8x8 * covariance * R8x8.transpose();
 }
 
 
@@ -109,14 +109,14 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
     DetVec new_track_bbox;
     _populate_DetVec_xywh(new_track_bbox, new_track._tlwh);
 
-    KFDataStateSpace state_space = kalman_filter.update(_mean, _covariance, new_track_bbox);
+    KFDataStateSpace state_space = kalman_filter.update(mean, covariance, new_track_bbox);
 
     if (new_track.curr_feat.size() > 0) {
         _update_features(new_track.curr_feat);
     }
 
-    _mean = state_space.first;
-    _covariance = state_space.second;
+    mean = state_space.first;
+    covariance = state_space.second;
     state = TrackState::Tracked;
     is_activated = true;
     _score = new_track._score;
@@ -178,8 +178,8 @@ void Track::_update_tracklet_tlwh_inplace() {
     }
 
     // If the tracklet is not new, update the tlwh using the Kalman filter
-    // mean. KF mean contains xywh, so need to convert
-    _tlwh = {_mean(0) - _mean(2) / 2, _mean(1) - _mean(3) / 2, _mean(2), _mean(3)};
+    // KF is tracking [x-center, y-center, width, height]
+    _tlwh = {mean(0) - mean(2) / 2, mean(1) - mean(3) / 2, mean(2), mean(3)};
 }
 
 void Track::_update_class_id(uint8_t class_id, float score) {
