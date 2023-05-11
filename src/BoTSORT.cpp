@@ -1,4 +1,5 @@
 #include "BoTSORT.h"
+#include "matching.h"
 
 BoTSORT::BoTSORT(
         std::optional<const char *> model_weights,
@@ -42,8 +43,8 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     ////////////////// Step 1: Create tracks for detections //////////////////
     // For all detections, extract features, create tracks and classify on the segregate of confidence
     _frame_id++;
-    std::vector<Track> detections_high_conf;
-    std::vector<Track> detections_low_conf;
+    std::vector<Track *> detections_high_conf;
+    std::vector<Track *> detections_low_conf;
     if (detections.size() > 0) {
         for (Detection &detection: const_cast<std::vector<Detection> &>(detections)) {
             detection.bbox_tlwh.x = std::max(0.0f, detection.bbox_tlwh.x);
@@ -56,9 +57,9 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
             Track track = Track(tlwh, detection.confidence, detection.class_id, embedding);
 
             if (detection.confidence >= _track_high_thresh) {
-                detections_high_conf.push_back(track);
+                detections_high_conf.push_back(&track);
             } else {
-                detections_low_conf.push_back(track);
+                detections_low_conf.push_back(&track);
             }
         }
     }
@@ -85,7 +86,10 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     // Estimate camera motion and apply camera motion compensation
     HomographyMatrix H = _gmc_algo->apply(frame, detections);
     Track::multi_cmc(tracks_pool, H);
+    Track::multi_cmc(unconfirmed_tracks, H);
 
+    // Associate tracks with high confidence detections
+    CostMatrix raw_emd_dist = embedding_distance(tracks_pool, detections_high_conf);
 
     // Added for code compilation
     return std::vector<Track>();
