@@ -58,7 +58,7 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
             if (detection.confidence >= _track_high_thresh) {
                 detections_high_conf.push_back(&track);
-            } else {
+            } else if (detection.confidence > 0.1 && detection.confidence < _track_high_thresh) {
                 detections_low_conf.push_back(&track);
             }
         }
@@ -85,8 +85,8 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
     // Estimate camera motion and apply camera motion compensation
     HomographyMatrix H = _gmc_algo->apply(frame, detections);
-    Track::multi_cmc(tracks_pool, H);
-    Track::multi_cmc(unconfirmed_tracks, H);
+    Track::multi_gmc(tracks_pool, H);
+    Track::multi_gmc(unconfirmed_tracks, H);
 
     // Associate tracks with high confidence detections
     CostMatrix raw_emd_dist = embedding_distance(tracks_pool, detections_high_conf);
