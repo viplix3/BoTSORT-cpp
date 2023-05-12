@@ -41,7 +41,7 @@ BoTSORT::BoTSORT(
 
 
     // Global motion compensation module
-    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GMC_method_map[gmc_method]);
+    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GMC_method_map[std::string(gmc_method)]);
 }
 
 std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {

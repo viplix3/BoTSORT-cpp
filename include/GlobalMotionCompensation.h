@@ -19,7 +19,7 @@ enum GMC_Method {
     OptFlowModified,
 };
 
-extern std::map<const char *, GMC_Method> GMC_method_map;
+extern std::map<std::string, GMC_Method> GMC_method_map;
 
 
 class GMC_Algorithm {
