@@ -85,6 +85,12 @@ public:
     void mark_removed();
 
     /**
+     * @brief Get the latest detection bounding box in the format [top-left-x, top-left-y, width, height]
+     */
+    std::vector<float> Track::get_tlwh();
+
+
+    /**
      * @brief Activates the track
      * 
      * @param kalman_filter Kalman filter object for the track
