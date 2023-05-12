@@ -89,7 +89,6 @@ public:
      */
     std::vector<float> get_tlwh();
 
-
     /**
      * @brief Activates the track
      * 

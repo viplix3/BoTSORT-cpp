@@ -67,7 +67,6 @@ public:
      */
     KFDataStateSpace update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement);
 
-
     /**
      * @brief Compute the gating distance between the Kalman Filter state space data (mean, covariance) and the 
      * measurements (detections) using the Mahalanobis distance.

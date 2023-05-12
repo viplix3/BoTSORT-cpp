@@ -27,7 +27,6 @@ CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vec
     return cost_matrix;
 }
 
-
 void fuse_motion(KalmanFilter &KF,
                  CostMatrix &cost_matrix,
                  std::vector<Track *> tracks,

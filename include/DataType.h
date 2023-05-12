@@ -37,6 +37,7 @@ struct Detection {
     float confidence;
 };
 
+
 // Re-ID Features
 /**
  * @brief Re-ID feature vector with FEATURE_DIM elements.
@@ -46,6 +47,7 @@ using FeatureVector = Eigen::Matrix<float, 1, FEATURE_DIM>;
  * @brief Re-ID feature matrix with dynamic rows and FEATURE_DIM columns.
  */
 using FeatureMatrix = Eigen::Matrix<float, Eigen::Dynamic, FEATURE_DIM>;
+
 
 // Kalman Filter
 /**
@@ -74,12 +76,14 @@ using KFMeasSpaceMatrix = Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KAL
  */
 using KFDataMeasurementSpace = std::pair<KFMeasSpaceVec, KFMeasSpaceMatrix>;
 
+
 // Camera Motion Compensation
 /**
  * @brief 3x3 homography matrix.
  * 
  */
 using HomographyMatrix = Eigen::Matrix<float, 3, 3>;
+
 
 // Tracker
 /**
@@ -91,6 +95,12 @@ using TrackerData = std::pair<int, FeatureVector>;
  */
 using MatchData = std::pair<int, int>;
 
+
+// Association and Linear Assignment
+/**
+ * @brief Cost matrix for linear assignment with dynamic rows and columns.
+ */
+using CostMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 /**
  * @brief Association data containing matched and unmatched tracks and detections.
  */
@@ -100,11 +110,6 @@ struct AssociationData {
     std::vector<int> unmatched_detections;///< Unmatched detection IDs.
 };
 
-// Linear Assignment
-/**
- * @brief Cost matrix for linear assignment with dynamic rows and columns.
- */
-using CostMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 
 // Result
 /**
