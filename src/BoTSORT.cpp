@@ -209,11 +209,11 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     }
 
     // Fuse the IoU distance and the embedding distance
-    CostMatrix distances_first_association = fuse_iou_with_emb(iou_dists, raw_emd_dist, _proximity_thresh, _appearance_thresh);
+    CostMatrix distances_unconfirmed = fuse_iou_with_emb(iou_dists, raw_emd_dist, _proximity_thresh, _appearance_thresh);
 
     // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
     AssociationData unconfirmed_associations;
-    linear_assignment(iou_dists_unconfirmed, 0.7, unconfirmed_associations);
+    linear_assignment(distances_unconfirmed, 0.7, unconfirmed_associations);
 
     for (size_t i = 0; i < unconfirmed_associations.matches.size(); i++) {
         Track *track = unconfirmed_tracks[unconfirmed_associations.matches[i].first];
