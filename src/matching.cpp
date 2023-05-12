@@ -40,7 +40,13 @@ CostMatrix fuse_motion(KalmanFilter &KF,
     uint8_t gating_dim = (only_position == true) ? 2 : 4;
     const double gating_threshold = KalmanFilter::chi2inv95[gating_dim];
 
+    std::vector<DetVec> measurements;
+    for (size_t i = 0; i < detections.size(); i++) {
+        DetVec det_xywh(detections[i]->get_tlwh());
+        measurements.emplace_back(det_xywh);
+    }
+
     for (size_t i = 0; i < tracks.size(); i++) {
-        KF.gating_distance(tracks[i]->mean, tracks[i]->covariance, detections, only_position);
+        KF.gating_distance(tracks[i]->mean, tracks[i]->covariance, measurements, only_position);
     }
 }
