@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "drawable": "cpp",
+        "observer": "cpp",
+        "state": "cpp",
+        "*.tcc": "cpp",
+        "boundingbox": "cpp",
+        "boundingsphere": "cpp",
+        "timer": "cpp"
+    },
+    "cmake.debugConfig": {
+        "args": [
+            "/home/vipin/datasets/extracted/MOT20/train/MOT20-02/img1",
+            "/home/vipin/GitRepos/ObjectDetectors/yolov8/runs/detect/predict/labels",
+            "/home/vipin/GitRepos/MultiObjectTracking/mot-cpp-jetson/output"
+        ]
+    }
+}
