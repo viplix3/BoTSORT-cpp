@@ -245,12 +245,23 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
     // Initialize new tracks for the high confidence detections left after all the associations
     for (Track *detection: unmatched_high_conf_detections) {
-        if (detection->get_score() > _new_track_thresh) {
+        if (detection->get_score() >= _new_track_thresh) {
             detection->activate(*_kalman_filter, _frame_id);
             activated_tracks.push_back(detection);
         }
     }
     ////////////////// Initialize new tracks //////////////////
+
+
+    ////////////////// Update lost tracks state //////////////////
+    for (Track *track: _lost_tracks) {
+        if (_frame_id - track->end_frame() > _max_time_lost) {
+            track->mark_removed();
+            removed_tracks.push_back(track);
+        }
+    }
+    ////////////////// Update lost tracks state //////////////////
+
 
     // Added for code compilation
     return std::vector<Track>();
