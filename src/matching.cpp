@@ -25,7 +25,7 @@ CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vec
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
             for (int j = 0; j < num_detections; j++) {
-                cost_matrix(i, j) = cosine_distance(tracks[i]->smooth_feat, detections[j]->curr_feat);
+                cost_matrix(i, j) = std::max(0.0f, cosine_distance(tracks[i]->smooth_feat, detections[j]->curr_feat));
             }
         }
     }
@@ -83,4 +83,38 @@ void fuse_motion(KalmanFilter &KF,
             cost_matrix(i, j) = lambda * cost_matrix(i, j) + (1 - lambda) * gating_distance[j];
         }
     }
+}
+
+CostMatrix fuse_iou_with_emb(CostMatrix &iou_matrix, CostMatrix &emb_matrix, float iou_threshold, float appearance_threshold) {
+    if (emb_matrix.rows() == 0 || emb_matrix.cols() == 0) {
+        return iou_matrix;
+    }
+
+    // If iou distance is larger than threshold, set emb distance to inf
+    for (size_t i = 0; i < iou_matrix.rows(); i++) {
+        for (size_t j = 0; j < iou_matrix.cols(); j++) {
+            if (iou_matrix(i, j) < iou_threshold) {
+                emb_matrix(i, j) = std::numeric_limits<float>::infinity();
+            }
+        }
+    }
+
+    // If emb distance is larger than threshold, set the emb distance to inf
+    for (size_t i = 0; i < emb_matrix.rows(); i++) {
+        for (size_t j = 0; j < emb_matrix.cols(); j++) {
+            if (emb_matrix(i, j) > appearance_threshold) {
+                emb_matrix(i, j) = std::numeric_limits<float>::infinity();
+            }
+        }
+    }
+
+    // Fuse iou and emb distance by taking the element-wise minimum
+    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(iou_matrix.rows(), iou_matrix.cols());
+    for (size_t i = 0; i < iou_matrix.rows(); i++) {
+        for (size_t j = 0; j < iou_matrix.cols(); j++) {
+            cost_matrix(i, j) = std::min(iou_matrix(i, j), emb_matrix(i, j));
+        }
+    }
+
+    return cost_matrix;
 }

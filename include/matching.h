@@ -47,3 +47,14 @@ void fuse_motion(KalmanFilter &KF,
                  std::vector<Track *> detections,
                  bool only_position = false,
                  float lambda = 0.98);
+
+/**
+ * @brief Fuses IoU and embedding distance into a single cost matrix
+ * 
+ * @param iou_matrix IoU distance matrix
+ * @param emb_matrix Embedding distance matrix
+ * @param iou_threshold Threshold for IoU distance
+ * @param appearance_threshold Threshold for embedding distance
+ * @return CostMatrix Fused cost matrix
+ */
+CostMatrix fuse_iou_with_emb(CostMatrix &iou_matrix, CostMatrix &emb_matrix, float iou_threshold, float appearance_threshold);
