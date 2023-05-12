@@ -157,7 +157,7 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     CostMatrix iou_dists_second;
     iou_distance(unmatched_tracks_after_1st_association, detections_low_conf);
 
-    // Perform linear assignment on the final distance matrix, LAPJV algorithm is used here
+    // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
     AssociationData second_associations;
     linear_assignment(iou_dists_second, 0.5, second_associations);
 
@@ -191,6 +191,48 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
 
     ////////////////// Deal with unconfirmed tracks //////////////////
+    std::vector<Track *> unmatched_detections_after_1st_association;
+    for (size_t i = 0; i < first_associations.unmatched_det_indices.size(); i++) {
+        int detection_idx = first_associations.unmatched_det_indices[i];
+        Track *detection = detections_high_conf[detection_idx];
+        unmatched_detections_after_1st_association.push_back(detection);
+    }
+
+    //Find IoU distance between unconfirmed tracks and high confidence detections left after the first association
+    CostMatrix iou_dists_unconfirmed;
+    iou_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
+    fuse_score(iou_dists_unconfirmed, unmatched_detections_after_1st_association);
+
+    if (_reid_enabled) {
+        // Find embedding distance between unconfirmed tracks and high confidence detections left after the first association
+        CostMatrix raw_emd_dist_unconfirmed = embedding_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
+        fuse_motion(*_kalman_filter, raw_emd_dist_unconfirmed, unconfirmed_tracks, unmatched_detections_after_1st_association, false, _lambda);
+    }
+
+    // Fuse the IoU distance and the embedding distance
+    CostMatrix distances_first_association = fuse_iou_with_emb(iou_dists, raw_emd_dist, _proximity_thresh, _appearance_thresh);
+
+    // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
+    AssociationData unconfirmed_associations;
+    linear_assignment(iou_dists_unconfirmed, 0.7, unconfirmed_associations);
+
+    for (size_t i = 0; i < unconfirmed_associations.matches.size(); i++) {
+        Track *track = unconfirmed_tracks[unconfirmed_associations.matches[i].first];
+        Track *detection = unmatched_detections_after_1st_association[unconfirmed_associations.matches[i].second];
+
+        // If the unconfrimed track is associated with a detection we update the track with the new associated detection
+        // and add the track to the activated tracks list
+        track->update(*_kalman_filter, *detection, _frame_id);
+        activated_tracks.push_back(track);
+    }
+
+    // All the uncfonfirmed tracks that are not associated with any detection are marked as removed
+    std::vector<Track *> removed_tracks;
+    for (size_t i = 0; i < unconfirmed_associations.unmatched_track_indices.size(); i++) {
+        Track *track = unconfirmed_tracks[unconfirmed_associations.unmatched_track_indices[i]];
+        track->mark_removed();
+        removed_tracks.push_back(track);
+    }
     ////////////////// Deal with unconfirmed tracks //////////////////
 
 
