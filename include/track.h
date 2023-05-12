@@ -87,14 +87,14 @@ public:
     /**
      * @brief Get the latest detection bounding box in the format [top-left-x, top-left-y, width, height]
      */
-    std::vector<float> get_tlwh();
+    std::vector<float> get_tlwh() const;
 
     /**
      * @brief Get the score object
      * 
      * @return float Confidence score of the track
      */
-    float get_score();
+    float get_score() const;
 
     /**
      * @brief Activates the track
