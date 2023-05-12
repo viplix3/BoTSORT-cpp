@@ -34,8 +34,23 @@ private:
 
 
 public:
+    /**
+     * @brief Construct a new BoTSORT MultiObjectTrack algorithm object
+     * 
+     * @param model_weights (Optional) Path to the model weights file. If not provided, the Re-ID is disabled
+     * @param fp16_inference If true, the model weights are loaded in FP16 precision (default: false)
+     * @param track_high_thresh Confidence threshold to classify a detection as a high confidence detection (default: 0.45)
+     * @param new_track_thresh Minimum confidence threshold to start a new track (default: 0.6)
+     * @param track_buffer 
+     * @param match_thresh Match threshold used for in linear assignment. Only applied on first association (default: 0.8)
+     * @param proximity_thresh IoU threshold for matching detections to tracks (default: 0.5)
+     * @param appearance_thresh Appearance threshold for matching detections to tracks (default: 0.25)
+     * @param gmc_method Global Camera Motion compensation method (default: "sparseOptFlow")
+     * @param frame_rate Frame rate of the video (default: 30)
+     * @param lambda Exponential decay rate for the smooth feature (default: 0.985)
+     */
     BoTSORT(
-            std::optional<const char *> model_weights = "",
+            std::optional<const char *> model_weights = std::nullopt,
             bool fp16_inference = false,
             float track_high_thresh = 0.45,
             float new_track_thresh = 0.6,
