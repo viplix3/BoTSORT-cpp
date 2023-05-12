@@ -199,18 +199,18 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     }
 
     //Find IoU distance between unconfirmed tracks and high confidence detections left after the first association
-    CostMatrix iou_dists_unconfirmed;
+    CostMatrix iou_dists_unconfirmed, raw_emd_dist_unconfirmed;
     iou_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
     fuse_score(iou_dists_unconfirmed, unmatched_detections_after_1st_association);
 
     if (_reid_enabled) {
         // Find embedding distance between unconfirmed tracks and high confidence detections left after the first association
-        CostMatrix raw_emd_dist_unconfirmed = embedding_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
+        raw_emd_dist_unconfirmed = embedding_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
         fuse_motion(*_kalman_filter, raw_emd_dist_unconfirmed, unconfirmed_tracks, unmatched_detections_after_1st_association, false, _lambda);
     }
 
     // Fuse the IoU distance and the embedding distance
-    CostMatrix distances_unconfirmed = fuse_iou_with_emb(iou_dists, raw_emd_dist, _proximity_thresh, _appearance_thresh);
+    CostMatrix distances_unconfirmed = fuse_iou_with_emb(iou_dists_unconfirmed, raw_emd_dist_unconfirmed, _proximity_thresh, _appearance_thresh);
 
     // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
     AssociationData unconfirmed_associations;
