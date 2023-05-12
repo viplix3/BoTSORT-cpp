@@ -1,3 +1,5 @@
+#pragma once
+
 #include "DataType.h"
 #include "track.h"
 
@@ -26,3 +28,5 @@ void fuse_motion(KalmanFilter &KF,
                  std::vector<Track *> detections,
                  bool only_position = false,
                  float lambda = 0.98);
+
+CostMatrix iou_distance(const std::vector<Track *> &tracks, const std::vector<Track *> &detections);
