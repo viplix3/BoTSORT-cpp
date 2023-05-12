@@ -17,7 +17,6 @@ CostMatrix iou_distance(const std::vector<Track *> &tracks, const std::vector<Tr
     return cost_matrix;
 }
 
-
 CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vector<Track *> &detections) {
     int num_tracks = tracks.size();
     int num_detections = detections.size();
@@ -32,6 +31,18 @@ CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vec
     }
 
     return cost_matrix;
+}
+
+void fuse_score(CostMatrix &cost_matrix, std::vector<Track *> detections) {
+    if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0) {
+        return;
+    }
+
+    for (size_t i = 0; i < cost_matrix.rows(); i++) {
+        for (size_t j = 0; j < cost_matrix.cols(); j++) {
+            cost_matrix(i, j) = 1.0 - ((1.0 - cost_matrix(i, j)) * detections[j]->get_score());
+        }
+    }
 }
 
 void fuse_motion(KalmanFilter &KF,

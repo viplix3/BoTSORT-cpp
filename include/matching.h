@@ -4,6 +4,15 @@
 #include "track.h"
 
 /**
+ * @brief Calculate the IoU distance (1 - IoU) between tracks and detections
+ * 
+ * @param tracks Tracks
+ * @param detections Tracks created from detections
+ * @return CostMatrix IoU distance matrix
+ */
+CostMatrix iou_distance(const std::vector<Track *> &tracks, const std::vector<Track *> &detections);
+
+/**
  * @brief Calculate the embedding distance between tracks and detections using cosine distance
  * 
  * @param tracks Confirmed tracks
@@ -11,6 +20,16 @@
  * @return CostMatrix Embedding distance matrix
  */
 CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vector<Track *> &detections);
+
+/**
+ * @brief Fuses the detection score into the cost matrix in-place
+ *     fused_cost = 1 - ((1 - cost_matrix) * detection_score)
+ *     fused_cost = 1 - (similarity * detection_score)
+ * 
+ * @param cost_matrix Cost matrix in which to fuse the detection score
+ * @param detections Tracks created from detections used to create the cost matrix
+ */
+void fuse_score(CostMatrix &cost_matrix, std::vector<Track *> detections);
 
 /**
  * @brief Fuses motion (maha distance) into the cost matrix in-place
@@ -28,5 +47,3 @@ void fuse_motion(KalmanFilter &KF,
                  std::vector<Track *> detections,
                  bool only_position = false,
                  float lambda = 0.98);
-
-CostMatrix iou_distance(const std::vector<Track *> &tracks, const std::vector<Track *> &detections);
