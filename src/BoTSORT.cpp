@@ -32,6 +32,10 @@ BoTSORT::BoTSORT(
     // Re-ID module, load visual feature extractor here
     if (model_weights.has_value()) {
         _reid_model = std::make_unique<ReIDModel>(model_weights.value(), fp16_inference);
+        _reid_enabled = true;
+    } else {
+        std::cout << "Re-ID module disabled" << std::endl;
+        _reid_enabled = false;
     }
 
 
@@ -43,8 +47,9 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     ////////////////// Step 1: Create tracks for detections //////////////////
     // For all detections, extract features, create tracks and classify on the segregate of confidence
     _frame_id++;
-    std::vector<Track *> detections_high_conf;
-    std::vector<Track *> detections_low_conf;
+    std::vector<Track *> detections_high_conf, detections_low_conf;
+    std::vector<Track *> activated_tracks, refind_tracks;
+
     if (detections.size() > 0) {
         for (Detection &detection: const_cast<std::vector<Detection> &>(detections)) {
             detection.bbox_tlwh.x = std::max(0.0f, detection.bbox_tlwh.x);
@@ -52,14 +57,19 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
             detection.bbox_tlwh.width = std::min(static_cast<float>(frame.cols - 1), detection.bbox_tlwh.width);
             detection.bbox_tlwh.height = std::min(static_cast<float>(frame.rows - 1), detection.bbox_tlwh.height);
 
-            FeatureVector embedding = _extract_features(frame, detection.bbox_tlwh);
+            Track *tracklet;
             std::vector<float> tlwh = {detection.bbox_tlwh.x, detection.bbox_tlwh.y, detection.bbox_tlwh.width, detection.bbox_tlwh.height};
-            Track track = Track(tlwh, detection.confidence, detection.class_id, embedding);
+            if (_reid_enabled) {
+                FeatureVector embedding = _extract_features(frame, detection.bbox_tlwh);
+                tracklet = new Track(tlwh, detection.confidence, detection.class_id, embedding);
+            } else {
+                tracklet = new Track(tlwh, detection.confidence, detection.class_id);
+            }
 
             if (detection.confidence >= _track_high_thresh) {
-                detections_high_conf.push_back(&track);
+                detections_high_conf.push_back(tracklet);
             } else if (detection.confidence > 0.1 && detection.confidence < _track_high_thresh) {
-                detections_low_conf.push_back(&track);
+                detections_low_conf.push_back(tracklet);
             }
         }
     }
@@ -89,8 +99,35 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     Track::multi_gmc(unconfirmed_tracks, H);
 
     // Associate tracks with high confidence detections
-    CostMatrix raw_emd_dist = embedding_distance(tracks_pool, detections_high_conf);
-    fuse_motion(*_kalman_filter, raw_emd_dist, tracks_pool, detections_high_conf, false, _lambda);
+    CostMatrix iou_dists, raw_emd_dist;
+
+    iou_dists = iou_distance(tracks_pool, detections_high_conf);
+    fuse_score(iou_dists, detections_high_conf);
+
+    if (_reid_enabled) {
+        raw_emd_dist = embedding_distance(tracks_pool, detections_high_conf);
+        fuse_motion(*_kalman_filter, raw_emd_dist, tracks_pool, detections_high_conf, false, _lambda);
+    }
+
+    AssociationData first_associations;
+    CostMatrix distances_first_association = fuse_iou_with_emb(iou_dists, raw_emd_dist, _proximity_thresh, _appearance_thresh);
+    linear_assignment(distances_first_association, _match_thresh, first_associations);
+
+    for (size_t i = 0; i < first_associations.matches.size(); i++) {
+        Track *track = tracks_pool[first_associations.matches[i].first];
+        Track *detection = detections_high_conf[first_associations.matches[i].second];
+
+        if (track->state == TrackState::Tracked) {
+            track->update(*_kalman_filter, *detection, _frame_id);
+            activated_tracks.push_back(track);
+        } else {
+            track->re_activate(*_kalman_filter, *detection, _frame_id, false);
+            refind_tracks.push_back(track);
+        }
+    }
+
+
+    ////////////////// Step 3: Second association, with low score detection boxes //////////////////
 
     // Added for code compilation
     return std::vector<Track>();
