@@ -31,3 +31,10 @@ inline float iou(const std::vector<float> &tlwh_a, const std::vector<float> &tlw
     float area_b = (tlwh_b[2] + 1) * (tlwh_b[3] + 1);
     return area_i / (area_a + area_b - area_i);
 }
+
+double lapjv(CostMatrix &cost,
+             std::vector<int> &rowsol,
+             std::vector<int> &colsol,
+             bool extend_cost = false,
+             float cost_limit = LONG_MAX,
+             bool return_cost = true);
