@@ -46,7 +46,7 @@ public:
             const char *gmc_method = "sparseOptFlow",
             uint8_t frame_rate = 30,
             float lambda = 0.985);
-    ~BoTSORT();
+    ~BoTSORT() = default;
 
 private:
     /**
