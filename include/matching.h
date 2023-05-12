@@ -58,3 +58,5 @@ void fuse_motion(KalmanFilter &KF,
  * @return CostMatrix Fused cost matrix
  */
 CostMatrix fuse_iou_with_emb(CostMatrix &iou_matrix, CostMatrix &emb_matrix, float iou_threshold, float appearance_threshold);
+
+void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &associations);

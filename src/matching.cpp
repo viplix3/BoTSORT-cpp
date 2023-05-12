@@ -118,3 +118,35 @@ CostMatrix fuse_iou_with_emb(CostMatrix &iou_matrix, CostMatrix &emb_matrix, flo
 
     return cost_matrix;
 }
+
+void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &associations) {
+    // If cost matrix is empty, all the tracks and detections are unmatched
+    if (cost_matrix.size() == 0) {
+        for (int i = 0; i < cost_matrix.rows(); i++) {
+            associations.unmatched_track_indices.emplace_back(i);
+        }
+
+        for (int i = 0; i < cost_matrix.cols(); i++) {
+            associations.unmatched_det_indices.emplace_back(i);
+        }
+
+        return;
+    }
+
+    std::vector<int> rowsol, colsol;
+    float total_cost = lapjv(cost_matrix, rowsol, colsol, true, thresh);
+
+    for (int i = 0; i < rowsol.size(); i++) {
+        if (rowsol[i] >= 0) {
+            associations.matches.push_back(std::make_pair(i, rowsol[i]));
+        } else {
+            associations.unmatched_track_indices.emplace_back(i);
+        }
+    }
+
+    for (int i = 0; i < colsol.size(); i++) {
+        if (colsol[i] == -1) {
+            associations.unmatched_det_indices.emplace_back(i);
+        }
+    }
+}
