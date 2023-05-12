@@ -28,25 +28,42 @@ CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vec
 }
 
 
-CostMatrix fuse_motion(KalmanFilter &KF,
-                       CostMatrix &cost_matrix,
-                       std::vector<Track *> tracks,
-                       std::vector<Track *> detections,
-                       bool only_position) {
+void fuse_motion(KalmanFilter &KF,
+                 CostMatrix &cost_matrix,
+                 std::vector<Track *> tracks,
+                 std::vector<Track *> detections,
+                 bool only_position,
+                 float lambda) {
     if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0) {
-        return cost_matrix;
+        return;
     }
 
     uint8_t gating_dim = (only_position == true) ? 2 : 4;
     const double gating_threshold = KalmanFilter::chi2inv95[gating_dim];
 
     std::vector<DetVec> measurements;
+    std::vector<float> det_xywh;
     for (size_t i = 0; i < detections.size(); i++) {
-        DetVec det_xywh(detections[i]->get_tlwh());
-        measurements.emplace_back(det_xywh);
+        DetVec det;
+
+        det_xywh = detections[i]->get_tlwh();
+        det << det_xywh[0], det_xywh[1], det_xywh[2], det_xywh[3];
+        measurements.emplace_back(det);
     }
 
     for (size_t i = 0; i < tracks.size(); i++) {
-        KF.gating_distance(tracks[i]->mean, tracks[i]->covariance, measurements, only_position);
+        Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance = KF.gating_distance(
+                tracks[i]->mean,
+                tracks[i]->covariance,
+                measurements,
+                only_position);
+
+        for (size_t j = 0; j < gating_distance.size(); j++) {
+            if (gating_distance(0, j) > gating_threshold) {
+                cost_matrix(i, j) = std::numeric_limits<float>::infinity();
+            }
+
+            cost_matrix(i, j) = lambda * cost_matrix(i, j) + (1 - lambda) * gating_distance[j];
+        }
     }
 }

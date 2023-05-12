@@ -87,7 +87,7 @@ public:
     /**
      * @brief Get the latest detection bounding box in the format [top-left-x, top-left-y, width, height]
      */
-    std::vector<float> Track::get_tlwh();
+    std::vector<float> get_tlwh();
 
 
     /**

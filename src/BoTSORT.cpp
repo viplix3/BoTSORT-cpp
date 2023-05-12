@@ -90,6 +90,7 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
     // Associate tracks with high confidence detections
     CostMatrix raw_emd_dist = embedding_distance(tracks_pool, detections_high_conf);
+    fuse_motion(*_kalman_filter, raw_emd_dist, tracks_pool, detections_high_conf, false, _lambda);
 
     // Added for code compilation
     return std::vector<Track>();
