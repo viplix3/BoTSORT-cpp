@@ -11,7 +11,7 @@
 
 
 void mot_format_writer(const std::vector<Track> &tracks, const std::string &output_file) {
-    std::ofstream mot_file(output_file);
+    std::ofstream mot_file(output_file, std::ios::app);
     for (const Track &track: tracks) {
         std::vector<float> bbox_tlwh = track.get_tlwh();
         float score = track.get_score();
@@ -89,11 +89,11 @@ int main(int argc, char **argv) {
 
 
     // Read detections and execute MultiObjectTracker
+    std::string output_file_txt = output_dir_mot + "/all.txt";
     for (const auto &filepath: image_filepaths) {
         std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
         filename = filename.substr(0, filename.find_last_of('.'));
         std::string detection_file = detection_dir + "/" + filename + ".txt";
-        std::string output_file_txt = output_dir_mot + "/" + filename + ".txt";
         std::string output_file_img = output_dir_img + "/" + filename + ".jpg";
 
         // Read image and detections
