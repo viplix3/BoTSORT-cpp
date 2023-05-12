@@ -105,9 +105,9 @@ using CostMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
  * @brief Association data containing matched and unmatched tracks and detections.
  */
 struct AssociationData {
-    std::vector<MatchData> matches;       ///< Matched track and detection pairs.
-    std::vector<int> unmatched_tracks;    ///< Unmatched track IDs.
-    std::vector<int> unmatched_detections;///< Unmatched detection IDs.
+    std::vector<MatchData> matches;          ///< Matched track and detection pairs.
+    std::vector<int> unmatched_track_indices;///< Unmatched track indices.
+    std::vector<int> unmatched_det_indices;  ///< Unmatched detection indices
 };
 
 
