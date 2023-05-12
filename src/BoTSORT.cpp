@@ -1,5 +1,6 @@
 #include "BoTSORT.h"
 #include "matching.h"
+#include <unordered_set>
 
 BoTSORT::BoTSORT(
         std::optional<const char *> model_weights,
@@ -263,8 +264,37 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     ////////////////// Update lost tracks state //////////////////
 
 
-    // Added for code compilation
-    return std::vector<Track>();
+    ////////////////// Clean up the track lists //////////////////
+    std::vector<Track *> upated_tracked_tracks;
+    for (size_t i = 0; i < _tracked_tracks.size(); i++) {
+        if (_tracked_tracks[i]->state == TrackState::Tracked) {
+            upated_tracked_tracks.push_back(_tracked_tracks[i]);
+        }
+    }
+    _tracked_tracks = _merge_track_lists(upated_tracked_tracks, activated_tracks);
+    _tracked_tracks = _merge_track_lists(_tracked_tracks, refind_tracks);
+
+    _lost_tracks = _merge_track_lists(_lost_tracks, lost_tracks);
+    _lost_tracks = _remove_from_list(_lost_tracks, _tracked_tracks);
+    _lost_tracks = _remove_from_list(_lost_tracks, _removed_tracks);
+    _removed_tracks = _merge_track_lists(_removed_tracks, removed_tracks);
+
+    std::vector<Track *> tracked_tracks_cleaned, lost_tracks_cleaned;
+    _remove_duplicate_tracks(tracked_tracks_cleaned, lost_tracks_cleaned, _tracked_tracks, _lost_tracks);
+    _tracked_tracks = tracked_tracks_cleaned, _lost_tracks = lost_tracks_cleaned;
+    ////////////////// Clean up the track lists //////////////////
+
+
+    ////////////////// Update output tracks //////////////////
+    std::vector<Track> output_tracks;
+    for (Track *track: _tracked_tracks) {
+        if (track->is_activated) {
+            output_tracks.push_back(*track);
+        }
+    }
+    ////////////////// Update output tracks //////////////////
+
+    return output_tracks;
 }
 
 FeatureVector BoTSORT::_extract_features(const cv::Mat &frame, const cv::Rect_<float> &bbox_tlwh) {
@@ -290,4 +320,60 @@ std::vector<Track *> BoTSORT::_merge_track_lists(std::vector<Track *> &tracks_li
     }
 
     return merged_tracks_list;
+}
+
+
+std::vector<Track *> BoTSORT::_remove_from_list(std::vector<Track *> &tracks_list, std::vector<Track *> &tracks_to_remove) {
+    std::map<int, bool> exists;
+    std::vector<Track *> new_tracks_list;
+
+    for (Track *track: tracks_to_remove) {
+        exists[track->track_id] = true;
+    }
+
+    for (Track *track: tracks_list) {
+        if (exists.find(track->track_id) == exists.end()) {
+            new_tracks_list.push_back(track);
+        }
+    }
+
+    return new_tracks_list;
+}
+
+void BoTSORT::_remove_duplicate_tracks(
+        std::vector<Track *> &result_tracks_a,
+        std::vector<Track *> &result_tracks_b,
+        std::vector<Track *> &tracks_list_a,
+        std::vector<Track *> &tracks_list_b) {
+    CostMatrix iou_dists = iou_distance(tracks_list_a, tracks_list_b);
+
+    std::unordered_set<size_t> dup_a, dup_b;
+    for (size_t i = 0; i < iou_dists.rows(); i++) {
+        for (size_t j = 0; j < iou_dists.cols(); j++) {
+            if (iou_dists(i, j) < 0.15) {
+                int time_a = tracks_list_a[i]->frame_id - tracks_list_a[i]->start_frame;
+                int time_b = tracks_list_b[j]->frame_id - tracks_list_b[j]->start_frame;
+
+                // We make an assumption that the longer trajectory is the correct one
+                if (time_a > time_b) {
+                    dup_b.insert(j);// In list b, track with index j is a duplicate
+                } else {
+                    dup_a.insert(i);// In list a, track with index i is a duplicate
+                }
+            }
+        }
+    }
+
+    // Remove duplicates from the lists
+    for (size_t i = 0; i < tracks_list_a.size(); i++) {
+        if (dup_a.find(i) == dup_a.end()) {
+            result_tracks_a.push_back(tracks_list_a[i]);
+        }
+    }
+
+    for (size_t i = 0; i < tracks_list_b.size(); i++) {
+        if (dup_b.find(i) == dup_b.end()) {
+            result_tracks_b.push_back(tracks_list_b[i]);
+        }
+    }
 }

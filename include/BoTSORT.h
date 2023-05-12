@@ -67,10 +67,28 @@ private:
      */
     std::vector<Track *> _merge_track_lists(std::vector<Track *> &tracks_list_a, std::vector<Track *> &tracks_list_b);
 
-    std::vector<Track> _sub_tracks(std::vector<Track> &tracks_list_a, std::vector<Track> &tracks_list_b);
+    /**
+     * @brief Remove tracks from the given track list
+     * 
+     * @param tracks_list List from which tracks are to be removed
+     * @param tracks_to_remove Subset of tracks to be removed
+     * @return std::vector<Track *> List with tracks removed
+     */
+    std::vector<Track *> _remove_from_list(std::vector<Track *> &tracks_list, std::vector<Track *> &tracks_to_remove);
+
+    /**
+     * @brief Rectify track lists
+     *  For any 2 tracks from lists a and b having IoU overlap < 0.15,
+     *  the track with smaller history is considered as a false positive and removed
+     * 
+     * @param result_tracks_a Output track list a after rectification
+     * @param result_tracks_b Output track list b after rectification
+     * @param tracks_list_a Input track list a
+     * @param tracks_list_b Input track list b
+     */
     void _remove_duplicate_tracks(
-            std::vector<Track> &result_tracks_a,
-            std::vector<Track> &result_tracks_b,
-            std::vector<Track> &tracks_list_a,
-            std::vector<Track> &tracks_list_b);
+            std::vector<Track *> &result_tracks_a,
+            std::vector<Track *> &result_tracks_b,
+            std::vector<Track *> &tracks_list_a,
+            std::vector<Track *> &tracks_list_b);
 };
