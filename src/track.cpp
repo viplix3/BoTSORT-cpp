@@ -184,6 +184,10 @@ void Track::_update_tracklet_tlwh_inplace() {
     _tlwh = {mean(0) - mean(2) / 2, mean(1) - mean(3) / 2, mean(2), mean(3)};
 }
 
+std::vector<float> Track::get_tlwh() {
+    return _tlwh;
+}
+
 void Track::_update_class_id(uint8_t class_id, float score) {
     if (_class_hist.size() > 0) {
         int max_freq = 0;
