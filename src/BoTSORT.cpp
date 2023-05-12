@@ -155,7 +155,7 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
     // Find IoU distance between unmatched but tracked tracks left after the first association and low confidence detections
     CostMatrix iou_dists_second;
-    iou_distance(unmatched_tracks_after_1st_association, detections_low_conf);
+    iou_dists_second = iou_distance(unmatched_tracks_after_1st_association, detections_low_conf);
 
     // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
     AssociationData second_associations;
@@ -200,7 +200,7 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
     //Find IoU distance between unconfirmed tracks and high confidence detections left after the first association
     CostMatrix iou_dists_unconfirmed, raw_emd_dist_unconfirmed;
-    iou_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
+    iou_dists_unconfirmed = iou_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
     fuse_score(iou_dists_unconfirmed, unmatched_detections_after_1st_association);
 
     if (_reid_enabled) {
