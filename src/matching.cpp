@@ -145,7 +145,7 @@ void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &a
     }
 
     for (int i = 0; i < colsol.size(); i++) {
-        if (colsol[i] == -1) {
+        if (colsol[i] < 0) {
             associations.unmatched_det_indices.emplace_back(i);
         }
     }
