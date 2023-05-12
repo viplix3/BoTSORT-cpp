@@ -188,6 +188,10 @@ std::vector<float> Track::get_tlwh() {
     return _tlwh;
 }
 
+float Track::get_score() {
+    return _score;
+}
+
 void Track::_update_class_id(uint8_t class_id, float score) {
     if (_class_hist.size() > 0) {
         int max_freq = 0;

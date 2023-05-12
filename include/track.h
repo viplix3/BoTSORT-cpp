@@ -90,6 +90,13 @@ public:
     std::vector<float> get_tlwh();
 
     /**
+     * @brief Get the score object
+     * 
+     * @return float Confidence score of the track
+     */
+    float get_score();
+
+    /**
      * @brief Activates the track
      * 
      * @param kalman_filter Kalman filter object for the track
