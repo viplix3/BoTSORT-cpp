@@ -184,11 +184,11 @@ void Track::_update_tracklet_tlwh_inplace() {
     _tlwh = {mean(0) - mean(2) / 2, mean(1) - mean(3) / 2, mean(2), mean(3)};
 }
 
-std::vector<float> Track::get_tlwh() {
+std::vector<float> Track::get_tlwh() const {
     return _tlwh;
 }
 
-float Track::get_score() {
+float Track::get_score() const {
     return _score;
 }
 
