@@ -102,7 +102,6 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
 
     ////////////////// ASSOCIATION ALGORITHM STARTS HERE //////////////////
-
     ////////////////// First association, with high score detection boxes //////////////////
     CostMatrix iou_dists, raw_emd_dist;
 
@@ -235,6 +234,23 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
     }
     ////////////////// Deal with unconfirmed tracks //////////////////
 
+
+    ////////////////// Initialize new tracks //////////////////
+    std::vector<Track *> unmatched_high_conf_detections;
+    for (size_t i = 0; i < unconfirmed_associations.unmatched_det_indices.size(); i++) {
+        int detection_idx = unconfirmed_associations.unmatched_det_indices[i];
+        Track *detection = unmatched_detections_after_1st_association[detection_idx];
+        unmatched_high_conf_detections.push_back(detection);
+    }
+
+    // Initialize new tracks for the high confidence detections left after all the associations
+    for (Track *detection: unmatched_high_conf_detections) {
+        if (detection->get_score() > _new_track_thresh) {
+            detection->activate(*_kalman_filter, _frame_id);
+            activated_tracks.push_back(detection);
+        }
+    }
+    ////////////////// Initialize new tracks //////////////////
 
     // Added for code compilation
     return std::vector<Track>();
