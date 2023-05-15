@@ -21,8 +21,9 @@ public:
 
 private:
     bool _reid_enabled;
-    uint8_t _track_buffer, _frame_rate, _frame_id, _buffer_size, _max_time_lost;
+    uint8_t _track_buffer, _frame_rate, _buffer_size, _max_time_lost;
     float _track_high_thresh, _new_track_thresh, _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
+    unsigned int _frame_id;
 
     std::vector<Track *> _tracked_tracks;
     std::vector<Track *> _lost_tracks;
