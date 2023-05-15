@@ -24,7 +24,7 @@ public:
     int start_frame;
 
     std::vector<float> det_tlwh;
-    FeatureVector curr_feat, smooth_feat;
+    FeatureVector *curr_feat, *smooth_feat;
     KFStateSpaceVec mean;
     KFStateSpaceMatrix covariance;
 
@@ -36,7 +36,7 @@ private:
     static constexpr float _alpha = 0.9;
 
     int _feat_history_size;
-    std::deque<FeatureVector> _feat_history;
+    std::deque<FeatureVector> *_feat_history;
 
 
 public:
@@ -50,7 +50,7 @@ public:
      * @param feat_history_size Size of the feature history (default: 50)
      */
     Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat = std::nullopt, int feat_history_size = 50);
-    ~Track() = default;
+    ~Track();
 
     /**
      * @brief Get the next track ID
@@ -159,7 +159,7 @@ private:
      * 
      * @param feat Current feature vector
      */
-    void _update_features(FeatureVector &feat);
+    void _update_features(FeatureVector *feat);
 
     /**
      * @brief Populate a DetVec bbox object (xywh) from the detection bounding box (tlwh)

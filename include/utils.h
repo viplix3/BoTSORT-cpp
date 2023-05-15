@@ -9,8 +9,8 @@
  * @param y Feature vector 2
  * @return float Cosine distance (1 - cosine similarity)
  */
-inline float cosine_distance(const FeatureVector &x, const FeatureVector &y) {
-    return 1.0f - (x.dot(y) / (x.norm() * y.norm() + 1e-5f));
+inline float cosine_distance(const FeatureVector *x, const FeatureVector *y) {
+    return 1.0f - (x->dot(*y) / (x->norm() * y->norm() + 1e-5f));
 }
 
 

@@ -11,16 +11,28 @@ Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::option
     tracklet_len = 0;
     is_activated = false;
     state = TrackState::New;
-    _feat_history_size = feat_history_size;
 
     if (feat) {
-        _update_features(*feat);
+        _feat_history_size = feat_history_size;
+        _feat_history = new std::deque<FeatureVector>();
+        _update_features(&feat.value());
+    } else {
+        curr_feat = nullptr;
+        smooth_feat = nullptr;
+        _feat_history = nullptr;
+        _feat_history_size = 0;
     }
-
-    _feat_history = std::deque<FeatureVector>(_feat_history_size);
 
     _update_class_id(class_id, score);
     _update_tracklet_tlwh_inplace();
+}
+
+Track::~Track() {
+    if (_feat_history) {
+        delete curr_feat;
+        delete smooth_feat;
+        delete _feat_history;
+    }
 }
 
 void Track::activate(KalmanFilter &kalman_filter, int frame_id) {
@@ -53,7 +65,7 @@ void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame
     mean = state_space.first;
     covariance = state_space.second;
 
-    if (new_track.curr_feat.size() > 0) {
+    if (new_track.curr_feat) {
         _update_features(new_track.curr_feat);
     }
 
@@ -111,7 +123,7 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
 
     KFDataStateSpace state_space = kalman_filter.update(mean, covariance, new_track_bbox);
 
-    if (new_track.curr_feat.size() > 0) {
+    if (new_track.curr_feat) {
         _update_features(new_track.curr_feat);
     }
 
@@ -127,21 +139,21 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::_update_features(FeatureVector &feat) {
-    feat /= feat.norm();
-    curr_feat = feat;
+void Track::_update_features(FeatureVector *feat) {
+    *feat /= feat->norm();
 
-    if (_feat_history.size() == 0) {
-        smooth_feat = feat;
+    if (_feat_history->empty()) {
+        curr_feat = new FeatureVector(*feat);
+        smooth_feat = new FeatureVector(*curr_feat);
     } else {
-        smooth_feat = _alpha * smooth_feat + (1 - _alpha) * feat;
+        *smooth_feat = _alpha * (*smooth_feat) + (1 - _alpha) * (*feat);
     }
 
-    if (_feat_history.size() == _feat_history_size) {
-        _feat_history.pop_front();
+    if (_feat_history->size() == _feat_history_size) {
+        _feat_history->pop_front();
     }
-    _feat_history.push_back(feat);
-    smooth_feat /= smooth_feat.norm();
+    _feat_history->push_back(*feat);
+    *smooth_feat /= smooth_feat->norm();
 }
 
 int Track::next_id() {
