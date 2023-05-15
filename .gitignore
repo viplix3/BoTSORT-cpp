@@ -1047,3 +1047,4 @@ dkms.conf
 
 # Output files
 output/*
+.idea/*
