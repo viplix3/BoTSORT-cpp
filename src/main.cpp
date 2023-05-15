@@ -33,12 +33,13 @@ std::vector<Detection> read_detections_from_file(const std::string &detection_fi
 
         Detection det;
         det.class_id = values[0];
-        det.bbox_tlwh = cv::Rect_(values[1], values[2], values[3], values[4]);
+        det.bbox_tlwh = cv::Rect_(values[1] - values[3] / 2, values[2] - values[4] / 2, values[3], values[4]);
         // bounding box is normalized, so convert to absolute coordinates
         det.bbox_tlwh.x *= frame_width;
         det.bbox_tlwh.y *= frame_height;
         det.bbox_tlwh.width *= frame_width;
         det.bbox_tlwh.height *= frame_height;
+
         det.confidence = values[5];
         detections.push_back(det);
     }
