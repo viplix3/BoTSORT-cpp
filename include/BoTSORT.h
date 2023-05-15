@@ -17,7 +17,7 @@ public:
      * @param frame Current frame
      * @return std::vector<Track>
      */
-    std::vector<Track> track(const std::vector<Detection> &detections, const cv::Mat &frame);
+    std::vector<Track *> track(const std::vector<Detection> &detections, const cv::Mat &frame);
 
 private:
     bool _reid_enabled;

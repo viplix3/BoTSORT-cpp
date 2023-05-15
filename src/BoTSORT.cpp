@@ -44,7 +44,7 @@ BoTSORT::BoTSORT(
     _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[std::string(gmc_method)]);
 }
 
-std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
+std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
     ////////////////// CREATE TRACK OBJECT FOR ALL THE DETECTIONS //////////////////
     // For all detections, extract features, create tracks and classify on the segregate of confidence
     _frame_id++;
@@ -286,10 +286,10 @@ std::vector<Track> BoTSORT::track(const std::vector<Detection> &detections, cons
 
 
     ////////////////// Update output tracks //////////////////
-    std::vector<Track> output_tracks;
+    std::vector<Track *> output_tracks;
     for (Track *track: _tracked_tracks) {
         if (track->is_activated) {
-            output_tracks.push_back(*track);
+            output_tracks.push_back(track);
         }
     }
     ////////////////// Update output tracks //////////////////

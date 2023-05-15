@@ -23,10 +23,6 @@ Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::option
     _update_tracklet_tlwh_inplace();
 }
 
-Track::~Track() {
-    // Nothing to do here
-}
-
 void Track::activate(KalmanFilter &kalman_filter, int frame_id) {
     track_id = next_id();
 

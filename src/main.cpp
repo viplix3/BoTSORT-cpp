@@ -11,13 +11,13 @@
 #include "track.h"
 
 
-void mot_format_writer(const std::vector<Track> &tracks, const std::string &output_file) {
+void mot_format_writer(const std::vector<Track *> &tracks, const std::string &output_file) {
     std::ofstream mot_file(output_file, std::ios::app);
-    for (const Track &track: tracks) {
-        std::vector<float> bbox_tlwh = track.get_tlwh();
-        float score = track.get_score();
+    for (const Track *track: tracks) {
+        std::vector<float> bbox_tlwh = track->get_tlwh();
+        float score = track->get_score();
 
-        mot_file << track.frame_id << "," << track.track_id << "," << bbox_tlwh[0] << ","
+        mot_file << track->frame_id << "," << track->track_id << "," << bbox_tlwh[0] << ","
                  << bbox_tlwh[1] << "," << bbox_tlwh[2] << "," << bbox_tlwh[3] << "," << score << ",-1,-1,-1" << std::endl;
     }
     mot_file.close();
@@ -47,20 +47,20 @@ std::vector<Detection> read_detections_from_file(const std::string &detection_fi
     return detections;
 }
 
-void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<Track> &tracks) {
+void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<Track *> &tracks) {
     static std::map<int, cv::Scalar> track_colors;
     for (const auto &det: detections) {
         cv::rectangle(frame, det.bbox_tlwh, cv::Scalar(0, 0, 0), 1);
     }
 
-    for (const auto &track: tracks) {
-        std::vector<float> bbox_tlwh = track.get_tlwh();
+    for (const auto *track: tracks) {
+        std::vector<float> bbox_tlwh = track->get_tlwh();
         cv::Scalar color = cv::Scalar(rand() % 255, rand() % 255, rand() % 255);
 
-        if (track_colors.find(track.track_id) == track_colors.end()) {
-            track_colors[track.track_id] = color;
+        if (track_colors.find(track->track_id) == track_colors.end()) {
+            track_colors[track->track_id] = color;
         } else {
-            color = track_colors[track.track_id];
+            color = track_colors[track->track_id];
         }
 
         cv::rectangle(frame, cv::Rect(bbox_tlwh[0], bbox_tlwh[1], bbox_tlwh[2], bbox_tlwh[3]), color, 2);
@@ -99,6 +99,7 @@ int main(int argc, char **argv) {
 
 
     // Read detections and execute MultiObjectTracker
+    int frame_counter = 0;
     std::string output_file_txt = output_dir_mot + "/all.txt";
     for (const auto &filepath: image_filepaths) {
         std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
@@ -111,13 +112,21 @@ int main(int argc, char **argv) {
         std::vector<Detection> detections = read_detections_from_file(detection_file, frame.cols, frame.rows);
 
         // Execute tracker
-        std::vector<Track> tracks = tracker.track(detections, frame);
+        std::vector<Track *> tracks = tracker.track(detections, frame);
 
         // Outputs
         mot_format_writer(tracks, output_file_txt);
 
         plot_tracks(frame, detections, tracks);
         cv::imwrite(output_file_img, frame);
+
+        frame_counter++;
+
+        if (frame_counter % 10 == 0)
+            std::cout << "Processed " << frame_counter << " frames" << std::endl;
+
+        if (frame_counter == 50)
+            break;
     }
 
     return 0;
