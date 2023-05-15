@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
 
 #include "BoTSORT.h"
 #include "DataType.h"
@@ -46,6 +47,7 @@ std::vector<Detection> read_detections_from_file(const std::string &detection_fi
 }
 
 void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<Track> &tracks) {
+    static std::map<int, cv::Scalar> track_colors;
     for (const auto &det: detections) {
         cv::rectangle(frame, det.bbox_tlwh, cv::Scalar(0, 0, 0), 1);
     }
@@ -53,6 +55,13 @@ void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector
     for (const auto &track: tracks) {
         std::vector<float> bbox_tlwh = track.get_tlwh();
         cv::Scalar color = cv::Scalar(rand() % 255, rand() % 255, rand() % 255);
+
+        if (track_colors.find(track.track_id) == track_colors.end()) {
+            track_colors[track.track_id] = color;
+        } else {
+            color = track_colors[track.track_id];
+        }
+
         cv::rectangle(frame, cv::Rect(bbox_tlwh[0], bbox_tlwh[1], bbox_tlwh[2], bbox_tlwh[3]), color, 2);
     }
 }
