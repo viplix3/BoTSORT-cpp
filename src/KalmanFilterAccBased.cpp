@@ -76,9 +76,9 @@ KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const 
             std::max(std_factor * mean(3), min_std);
     measurement_cov = measurement_cov.array().square().matrix();
 
-    KFMeasSpaceVec mean_updated = _measurement_matrix * mean.transpose();
-    KFMeasSpaceMatrix covariance_updated = _measurement_matrix * covariance * _measurement_matrix.transpose() + measurement_cov;
-    return std::make_pair(mean_updated, covariance_updated);
+    KFMeasSpaceVec mean_projected = _measurement_matrix * mean.transpose();
+    KFMeasSpaceMatrix covariance_projected = _measurement_matrix * covariance * _measurement_matrix.transpose() + measurement_cov;
+    return std::make_pair(mean_projected, covariance_projected);
 }
 
 KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement) {

@@ -55,9 +55,9 @@ KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const 
     KFMeasSpaceVec innovation_cov = (_std_weight_position * Eigen::Vector4f(mean(2), mean(3), mean(2), mean(3))).array().square().matrix();
     KFMeasSpaceMatrix innovation_cov_diag = innovation_cov.asDiagonal();
 
-    KFMeasSpaceVec mean_updated = _measurement_matrix * mean.transpose();
-    KFMeasSpaceMatrix covariance_updated = _measurement_matrix * covariance * _measurement_matrix.transpose() + innovation_cov_diag;
-    return {mean_updated, covariance_updated};
+    KFMeasSpaceVec mean_projected = _measurement_matrix * mean.transpose();
+    KFMeasSpaceMatrix covariance_projected = _measurement_matrix * covariance * _measurement_matrix.transpose() + innovation_cov_diag;
+    return {mean_projected, covariance_projected};
 }
 
 KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement) {
