@@ -41,7 +41,7 @@ private:
     int _ransac_max_iters = 500;
 
 public:
-    ORB_GMC(float downscale);
+    explicit ORB_GMC(float downscale);
 
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
@@ -57,7 +57,7 @@ private:
 
 
 public:
-    ECC_GMC(float downscale, int max_iterations = 100, int termination_eps = 1e-6);
+    explicit ECC_GMC(float downscale, int max_iterations = 100, int termination_eps = static_cast<int>(1e-6));
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
@@ -77,7 +77,7 @@ private:
 
 
 public:
-    SparseOptFlow_GMC(float downscale);
+    explicit SparseOptFlow_GMC(float downscale);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
@@ -87,7 +87,7 @@ private:
 
 
 public:
-    OptFlowModified_GMC(float downscale);
+    explicit OptFlowModified_GMC(float downscale);
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
 };
 
@@ -101,7 +101,7 @@ private:
 
 
 public:
-    GlobalMotionCompensation(GMC_Method method, float downscale = 2.0);
+    explicit GlobalMotionCompensation(GMC_Method method, float downscale = 2.0);
     ~GlobalMotionCompensation() = default;
 
     HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections);

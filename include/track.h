@@ -57,14 +57,14 @@ public:
      * 
      * @return int Next track ID
      */
-    int next_id();
+    static int next_id();
 
     /**
      * @brief Get end frame-id of the track
      * 
      * @return int End frame-id of the track
      */
-    int end_frame();
+    int end_frame() const;
 
     /**
      * @brief Upates the track state to Lost
@@ -167,7 +167,7 @@ private:
      * @param bbox_xywh DetVec bbox object (xywh) to be populated
      * @param tlwh Detection bounding box (tlwh)
      */
-    void _populate_DetVec_xywh(DetVec &bbox_xywh, const std::vector<float> &tlwh);
+    static void _populate_DetVec_xywh(DetVec &bbox_xywh, const std::vector<float> &tlwh);
 
     /**
      * @brief Update the tracklet bounding box (stored as tlwh) inplace accoding to the tracker state

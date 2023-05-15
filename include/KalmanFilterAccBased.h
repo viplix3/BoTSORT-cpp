@@ -36,7 +36,7 @@ public:
      * 
      * @param dt Time interval between consecutive measurements (dt = 1/FPS)
      */
-    KalmanFilter(double dt);
+    explicit KalmanFilter(double dt);
 
     /**
      * @brief Initialize the Kalman Filter with a measurement (detection).
@@ -44,7 +44,7 @@ public:
      * @param det Detection [x-center, y-center, width, height].
      * @return KFDataStateSpace Kalman filter state space data [mean, covariance].
      */
-    KFDataStateSpace init(const DetVec &det);
+    KFDataStateSpace init(const DetVec &det) const;
 
     /**
      * @brief Predict the next Kalman Filter state space data (mean, covariance) given the current state space data.
