@@ -81,7 +81,7 @@ private:
      * @param tracks_list_b Second track list
      * @return std::vector<Track *> Merged track list
      */
-    std::vector<Track *> _merge_track_lists(std::vector<Track *> &tracks_list_a, std::vector<Track *> &tracks_list_b);
+    static std::vector<Track *> _merge_track_lists(std::vector<Track *> &tracks_list_a, std::vector<Track *> &tracks_list_b);
 
     /**
      * @brief Remove tracks from the given track list
@@ -90,7 +90,7 @@ private:
      * @param tracks_to_remove Subset of tracks to be removed
      * @return std::vector<Track *> List with tracks removed
      */
-    std::vector<Track *> _remove_from_list(std::vector<Track *> &tracks_list, std::vector<Track *> &tracks_to_remove);
+    static std::vector<Track *> _remove_from_list(std::vector<Track *> &tracks_list, std::vector<Track *> &tracks_to_remove);
 
     /**
      * @brief Rectify track lists
@@ -102,7 +102,7 @@ private:
      * @param tracks_list_a Input track list a
      * @param tracks_list_b Input track list b
      */
-    void _remove_duplicate_tracks(
+    static void _remove_duplicate_tracks(
             std::vector<Track *> &result_tracks_a,
             std::vector<Track *> &result_tracks_b,
             std::vector<Track *> &tracks_list_a,

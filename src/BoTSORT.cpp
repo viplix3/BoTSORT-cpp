@@ -51,7 +51,7 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
     std::vector<Track *> detections_high_conf, detections_low_conf;
     std::vector<Track *> activated_tracks, refind_tracks;
 
-    if (detections.size() > 0) {
+    if (!detections.empty()) {
         for (Detection &detection: const_cast<std::vector<Detection> &>(detections)) {
             detection.bbox_tlwh.x = std::max(0.0f, detection.bbox_tlwh.x);
             detection.bbox_tlwh.y = std::max(0.0f, detection.bbox_tlwh.y);
@@ -124,9 +124,9 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
     linear_assignment(distances_first_association, _match_thresh, first_associations);
 
     // Update the tracks with the associated detections
-    for (size_t i = 0; i < first_associations.matches.size(); i++) {
-        Track *track = tracks_pool[first_associations.matches[i].first];
-        Track *detection = detections_high_conf[first_associations.matches[i].second];
+    for (auto &match: first_associations.matches) {
+        Track *track = tracks_pool[match.first];
+        Track *detection = detections_high_conf[match.second];
 
         // If track was being actively tracked, we update the track with the new associated detection
         if (track->state == TrackState::Tracked) {
@@ -145,8 +145,7 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
     ////////////////// Second association, with low score detection boxes //////////////////
     // Get all unmatched but tracked tracks after the first association, these tracks will be used for the second association
     std::vector<Track *> unmatched_tracks_after_1st_association;
-    for (size_t i = 0; i < first_associations.unmatched_track_indices.size(); i++) {
-        int track_idx = first_associations.unmatched_track_indices[i];
+    for (int track_idx: first_associations.unmatched_track_indices) {
         Track *track = tracks_pool[track_idx];
         if (track->state == TrackState::Tracked) {
             unmatched_tracks_after_1st_association.push_back(track);
@@ -162,9 +161,9 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
     linear_assignment(iou_dists_second, 0.5, second_associations);
 
     // Update the tracks with the associated detections
-    for (size_t i = 0; i < second_associations.matches.size(); i++) {
-        Track *track = unmatched_tracks_after_1st_association[second_associations.matches[i].first];
-        Track *detection = detections_low_conf[second_associations.matches[i].second];
+    for (auto &match: second_associations.matches) {
+        Track *track = unmatched_tracks_after_1st_association[match.first];
+        Track *detection = detections_low_conf[match.second];
 
         // If track was being actively tracked, we update the track with the new associated detection
         if (track->state == TrackState::Tracked) {
@@ -180,8 +179,8 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
 
     // The tracks that are not associated with any detection even after the second association are marked as lost
     std::vector<Track *> lost_tracks;
-    for (size_t i = 0; i < second_associations.unmatched_track_indices.size(); i++) {
-        Track *track = unmatched_tracks_after_1st_association[second_associations.unmatched_track_indices[i]];
+    for (int unmatched_track_index: second_associations.unmatched_track_indices) {
+        Track *track = unmatched_tracks_after_1st_association[unmatched_track_index];
         if (track->state != TrackState::Lost) {
             track->mark_lost();
             lost_tracks.push_back(track);
@@ -192,8 +191,7 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
 
     ////////////////// Deal with unconfirmed tracks //////////////////
     std::vector<Track *> unmatched_detections_after_1st_association;
-    for (size_t i = 0; i < first_associations.unmatched_det_indices.size(); i++) {
-        int detection_idx = first_associations.unmatched_det_indices[i];
+    for (int detection_idx: first_associations.unmatched_det_indices) {
         Track *detection = detections_high_conf[detection_idx];
         unmatched_detections_after_1st_association.push_back(detection);
     }
@@ -220,16 +218,16 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
         Track *track = unconfirmed_tracks[unconfirmed_associations.matches[i].first];
         Track *detection = unmatched_detections_after_1st_association[unconfirmed_associations.matches[i].second];
 
-        // If the unconfrimed track is associated with a detection we update the track with the new associated detection
+        // If the unconfirmed track is associated with a detection we update the track with the new associated detection
         // and add the track to the activated tracks list
         track->update(*_kalman_filter, *detection, _frame_id);
         activated_tracks.push_back(track);
     }
 
-    // All the uncfonfirmed tracks that are not associated with any detection are marked as removed
+    // All the unconfirmed tracks that are not associated with any detection are marked as removed
     std::vector<Track *> removed_tracks;
-    for (size_t i = 0; i < unconfirmed_associations.unmatched_track_indices.size(); i++) {
-        Track *track = unconfirmed_tracks[unconfirmed_associations.unmatched_track_indices[i]];
+    for (int unmatched_track_index: unconfirmed_associations.unmatched_track_indices) {
+        Track *track = unconfirmed_tracks[unmatched_track_index];
         track->mark_removed();
         removed_tracks.push_back(track);
     }
@@ -238,8 +236,7 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
 
     ////////////////// Initialize new tracks //////////////////
     std::vector<Track *> unmatched_high_conf_detections;
-    for (size_t i = 0; i < unconfirmed_associations.unmatched_det_indices.size(); i++) {
-        int detection_idx = unconfirmed_associations.unmatched_det_indices[i];
+    for (int detection_idx: unconfirmed_associations.unmatched_det_indices) {
         Track *detection = unmatched_detections_after_1st_association[detection_idx];
         unmatched_high_conf_detections.push_back(detection);
     }
@@ -265,13 +262,13 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
 
 
     ////////////////// Clean up the track lists //////////////////
-    std::vector<Track *> upated_tracked_tracks;
-    for (size_t i = 0; i < _tracked_tracks.size(); i++) {
-        if (_tracked_tracks[i]->state == TrackState::Tracked) {
-            upated_tracked_tracks.push_back(_tracked_tracks[i]);
+    std::vector<Track *> updated_tracked_tracks;
+    for (auto &_tracked_track: _tracked_tracks) {
+        if (_tracked_track->state == TrackState::Tracked) {
+            updated_tracked_tracks.push_back(_tracked_track);
         }
     }
-    _tracked_tracks = _merge_track_lists(upated_tracked_tracks, activated_tracks);
+    _tracked_tracks = _merge_track_lists(updated_tracked_tracks, activated_tracks);
     _tracked_tracks = _merge_track_lists(_tracked_tracks, refind_tracks);
 
     _lost_tracks = _merge_track_lists(_lost_tracks, lost_tracks);
