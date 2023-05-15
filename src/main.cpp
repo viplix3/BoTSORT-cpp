@@ -32,7 +32,7 @@ std::vector<Detection> read_detections_from_file(const std::string &detection_fi
         std::vector<float> values(std::istream_iterator<float>{iss}, std::istream_iterator<float>());
 
         Detection det;
-        det.class_id = values[0];
+        det.class_id = static_cast<int>(values[0]);
         det.bbox_tlwh = cv::Rect_(values[1] - values[3] / 2, values[2] - values[4] / 2, values[3], values[4]);
         // bounding box is normalized, so convert to absolute coordinates
         det.bbox_tlwh.x *= frame_width;
@@ -63,7 +63,13 @@ void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector
             color = track_colors[track->track_id];
         }
 
-        cv::rectangle(frame, cv::Rect(bbox_tlwh[0], bbox_tlwh[1], bbox_tlwh[2], bbox_tlwh[3]), color, 2);
+        cv::rectangle(frame,
+                      cv::Rect(static_cast<int>(bbox_tlwh[0]),
+                               static_cast<int>(bbox_tlwh[1]),
+                               static_cast<int>(bbox_tlwh[2]),
+                               static_cast<int>(bbox_tlwh[3])),
+                      color,
+                      2);
     }
 }
 
