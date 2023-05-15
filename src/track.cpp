@@ -11,11 +11,13 @@ Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::option
     tracklet_len = 0;
     is_activated = false;
     state = TrackState::New;
+    _feat_history_size = feat_history_size;
 
     if (feat) {
-        _feat_history_size = feat_history_size;
         _update_features(*feat);
     }
+
+    _feat_history = std::deque<FeatureVector>(_feat_history_size);
 
     _update_class_id(class_id, score);
     _update_tracklet_tlwh_inplace();
