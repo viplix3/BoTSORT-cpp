@@ -9,7 +9,7 @@ CostMatrix iou_distance(const std::vector<Track *> &tracks, const std::vector<Tr
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
             for (int j = 0; j < num_detections; j++) {
-                cost_matrix(i, j) = 1.0 - iou(tracks[i]->get_tlwh(), detections[j]->get_tlwh());
+                cost_matrix(i, j) = 1.0F - iou(tracks[i]->get_tlwh(), detections[j]->get_tlwh());
             }
         }
     }
@@ -40,7 +40,7 @@ void fuse_score(CostMatrix &cost_matrix, std::vector<Track *> detections) {
 
     for (size_t i = 0; i < cost_matrix.rows(); i++) {
         for (size_t j = 0; j < cost_matrix.cols(); j++) {
-            cost_matrix(i, j) = 1.0 - ((1.0 - cost_matrix(i, j)) * detections[j]->get_score());
+            cost_matrix(i, j) = 1.0F - ((1.0F - cost_matrix(i, j)) * detections[j]->get_score());
         }
     }
 }
@@ -60,10 +60,10 @@ void fuse_motion(KalmanFilter &KF,
 
     std::vector<DetVec> measurements;
     std::vector<float> det_xywh;
-    for (size_t i = 0; i < detections.size(); i++) {
+    for (auto & detection : detections) {
         DetVec det;
 
-        det_xywh = detections[i]->get_tlwh();
+        det_xywh = detection->get_tlwh();
         det << det_xywh[0], det_xywh[1], det_xywh[2], det_xywh[3];
         measurements.emplace_back(det);
     }
@@ -138,7 +138,7 @@ void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &a
 
     for (int i = 0; i < rowsol.size(); i++) {
         if (rowsol[i] >= 0) {
-            associations.matches.push_back(std::make_pair(i, rowsol[i]));
+            associations.matches.emplace_back(i, rowsol[i]);
         } else {
             associations.unmatched_track_indices.emplace_back(i);
         }

@@ -214,9 +214,9 @@ std::vector<Track *> BoTSORT::track(const std::vector<Detection> &detections, co
     AssociationData unconfirmed_associations;
     linear_assignment(distances_unconfirmed, 0.7, unconfirmed_associations);
 
-    for (size_t i = 0; i < unconfirmed_associations.matches.size(); i++) {
-        Track *track = unconfirmed_tracks[unconfirmed_associations.matches[i].first];
-        Track *detection = unmatched_detections_after_1st_association[unconfirmed_associations.matches[i].second];
+    for (auto &match: unconfirmed_associations.matches) {
+        Track *track = unconfirmed_tracks[match.first];
+        Track *detection = unmatched_detections_after_1st_association[match.second];
 
         // If the unconfirmed track is associated with a detection we update the track with the new associated detection
         // and add the track to the activated tracks list

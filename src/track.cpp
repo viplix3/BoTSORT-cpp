@@ -93,8 +93,8 @@ void Track::predict(KalmanFilter &kalman_filter) {
 }
 
 void Track::multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter) {
-    for (size_t i = 0; i < tracks.size(); i++) {
-        tracks[i]->predict(kalman_filter);
+    for (auto & track : tracks) {
+        track->predict(kalman_filter);
     }
 }
 
@@ -111,8 +111,8 @@ void Track::apply_camera_motion(const HomographyMatrix &H) {
 }
 
 void Track::multi_gmc(std::vector<Track *> &tracks, const HomographyMatrix &H) {
-    for (size_t i = 0; i < tracks.size(); i++) {
-        tracks[i]->apply_camera_motion(H);
+    for (auto & track : tracks) {
+        track->apply_camera_motion(H);
     }
 }
 
@@ -174,7 +174,7 @@ void Track::mark_removed() {
     state = TrackState::Removed;
 }
 
-int Track::end_frame() {
+int Track::end_frame() const {
     return frame_id;
 }
 
@@ -203,7 +203,7 @@ float Track::get_score() const {
 }
 
 void Track::_update_class_id(uint8_t class_id, float score) {
-    if (_class_hist.size() > 0) {
+    if (!_class_hist.empty()) {
         int max_freq = 0;
         bool found = false;
 
@@ -219,11 +219,11 @@ void Track::_update_class_id(uint8_t class_id, float score) {
         }
 
         if (!found) {
-            _class_hist.push_back({class_id, score});
+            _class_hist.emplace_back(class_id, score);
             _class_id = class_id;
         }
     } else {
-        _class_hist.push_back({class_id, score});
+        _class_hist.emplace_back(class_id, score);
         _class_id = class_id;
     }
 }

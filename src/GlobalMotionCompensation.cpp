@@ -54,15 +54,20 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
     // Create a mask, corner regions are ignored
     cv::Mat mask = cv::Mat::zeros(frame.size(), frame.type());
-    cv::Rect roi(width * 0.02, height * 0.02, width * 0.96, height * 0.96);
+    cv::Rect roi(static_cast<int>(width * 0.02),
+                 static_cast<int>(height * 0.02),
+                 static_cast<int>(width * 0.96),
+                 static_cast<int>(height * 0.96));
     mask(roi) = 255;
 
 
     // Set all the foreground (area with detections) to 0
     // This is to prevent the algorithm from detecting keypoints in the foreground so CMC can work better
     for (const auto &det: detections) {
-        cv::Rect tlwh_downscaled(det.bbox_tlwh.x / _downscale, det.bbox_tlwh.y / _downscale,
-                                 det.bbox_tlwh.width / _downscale, det.bbox_tlwh.height / _downscale);
+        cv::Rect tlwh_downscaled(static_cast<int>(det.bbox_tlwh.x / _downscale),
+                                 static_cast<int>(det.bbox_tlwh.y / _downscale),
+                                 static_cast<int>(det.bbox_tlwh.width / _downscale),
+                                 static_cast<int>(det.bbox_tlwh.height / _downscale));
         mask(tlwh_downscaled) = 0;
     }
 
@@ -97,7 +102,7 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
     // Filter matches on the basis of spatial distance
     std::vector<cv::DMatch> matches;
     std::vector<cv::Point2f> spatial_distances;
-    cv::Point2f max_spatial_distance(0.25 * width, 0.25 * height);
+    cv::Point2f max_spatial_distance(0.25F * width, 0.25F * height);
 
     for (const auto &knnMatch: knn_matches) {
         const auto &m = knnMatch[0];
