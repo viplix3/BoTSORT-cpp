@@ -1,6 +1,6 @@
 #include "GlobalMotionCompensation.h"
 
-std::map<std::string, GMC_Method> GMC_method_map = {
+std::map<std::string, GMC_Method> GlobalMotionCompensation::GMC_method_map = {
         {"orb", GMC_Method::ORB},
         {"ecc", GMC_Method::ECC},
         {"sparseOptFlow", GMC_Method::SparseOptFlow},

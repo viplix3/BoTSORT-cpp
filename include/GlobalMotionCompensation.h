@@ -19,8 +19,6 @@ enum GMC_Method {
     OptFlowModified,
 };
 
-extern std::map<std::string, GMC_Method> GMC_method_map;
-
 
 class GMC_Algorithm {
 public:
@@ -95,6 +93,9 @@ public:
 
 
 class GlobalMotionCompensation {
+public:
+    static std::map<std::string, GMC_Method> GMC_method_map;
+
 private:
     std::unique_ptr<GMC_Algorithm> _gmc_algorithm;
 
