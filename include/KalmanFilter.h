@@ -74,6 +74,7 @@ public:
      * @param mean Kalman Filter state space mean.
      * @param covariance Kalman Filter state space covariance.
      * @param measurements Detection [x-center, y-center, width, height].
+     * @param only_position If true, only the position (x-center, y-center) is used to compute the gating distance.
      * @return Eigen::Matrix<float, 1, Eigen::Dynamic> Gating distance.
      */
     Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance(

@@ -39,7 +39,7 @@ void fuse_score(CostMatrix &cost_matrix, const std::vector<std::shared_ptr<Track
  * @param tracks Tracks used to create the cost matrix
  * @param detections Tracks created from detections used to create the cost matrix
  * @param only_position Set to true only position should be used for gating distance
- * @param lambda Weighting factor for motion
+ * @param lambda Weighting factor for motion (default: 0.98)
  */
 void fuse_motion(const KalmanFilter &KF,
                  CostMatrix &cost_matrix,
@@ -59,4 +59,11 @@ void fuse_motion(const KalmanFilter &KF,
  */
 CostMatrix fuse_iou_with_emb(CostMatrix &iou_matrix, CostMatrix &emb_matrix, float iou_threshold, float appearance_threshold);
 
+/**
+ * @brief Performs linear assignment using the LAPJV algorithm
+ * 
+ * @param cost_matrix Cost matrix
+ * @param thresh Threshold for cost matrix
+ * @param associations Output associations between tracks and detections
+ */
 void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &associations);

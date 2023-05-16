@@ -11,11 +11,11 @@
 class BoTSORT {
 public:
     /**
-     * @brief Execute the tracking algorithm on the given detections and frame
+     * @brief Track the objects in the frame
      * 
-     * @param detections Detections (respresented using the Detection struct) in the current frame
-     * @param frame Current frame
-     * @return std::vector<Track>
+     * @param detections Detections in the frame
+     * @param frame Frame
+     * @return std::vector<std::shared_ptr<Track>> 
      */
     std::vector<std::shared_ptr<Track>> track(const std::vector<Detection> &detections, const cv::Mat &frame);
 
@@ -36,19 +36,19 @@ private:
 
 public:
     /**
-     * @brief Construct a new BoTSORT MultiObjectTrack algorithm object
+     * @brief Construct a new BoTSORT MultiObjectTracking algorithm object
      * 
-     * @param model_weights (Optional) Path to the model weights file. If not provided, the Re-ID is disabled
-     * @param fp16_inference If true, the model weights are loaded in FP16 precision (default: false)
-     * @param track_high_thresh Confidence threshold to classify a detection as a high confidence detection (default: 0.45)
-     * @param new_track_thresh Minimum confidence threshold to start a new track (default: 0.6)
+     * @param model_weights (Optional) Path to the model weights file. If not provided, Re-ID is disabled (default: std::nullopt)
+     * @param fp16_inference If true, use FP16 inference (default: false)
+     * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.45)
+     * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.6)
      * @param track_buffer 
-     * @param match_thresh Match threshold used for in linear assignment. Only applied on first association (default: 0.8)
-     * @param proximity_thresh IoU threshold for matching detections to tracks (default: 0.5)
-     * @param appearance_thresh Appearance threshold for matching detections to tracks (default: 0.25)
-     * @param gmc_method Global Camera Motion compensation method (default: "sparseOptFlow")
+     * @param match_thresh IoU + Re-ID matching threshold for first stage matching (default: 0.8)
+     * @param proximity_thresh Minimum IoU threshold for using visual features for matching (default: 0.5)
+     * @param appearance_thresh Appearance matching threshold (default: 0.25)
+     * @param gmc_method Global motion compensation method (default: "sparseOptFlow")
      * @param frame_rate Frame rate of the video (default: 30)
-     * @param lambda Exponential decay rate for the smooth feature (default: 0.985)
+     * @param lambda Used for fusing motion distance and appearance distance (default: 0.985)
      */
     explicit BoTSORT(
             std::optional<const char *> model_weights = std::nullopt,
@@ -66,20 +66,20 @@ public:
 
 private:
     /**
-     * @brief Extract visual features from the given bounding box using CNN
+     * @brief Extract visual features from the given frame and bounding box
      * 
-     * @param frame Image frame
-     * @param bbox_tlwh Bounding box in the format (top left x, top left y, width, height)
+     * @param frame Input frame
+     * @param bbox_tlwh Bounding box (top, left, width, height)
      * @return FeatureVector Extracted visual features
      */
     FeatureVector _extract_features(const cv::Mat &frame, const cv::Rect_<float> &bbox_tlwh);
 
     /**
-     * @brief Merge two track lists into one with no duplicates
+     * @brief Merge the given track lists
      * 
-     * @param tracks_list_a First track list
-     * @param tracks_list_b Second track list
-     * @return std::vector<Track *> Merged track list
+     * @param tracks_list_a Track list a
+     * @param tracks_list_b Track list b
+     * @return std::vector<std::shared_ptr<Track>> Merged track list
      */
     static std::vector<std::shared_ptr<Track>> _merge_track_lists(std::vector<std::shared_ptr<Track>> &tracks_list_a, std::vector<std::shared_ptr<Track>> &tracks_list_b);
 
@@ -88,7 +88,7 @@ private:
      * 
      * @param tracks_list List from which tracks are to be removed
      * @param tracks_to_remove Subset of tracks to be removed
-     * @return std::vector<Track *> List with tracks removed
+     * @return std::vector<std::shared_ptr<Track>> Track list after removing tracks
      */
     static std::vector<std::shared_ptr<Track>> _remove_from_list(std::vector<std::shared_ptr<Track>> &tracks_list, std::vector<std::shared_ptr<Track>> &tracks_to_remove);
 

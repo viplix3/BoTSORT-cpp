@@ -61,7 +61,7 @@ public:
      * @param covariance Kalman Filter state space covariance.
      * @return KFDataMeasurementSpace Kalman Filter measurement space data [mean, covariance]. 
      */
-    KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, bool motion_compensated = false);
+    KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, bool motion_compensated = false) const;
 
     /**
      * @brief Update the Kalman Filter state space data (mean, covariance) given the measurement (detection).
@@ -80,13 +80,14 @@ public:
      * @param mean Kalman Filter state space mean.
      * @param covariance Kalman Filter state space covariance.
      * @param measurements Detections [x-center, y-center, width, height].
+     * @param only_position If true, only the position (x-center, y-center) is used to compute the gating distance.
      * @return Eigen::Matrix<float, 1, Eigen::Dynamic> Gating distance.
      */
     Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance(
             const KFStateSpaceVec &mean,
             const KFStateSpaceMatrix &covariance,
             const std::vector<DetVec> &measurements,
-            bool only_position = false);
+            bool only_position = false) const;
 
 private:
     /**

@@ -11,6 +11,12 @@
 #include "track.h"
 
 
+/**
+ * @brief Read detections from MOTChallenge format file
+ * 
+ * @param tracks Tracks
+ * @param output_file Output file where the tracks will be written
+ */
 void mot_format_writer(const std::vector<std::shared_ptr<Track>> &tracks, const std::string &output_file) {
     std::ofstream mot_file(output_file, std::ios::app);
     for (const std::shared_ptr<Track> &track: tracks) {
@@ -23,6 +29,14 @@ void mot_format_writer(const std::vector<std::shared_ptr<Track>> &tracks, const 
     mot_file.close();
 }
 
+/**
+ * @brief Read detections from YOLOv8 format file
+ * 
+ * @param detection_file Detection file
+ * @param frame_width Image width (used to convert normalized bounding box to absolute coordinates)
+ * @param frame_height Image height (used to convert normalized bounding box to absolute coordinates)
+ * @return std::vector<Detection> Detections
+ */
 std::vector<Detection> read_detections_from_file(const std::string &detection_file, int frame_width, int frame_height) {
     std::vector<Detection> detections;
     std::ifstream det_file(detection_file);
@@ -47,6 +61,13 @@ std::vector<Detection> read_detections_from_file(const std::string &detection_fi
     return detections;
 }
 
+/**
+ * @brief Plot tracks on the frame
+ * 
+ * @param frame Input frame
+ * @param detections Detections
+ * @param tracks Tracks
+ */
 void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<std::shared_ptr<Track>> &tracks) {
     static std::map<int, cv::Scalar> track_colors;
     for (const auto &det: detections) {
