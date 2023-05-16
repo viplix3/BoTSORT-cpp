@@ -127,6 +127,7 @@ int main(int argc, char **argv) {
 
     // Read detections and execute MultiObjectTracker
     int frame_counter = 0;
+    double tracker_time_sum = 0;
     std::string output_file_txt = output_dir_mot + "/all.txt";
     for (const auto &filepath: image_filepaths) {
         std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
@@ -139,7 +140,11 @@ int main(int argc, char **argv) {
         std::vector<Detection> detections = read_detections_from_file(detection_file, frame.cols, frame.rows);
 
         // Execute tracker
+        auto start = std::chrono::high_resolution_clock::now();
         std::vector<std::shared_ptr<Track>> tracks = tracker.track(detections, frame);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        tracker_time_sum += elapsed.count();
 
         // Outputs
         mot_format_writer(tracks, output_file_txt);
@@ -149,12 +154,16 @@ int main(int argc, char **argv) {
 
         frame_counter++;
 
-        if (frame_counter % 10 == 0)
-            std::cout << "Processed " << frame_counter << " frames" << std::endl;
+        if (frame_counter % 100 == 0) {
+            std::cout << "Processed " << frame_counter << " frames\t";
+            std::cout << "Tracker FPS: " << frame_counter / tracker_time_sum << std::endl;
+        }
 
-        if (frame_counter == 50)
-            break;
+        // if (frame_counter == 10)
+        //     break;
     }
+
+    std::cout << "Average tracker FPS: " << frame_counter / tracker_time_sum << std::endl;
 
     return 0;
 }
