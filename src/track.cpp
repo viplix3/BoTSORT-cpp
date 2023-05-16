@@ -1,7 +1,9 @@
 #include "track.h"
 
+#include <utility>
+
 Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat, int feat_history_size)
-    : det_tlwh(tlwh),
+    : det_tlwh(std::move(tlwh)),
       _score(score),
       _class_id(class_id),
       tracklet_len(0),
@@ -78,8 +80,8 @@ void Track::predict(KalmanFilter &kalman_filter) {
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter) {
-    for (auto &track: tracks) {
+void Track::multi_predict(std::vector<std::shared_ptr<Track>> &tracks, KalmanFilter &kalman_filter) {
+    for (std::shared_ptr<Track> &track: tracks) {
         track->predict(kalman_filter);
     }
 }
@@ -96,8 +98,8 @@ void Track::apply_camera_motion(const HomographyMatrix &H) {
     covariance = R8x8 * covariance * R8x8.transpose();
 }
 
-void Track::multi_gmc(std::vector<Track *> &tracks, const HomographyMatrix &H) {
-    for (auto &track: tracks) {
+void Track::multi_gmc(std::vector<std::shared_ptr<Track>> &tracks, const HomographyMatrix &H) {
+    for (std::shared_ptr<Track> &track: tracks) {
         track->apply_camera_motion(H);
     }
 }
@@ -125,7 +127,7 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::_update_features(std::shared_ptr<FeatureVector> feat) {
+void Track::_update_features(const std::shared_ptr<FeatureVector>& feat) {
     *feat /= feat->norm();
 
     if (_feat_history.empty()) {

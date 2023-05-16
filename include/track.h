@@ -128,7 +128,7 @@ public:
      * @param tracks Tracks on which to perform the prediction step
      * @param kalman_filter Kalman filter object for the tracks
      */
-    void static multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter);
+    void static multi_predict(std::vector<std::shared_ptr<Track>> &tracks, KalmanFilter &kalman_filter);
 
     /**
      * @brief Apply camera motion to the track
@@ -143,7 +143,7 @@ public:
      * @param tracks Tracks on which to apply the camera motion
      * @param H Homography matrix
      */
-    void static multi_gmc(std::vector<Track *> &tracks, const HomographyMatrix &H);
+    void static multi_gmc(std::vector<std::shared_ptr<Track>> &tracks, const HomographyMatrix &H);
 
     /**
      * @brief Update the track state using the new detection
@@ -160,7 +160,7 @@ private:
      * 
      * @param feat Current feature vector
      */
-    void _update_features(std::shared_ptr<FeatureVector> feat);
+    void _update_features(const std::shared_ptr<FeatureVector>& feat);
 
     /**
      * @brief Populate a DetVec bbox object (xywh) from the detection bounding box (tlwh)

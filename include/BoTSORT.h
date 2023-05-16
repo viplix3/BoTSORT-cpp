@@ -17,7 +17,7 @@ public:
      * @param frame Current frame
      * @return std::vector<Track>
      */
-    std::vector<Track *> track(const std::vector<Detection> &detections, const cv::Mat &frame);
+    std::vector<std::shared_ptr<Track>> track(const std::vector<Detection> &detections, const cv::Mat &frame);
 
 private:
     bool _reid_enabled;
@@ -25,9 +25,9 @@ private:
     float _track_high_thresh, _new_track_thresh, _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
     unsigned int _frame_id;
 
-    std::vector<Track *> _tracked_tracks;
-    std::vector<Track *> _lost_tracks;
-    std::vector<Track *> _removed_tracks;
+    std::vector<std::shared_ptr<Track>> _tracked_tracks;
+    std::vector<std::shared_ptr<Track>> _lost_tracks;
+    std::vector<std::shared_ptr<Track>> _removed_tracks;
 
     std::unique_ptr<KalmanFilter> _kalman_filter;
     std::unique_ptr<GlobalMotionCompensation> _gmc_algo;
@@ -50,7 +50,7 @@ public:
      * @param frame_rate Frame rate of the video (default: 30)
      * @param lambda Exponential decay rate for the smooth feature (default: 0.985)
      */
-    BoTSORT(
+    explicit BoTSORT(
             std::optional<const char *> model_weights = std::nullopt,
             bool fp16_inference = false,
             float track_high_thresh = 0.45,
@@ -81,7 +81,7 @@ private:
      * @param tracks_list_b Second track list
      * @return std::vector<Track *> Merged track list
      */
-    static std::vector<Track *> _merge_track_lists(std::vector<Track *> &tracks_list_a, std::vector<Track *> &tracks_list_b);
+    static std::vector<std::shared_ptr<Track>> _merge_track_lists(std::vector<std::shared_ptr<Track>> &tracks_list_a, std::vector<std::shared_ptr<Track>> &tracks_list_b);
 
     /**
      * @brief Remove tracks from the given track list
@@ -90,7 +90,7 @@ private:
      * @param tracks_to_remove Subset of tracks to be removed
      * @return std::vector<Track *> List with tracks removed
      */
-    static std::vector<Track *> _remove_from_list(std::vector<Track *> &tracks_list, std::vector<Track *> &tracks_to_remove);
+    static std::vector<std::shared_ptr<Track>> _remove_from_list(std::vector<std::shared_ptr<Track>> &tracks_list, std::vector<std::shared_ptr<Track>> &tracks_to_remove);
 
     /**
      * @brief Rectify track lists
@@ -103,8 +103,8 @@ private:
      * @param tracks_list_b Input track list b
      */
     static void _remove_duplicate_tracks(
-            std::vector<Track *> &result_tracks_a,
-            std::vector<Track *> &result_tracks_b,
-            std::vector<Track *> &tracks_list_a,
-            std::vector<Track *> &tracks_list_b);
+            std::vector<std::shared_ptr<Track>> &result_tracks_a,
+            std::vector<std::shared_ptr<Track>> &result_tracks_b,
+            std::vector<std::shared_ptr<Track>> &tracks_list_a,
+            std::vector<std::shared_ptr<Track>> &tracks_list_b);
 };

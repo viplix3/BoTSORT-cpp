@@ -1,7 +1,7 @@
 #include "matching.h"
 #include "utils.h"
 
-CostMatrix iou_distance(const std::vector<Track *> &tracks, const std::vector<Track *> &detections) {
+CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks, const std::vector<std::shared_ptr<Track>> &detections) {
     int num_tracks = tracks.size();
     int num_detections = detections.size();
 
@@ -17,7 +17,7 @@ CostMatrix iou_distance(const std::vector<Track *> &tracks, const std::vector<Tr
     return cost_matrix;
 }
 
-CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vector<Track *> &detections) {
+CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks, const std::vector<std::shared_ptr<Track>> &detections) {
     int num_tracks = tracks.size();
     int num_detections = detections.size();
 
@@ -33,7 +33,7 @@ CostMatrix embedding_distance(const std::vector<Track *> &tracks, const std::vec
     return cost_matrix;
 }
 
-void fuse_score(CostMatrix &cost_matrix, std::vector<Track *> detections) {
+void fuse_score(CostMatrix &cost_matrix, const std::vector<std::shared_ptr<Track>> &detections) {
     if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0) {
         return;
     }
@@ -45,10 +45,10 @@ void fuse_score(CostMatrix &cost_matrix, std::vector<Track *> detections) {
     }
 }
 
-void fuse_motion(KalmanFilter &KF,
+void fuse_motion(const KalmanFilter &KF,
                  CostMatrix &cost_matrix,
-                 std::vector<Track *> tracks,
-                 std::vector<Track *> detections,
+                 const std::vector<std::shared_ptr<Track>> &tracks,
+                 const std::vector<std::shared_ptr<Track>> &detections,
                  bool only_position,
                  float lambda) {
     if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0) {
@@ -60,7 +60,7 @@ void fuse_motion(KalmanFilter &KF,
 
     std::vector<DetVec> measurements;
     std::vector<float> det_xywh;
-    for (auto & detection : detections) {
+    for (const std::shared_ptr<Track> &detection: detections) {
         DetVec det;
 
         det_xywh = detection->get_tlwh();

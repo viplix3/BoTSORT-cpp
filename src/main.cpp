@@ -11,9 +11,9 @@
 #include "track.h"
 
 
-void mot_format_writer(const std::vector<Track *> &tracks, const std::string &output_file) {
+void mot_format_writer(const std::vector<std::shared_ptr<Track>> &tracks, const std::string &output_file) {
     std::ofstream mot_file(output_file, std::ios::app);
-    for (const Track *track: tracks) {
+    for (const std::shared_ptr<Track> &track: tracks) {
         std::vector<float> bbox_tlwh = track->get_tlwh();
         float score = track->get_score();
 
@@ -47,13 +47,13 @@ std::vector<Detection> read_detections_from_file(const std::string &detection_fi
     return detections;
 }
 
-void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<Track *> &tracks) {
+void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<std::shared_ptr<Track>> &tracks) {
     static std::map<int, cv::Scalar> track_colors;
     for (const auto &det: detections) {
         cv::rectangle(frame, det.bbox_tlwh, cv::Scalar(0, 0, 0), 1);
     }
 
-    for (const auto *track: tracks) {
+    for (const std::shared_ptr<Track> &track: tracks) {
         std::vector<float> bbox_tlwh = track->get_tlwh();
         cv::Scalar color = cv::Scalar(rand() % 255, rand() % 255, rand() % 255);
 
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
         std::vector<Detection> detections = read_detections_from_file(detection_file, frame.cols, frame.rows);
 
         // Execute tracker
-        std::vector<Track *> tracks = tracker.track(detections, frame);
+        std::vector<std::shared_ptr<Track>> tracks = tracker.track(detections, frame);
 
         // Outputs
         mot_format_writer(tracks, output_file_txt);
