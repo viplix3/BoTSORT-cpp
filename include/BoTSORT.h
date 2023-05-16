@@ -40,10 +40,10 @@ public:
      * 
      * @param model_weights (Optional) Path to the model weights file. If not provided, Re-ID is disabled (default: std::nullopt)
      * @param fp16_inference If true, use FP16 inference (default: false)
-     * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.45)
-     * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.6)
+     * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.7)
+     * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.8)
      * @param track_buffer 
-     * @param match_thresh IoU + Re-ID matching threshold for first stage matching (default: 0.8)
+     * @param match_thresh IoU + Re-ID matching threshold for first stage matching (default: 0.7)
      * @param proximity_thresh Minimum IoU threshold for using visual features for matching (default: 0.5)
      * @param appearance_thresh Appearance matching threshold (default: 0.25)
      * @param gmc_method Global motion compensation method (default: "sparseOptFlow")
@@ -53,10 +53,10 @@ public:
     explicit BoTSORT(
             std::optional<const char *> model_weights = std::nullopt,
             bool fp16_inference = false,
-            float track_high_thresh = 0.45,
-            float new_track_thresh = 0.6,
+            float track_high_thresh = 0.6,
+            float new_track_thresh = 0.7,
             uint8_t track_buffer = 30,
-            float match_thresh = 0.8,
+            float match_thresh = 0.7,
             float proximity_thresh = 0.5,
             float appearance_thresh = 0.25,
             const char *gmc_method = "sparseOptFlow",
