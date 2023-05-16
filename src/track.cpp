@@ -1,16 +1,12 @@
 #include "track.h"
 
-Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat, int feat_history_size) {
-    // Save the detection in the det_tlwh vector
-    det_tlwh.resize(DET_ELEMENTS);
-    det_tlwh.assign(tlwh.begin(), tlwh.end());
-
-    _score = score;
-    _class_id = -1;
-
-    tracklet_len = 0;
-    is_activated = false;
-    state = TrackState::New;
+Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat, int feat_history_size)
+    : det_tlwh(tlwh),
+      _score(score),
+      _class_id(class_id),
+      tracklet_len(0),
+      is_activated(false),
+      state(TrackState::New) {
 
     if (feat) {
         _feat_history_size = feat_history_size;
