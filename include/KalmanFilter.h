@@ -55,7 +55,7 @@ public:
      * @param covariance Kalman Filter state space covariance.
      * @return KFDataMeasurementSpace Kalman Filter measurement space data [mean, covariance]. 
      */
-    KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance);
+    KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance) const;
 
     /**
      * @brief Update the Kalman Filter state space data (mean, covariance) given the measurement (detection).
@@ -80,7 +80,7 @@ public:
             const KFStateSpaceVec &mean,
             const KFStateSpaceMatrix &covariance,
             const std::vector<DetVec> &measurements,
-            bool only_position = false);
+            bool only_position = false) const;
 
 private:
     /**
