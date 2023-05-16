@@ -2,7 +2,7 @@
 
 #include "DataType.h"
 
-namespace byte_kalman {
+namespace bot_kalman {
 class KalmanFilter {
 public:
     static constexpr double chi2inv95[10] = {
@@ -91,4 +91,4 @@ private:
      */
     void _init_kf_matrices(double dt);
 };
-}// namespace byte_kalman
+}// namespace bot_kalman

@@ -1,7 +1,7 @@
 #include "KalmanFilter.h"
 #include <eigen3/Eigen/Cholesky>
 
-namespace byte_kalman {
+namespace bot_kalman {
 KalmanFilter::KalmanFilter(double dt)
     : _std_weight_position(1.0 / 20),
       _std_weight_velocity(1.0 / 160) {
@@ -98,4 +98,4 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
 
     return mahalanobis_distance.array().square().matrix().rowwise().sum();
 }
-}// namespace byte_kalman
+}// namespace bot_kalman

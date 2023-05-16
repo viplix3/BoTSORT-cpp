@@ -1,10 +1,11 @@
 #pragma once
 
 #include "KalmanFilter.h"
+#include "KalmanFilterAccBased.h"
 #include <deque>
 #include <memory>
 
-using KalmanFilter = byte_kalman::KalmanFilter;
+using KalmanFilter = bot_kalman::KalmanFilter;
 
 enum TrackState {
     New = 0,
@@ -160,7 +161,7 @@ private:
      * 
      * @param feat Current feature vector
      */
-    void _update_features(const std::shared_ptr<FeatureVector>& feat);
+    void _update_features(const std::shared_ptr<FeatureVector> &feat);
 
     /**
      * @brief Populate a DetVec bbox object (xywh) from the detection bounding box (tlwh)

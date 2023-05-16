@@ -1,7 +1,7 @@
 #include "KalmanFilterAccBased.h"
 #include <eigen3/Eigen/Cholesky>
 
-namespace kalman_modified {
+namespace acc_kalman {
 KalmanFilter::KalmanFilter(double dt)
     : _init_pos_weight(5.0),
       _init_vel_weight(15.0),
@@ -119,4 +119,4 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
     return mahalanobis_distance.array().square().matrix().rowwise().sum();
 }
 
-}// namespace kalman_modified
+}// namespace acc_kalman
