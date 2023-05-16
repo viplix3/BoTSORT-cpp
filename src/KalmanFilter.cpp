@@ -2,11 +2,11 @@
 #include <eigen3/Eigen/Cholesky>
 
 namespace byte_kalman {
-KalmanFilter::KalmanFilter(double dt) {
-    _init_kf_matrices(dt);
+KalmanFilter::KalmanFilter(double dt)
+    : _std_weight_position(1.0 / 20),
+      _std_weight_velocity(1.0 / 160) {
 
-    _std_weight_position = 1.0 / 20;
-    _std_weight_velocity = 1.0 / 160;
+    _init_kf_matrices(dt);
 }
 
 void KalmanFilter::_init_kf_matrices(double dt) {
