@@ -66,7 +66,7 @@ void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance
     covariance = _state_transition_matrix * covariance * _state_transition_matrix.transpose() + motion_cov;
 }
 
-KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, bool motion_compensated) {
+KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, bool motion_compensated) const {
     float std_factor = motion_compensated ? _std_factor_motion_compensated_detection : _std_factor_detection;
     float min_std = motion_compensated ? _min_std_motion_compensated_detection : _min_std_detection;
 
@@ -100,7 +100,7 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
         const KFStateSpaceVec &mean,
         const KFStateSpaceMatrix &covariance,
         const std::vector<DetVec> &measurements,
-        bool only_position) {
+        bool only_position) const {
     KFDataMeasurementSpace projected = this->project(mean, covariance);
     KFMeasSpaceVec projected_mean = projected.first;
     KFMeasSpaceMatrix projected_covariance = projected.second;
