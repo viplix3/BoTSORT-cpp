@@ -29,7 +29,7 @@ private:
     std::vector<Track *> _lost_tracks;
     std::vector<Track *> _removed_tracks;
 
-    std::shared_ptr<KalmanFilter> _kalman_filter;
+    std::unique_ptr<KalmanFilter> _kalman_filter;
     std::unique_ptr<GlobalMotionCompensation> _gmc_algo;
     std::unique_ptr<ReIDModel> _reid_model;
 

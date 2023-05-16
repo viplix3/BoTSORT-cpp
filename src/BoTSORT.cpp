@@ -27,7 +27,7 @@ BoTSORT::BoTSORT(
     _frame_id = 0;
     _buffer_size = static_cast<uint8_t>(_frame_rate / 30.0 * _track_buffer);
     _max_time_lost = _buffer_size;
-    _kalman_filter = std::make_shared<KalmanFilter>(static_cast<double>(1.0 / _frame_rate));
+    _kalman_filter = std::make_unique<KalmanFilter>(static_cast<double>(1.0 / _frame_rate));
 
 
     // Re-ID module, load visual feature extractor here
