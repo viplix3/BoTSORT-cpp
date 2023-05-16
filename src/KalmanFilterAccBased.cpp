@@ -70,12 +70,10 @@ KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const 
     float std_factor = motion_compensated ? _std_factor_motion_compensated_detection : _std_factor_detection;
     float min_std = motion_compensated ? _min_std_motion_compensated_detection : _min_std_detection;
 
-    KFMeasSpaceMatrix measurement_cov;
-    measurement_cov << std::max(std_factor * mean(2), min_std),
-            std::max(std_factor * mean(3), min_std),
-            std::max(std_factor * mean(2), min_std),
-            std::max(std_factor * mean(3), min_std);
-    measurement_cov = measurement_cov.array().square().matrix();
+    Eigen::Vector4f std;
+    std << std::max(std_factor * mean(2), min_std), std::max(std_factor * mean(3), min_std), std::max(std_factor * mean(2), min_std), std::max(std_factor * mean(3), min_std);
+    KFMeasSpaceMatrix measurement_cov = KFMeasSpaceMatrix::Zero();
+    measurement_cov.diagonal() = std.array().square();
 
     KFMeasSpaceVec mean_projected = _measurement_matrix * mean.transpose();
     KFMeasSpaceMatrix covariance_projected = _measurement_matrix * covariance * _measurement_matrix.transpose() + measurement_cov;
