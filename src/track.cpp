@@ -14,25 +14,15 @@ Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::option
 
     if (feat) {
         _feat_history_size = feat_history_size;
-        _feat_history = new std::deque<FeatureVector>();
-        _update_features(&feat.value());
+        _update_features(std::make_shared<FeatureVector>(feat.value()));
     } else {
         curr_feat = nullptr;
         smooth_feat = nullptr;
-        _feat_history = nullptr;
         _feat_history_size = 0;
     }
 
     _update_class_id(class_id, score);
     _update_tracklet_tlwh_inplace();
-}
-
-Track::~Track() {
-    if (_feat_history) {
-        delete curr_feat;
-        delete smooth_feat;
-        delete _feat_history;
-    }
 }
 
 void Track::activate(KalmanFilter &kalman_filter, int frame_id) {
@@ -93,7 +83,7 @@ void Track::predict(KalmanFilter &kalman_filter) {
 }
 
 void Track::multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter) {
-    for (auto & track : tracks) {
+    for (auto &track: tracks) {
         track->predict(kalman_filter);
     }
 }
@@ -111,7 +101,7 @@ void Track::apply_camera_motion(const HomographyMatrix &H) {
 }
 
 void Track::multi_gmc(std::vector<Track *> &tracks, const HomographyMatrix &H) {
-    for (auto & track : tracks) {
+    for (auto &track: tracks) {
         track->apply_camera_motion(H);
     }
 }
@@ -139,20 +129,20 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::_update_features(FeatureVector *feat) {
+void Track::_update_features(std::shared_ptr<FeatureVector> feat) {
     *feat /= feat->norm();
 
-    if (_feat_history->empty()) {
-        curr_feat = new FeatureVector(*feat);
-        smooth_feat = new FeatureVector(*curr_feat);
+    if (_feat_history.empty()) {
+        curr_feat = feat;
+        smooth_feat = std::make_unique<FeatureVector>(*curr_feat);
     } else {
         *smooth_feat = _alpha * (*smooth_feat) + (1 - _alpha) * (*feat);
     }
 
-    if (_feat_history->size() == _feat_history_size) {
-        _feat_history->pop_front();
+    if (_feat_history.size() == _feat_history_size) {
+        _feat_history.pop_front();
     }
-    _feat_history->push_back(*feat);
+    _feat_history.push_back(curr_feat);
     *smooth_feat /= smooth_feat->norm();
 }
 
