@@ -23,8 +23,8 @@ void mot_format_writer(const std::vector<std::shared_ptr<Track>> &tracks, const 
         std::vector<float> bbox_tlwh = track->get_tlwh();
         float score = track->get_score();
 
-        mot_file << track->frame_id << " " << track->track_id << " " << bbox_tlwh[0] << " "
-                 << bbox_tlwh[1] << " " << bbox_tlwh[2] << " " << bbox_tlwh[3] << " -1 -1 -1 0" << std::endl;
+        mot_file << track->frame_id << "," << track->track_id << "," << bbox_tlwh[0] << ","
+                 << bbox_tlwh[1] << "," << bbox_tlwh[2] << "," << bbox_tlwh[3] << ",-1,-1,-1,0" << std::endl;
     }
     mot_file.close();
 }
@@ -164,6 +164,7 @@ int main(int argc, char **argv) {
     }
 
     std::cout << "Average tracker FPS: " << frame_counter / tracker_time_sum << std::endl;
+    std::cout << "Average processing time per frame (ms): " << (tracker_time_sum / frame_counter) * 1000 << std::endl;
 
     return 0;
 }
