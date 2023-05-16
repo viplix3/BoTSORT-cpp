@@ -13,6 +13,7 @@ KalmanFilter::KalmanFilter(double dt)
       _min_std_motion_compensated_detection(5.0),
       _velocity_coupling_factor(0.6),
       _velocity_half_life(2) {
+
     _init_kf_matrices(dt);
 }
 
