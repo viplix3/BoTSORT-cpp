@@ -23,8 +23,8 @@ void mot_format_writer(const std::vector<std::shared_ptr<Track>> &tracks, const 
         std::vector<float> bbox_tlwh = track->get_tlwh();
         float score = track->get_score();
 
-        mot_file << track->frame_id << "," << track->track_id << "," << bbox_tlwh[0] << ","
-                 << bbox_tlwh[1] << "," << bbox_tlwh[2] << "," << bbox_tlwh[3] << "," << score << ",-1,-1,-1" << std::endl;
+        mot_file << track->frame_id << " " << track->track_id << " " << bbox_tlwh[0] << " "
+                 << bbox_tlwh[1] << " " << bbox_tlwh[2] << " " << bbox_tlwh[3] << " -1 -1 -1 0" << std::endl;
     }
     mot_file.close();
 }
