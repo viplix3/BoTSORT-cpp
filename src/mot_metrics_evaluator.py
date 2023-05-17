@@ -30,7 +30,10 @@ def motMetricsEnhancedCalculator(gtSource, tSource):
     gt = np.loadtxt(gtSource, delimiter=",")
 
     # load tracking output
-    t = np.loadtxt(tSource, delimiter=",")
+    t = np.loadtxt(tSource, delimiter=",", usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+
+    print("Number of ground truth objects:", len(gt))
+    print("Number of tracking objects:", len(t))
 
     # Create an accumulator that will be updated during each frame
     acc = mm.MOTAccumulator(auto_id=True)
