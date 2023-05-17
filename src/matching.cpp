@@ -55,7 +55,7 @@ void fuse_motion(const KalmanFilter &KF,
         return;
     }
 
-    uint8_t gating_dim = (only_position == true) ? 2 : 4;
+    uint8_t gating_dim = only_position ? 2 : 4;
     const double gating_threshold = KalmanFilter::chi2inv95[gating_dim];
 
     std::vector<DetVec> measurements;
