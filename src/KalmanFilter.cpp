@@ -47,16 +47,16 @@ void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance
     std_combined.tail<4>().array() *= _std_weight_velocity;
     KFStateSpaceMatrix motion_cov = std_combined.array().square().matrix().asDiagonal();
 
-    mean = _state_transition_matrix * mean.transpose();
-    covariance = _state_transition_matrix * covariance * _state_transition_matrix.transpose() + motion_cov;
+    mean = _state_transition_matrix.lazyProduct(mean.transpose());
+    covariance = (_state_transition_matrix * covariance).lazyProduct(_state_transition_matrix.transpose()) + motion_cov;
 }
 
 KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance) const {
     KFMeasSpaceVec innovation_cov = (_std_weight_position * Eigen::Vector4f(mean(2), mean(3), mean(2), mean(3))).array().square().matrix();
     KFMeasSpaceMatrix innovation_cov_diag = innovation_cov.asDiagonal();
 
-    KFMeasSpaceVec mean_projected = _measurement_matrix * mean.transpose();
-    KFMeasSpaceMatrix covariance_projected = _measurement_matrix * covariance * _measurement_matrix.transpose() + innovation_cov_diag;
+    KFMeasSpaceVec mean_projected = _measurement_matrix.lazyProduct(mean.transpose());
+    KFMeasSpaceMatrix covariance_projected = (_measurement_matrix * covariance).lazyProduct(_measurement_matrix.transpose()) + innovation_cov_diag;
     return {mean_projected, covariance_projected};
 }
 
