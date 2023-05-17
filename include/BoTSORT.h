@@ -40,8 +40,8 @@ public:
      * 
      * @param model_weights (Optional) Path to the model weights file. If not provided, Re-ID is disabled (default: std::nullopt)
      * @param fp16_inference If true, use FP16 inference (default: false)
-     * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.7)
-     * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.8)
+     * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.6)
+     * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.7)
      * @param track_buffer 
      * @param match_thresh IoU + Re-ID matching threshold for first stage matching (default: 0.7)
      * @param proximity_thresh Minimum IoU threshold for using visual features for matching (default: 0.5)
