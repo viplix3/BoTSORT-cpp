@@ -42,11 +42,11 @@ public:
      * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.6)
      * @param track_low_thresh Lowest detection confidence threshold to consider a detection for tracking (default: 0.1)
      * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.7)
-     * @param track_buffer 
+     * @param track_buffer Used to decide for how many frames a track should be kept alive after it lost the object. (time_alive = (frame_rate / 30) * track_buffer)
      * @param match_thresh IoU + Re-ID matching threshold for first stage matching (default: 0.7)
      * @param proximity_thresh Minimum IoU threshold for using visual features for matching (default: 0.5)
      * @param appearance_thresh Appearance matching threshold (default: 0.25)
-     * @param gmc_method Global motion compensation method (default: "sparseOptFlow")
+     * @param gmc_method Global motion compensation method (default: "OpenCV_VideoStab")
      * @param frame_rate Frame rate of the video (default: 30)
      * @param lambda Used for fusing motion distance and appearance distance (default: 0.985)
      */
@@ -60,7 +60,7 @@ public:
             float match_thresh = 0.7,
             float proximity_thresh = 0.5,
             float appearance_thresh = 0.25,
-            const char *gmc_method = "sparseOptFlow",
+            const char *gmc_method = "OpenCV_VideoStab",
             uint8_t frame_rate = 30,
             float lambda = 0.985);
     ~BoTSORT() = default;
