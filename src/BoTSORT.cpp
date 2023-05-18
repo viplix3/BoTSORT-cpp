@@ -6,6 +6,7 @@ BoTSORT::BoTSORT(
         std::optional<const char *> model_weights,
         bool fp16_inference,
         float track_high_thresh,
+        float track_low_thresh,
         float new_track_thresh,
         uint8_t track_buffer,
         float match_thresh,
@@ -15,6 +16,7 @@ BoTSORT::BoTSORT(
         uint8_t frame_rate,
         float lambda)
     : _track_high_thresh(track_high_thresh),
+      _track_low_thresh(track_low_thresh),
       _new_track_thresh(new_track_thresh),
       _track_buffer(track_buffer),
       _match_thresh(match_thresh),
