@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <opencv2/highgui.hpp>
 
 #include "BoTSORT.h"
 #include "DataType.h"
@@ -123,6 +124,37 @@ int main(int argc, char **argv) {
     // Initialize BoTSORT tracker with all the deault params
     // TODO: Load BoTSORT params from a config file
     BoTSORT tracker = BoTSORT();
+
+
+// // Initialize GlobalMotionCompensation
+#ifdef TEST_GMC
+    /*
+        {"orb", GMC_Method::ORB},
+        {"ecc", GMC_Method::ECC},
+        {"sparseOptFlow", GMC_Method::SparseOptFlow},
+        {"optFlowModified", GMC_Method::OptFlowModified},
+        {"OpenCV_VideoStab", GMC_Method::OpenCV_VideoStab},
+    */
+    GlobalMotionCompensation gmc = GlobalMotionCompensation(GlobalMotionCompensation::GMC_method_map["OpenCV_VideoStab"], 2.0);
+    cv::VideoCapture cap("/home/vipin/datasets/test_videos/0x100000A9_424_20220427_094317.mp4");
+    cv::Mat frame;
+
+    while (cap.read(frame)) {
+        HomographyMatrix H = gmc.apply(frame, {});
+        cv::Mat H_cv;
+        cv::eigen2cv(H, H_cv);
+        cv::Mat warped_frame;
+        cv::warpPerspective(frame, warped_frame, H_cv, frame.size());
+
+        cv::imshow("frame", frame);
+        cv::imshow("warped", warped_frame);
+
+        if (cv::waitKey(1) == 27) {
+            break;
+        }
+    }
+    return 0;
+#endif
 
 
     // Read detections and execute MultiObjectTracker
