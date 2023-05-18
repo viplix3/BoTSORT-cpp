@@ -22,12 +22,11 @@ public:
 private:
     bool _reid_enabled;
     uint8_t _track_buffer, _frame_rate, _buffer_size, _max_time_lost;
-    float _track_high_thresh, _new_track_thresh, _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
+    float _track_high_thresh, _track_low_thresh, _new_track_thresh, _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
     unsigned int _frame_id;
 
     std::vector<std::shared_ptr<Track>> _tracked_tracks;
     std::vector<std::shared_ptr<Track>> _lost_tracks;
-    std::vector<std::shared_ptr<Track>> _removed_tracks;
 
     std::unique_ptr<KalmanFilter> _kalman_filter;
     std::unique_ptr<GlobalMotionCompensation> _gmc_algo;
@@ -41,6 +40,7 @@ public:
      * @param model_weights (Optional) Path to the model weights file. If not provided, Re-ID is disabled (default: std::nullopt)
      * @param fp16_inference If true, use FP16 inference (default: false)
      * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.6)
+     * @param track_low_thresh Lowest detection confidence threshold to consider a detection for tracking (default: 0.1)
      * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.7)
      * @param track_buffer 
      * @param match_thresh IoU + Re-ID matching threshold for first stage matching (default: 0.7)
@@ -54,6 +54,7 @@ public:
             std::optional<const char *> model_weights = std::nullopt,
             bool fp16_inference = false,
             float track_high_thresh = 0.6,
+            float track_low_thresh = 0.1,
             float new_track_thresh = 0.7,
             uint8_t track_buffer = 30,
             float match_thresh = 0.7,
