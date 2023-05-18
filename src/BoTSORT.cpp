@@ -60,24 +60,27 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
             std::shared_ptr<Track> tracklet;
             std::vector<float> tlwh = {detection.bbox_tlwh.x, detection.bbox_tlwh.y, detection.bbox_tlwh.width, detection.bbox_tlwh.height};
-            if (_reid_enabled) {
-                FeatureVector embedding = _extract_features(frame, detection.bbox_tlwh);
-                tracklet = std::make_unique<Track>(tlwh, detection.confidence, detection.class_id, embedding);
-            } else {
-                tracklet = std::make_unique<Track>(tlwh, detection.confidence, detection.class_id);
-            }
 
-            if (detection.confidence >= _track_high_thresh) {
-                detections_high_conf.emplace_back(tracklet);
-            } else if (detection.confidence > 0.1 && detection.confidence < _track_high_thresh) {
-                detections_low_conf.push_back(tracklet);
+            if (detection.confidence > _track_low_thresh) {
+                if (_reid_enabled) {
+                    FeatureVector embedding = _extract_features(frame, detection.bbox_tlwh);
+                    tracklet = std::make_shared<Track>(tlwh, detection.confidence, detection.class_id, embedding);
+                } else {
+                    tracklet = std::make_shared<Track>(tlwh, detection.confidence, detection.class_id);
+                }
+
+                if (detection.confidence >= _track_high_thresh) {
+                    detections_high_conf.emplace_back(tracklet);
+                } else {
+                    detections_low_conf.push_back(tracklet);
+                }
             }
         }
     }
 
     // Segregate tracks in unconfirmed and tracked tracks
     std::vector<std::shared_ptr<Track>> unconfirmed_tracks, tracked_tracks;
-    for (const std::shared_ptr<Track> &track: _tracked_tracks) {
+    for (std::shared_ptr<Track> &track: _tracked_tracks) {
         if (!track->is_activated) {
             unconfirmed_tracks.push_back(track);
         } else {
@@ -161,9 +164,9 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
     linear_assignment(iou_dists_second, 0.5, second_associations);
 
     // Update the tracks with the associated detections
-    for (auto &match: second_associations.matches) {
-        std::shared_ptr<Track> &track = unmatched_tracks_after_1st_association[match.first];
-        std::shared_ptr<Track> &detection = detections_low_conf[match.second];
+    for (const std::pair<int, int> &match: second_associations.matches) {
+        std::shared_ptr<Track> track = unmatched_tracks_after_1st_association[match.first];
+        std::shared_ptr<Track> detection = detections_low_conf[match.second];
 
         // If track was being actively tracked, we update the track with the new associated detection
         if (track->state == TrackState::Tracked) {
@@ -273,8 +276,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     _lost_tracks = _merge_track_lists(_lost_tracks, lost_tracks);
     _lost_tracks = _remove_from_list(_lost_tracks, _tracked_tracks);
-    _lost_tracks = _remove_from_list(_lost_tracks, _removed_tracks);
-    _removed_tracks = _merge_track_lists(_removed_tracks, removed_tracks);
+    _lost_tracks = _remove_from_list(_lost_tracks, removed_tracks);
 
     std::vector<std::shared_ptr<Track>> tracked_tracks_cleaned, lost_tracks_cleaned;
     _remove_duplicate_tracks(tracked_tracks_cleaned, lost_tracks_cleaned, _tracked_tracks, _lost_tracks);
