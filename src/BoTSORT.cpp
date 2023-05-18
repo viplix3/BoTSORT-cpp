@@ -50,8 +50,9 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
     ////////////////// CREATE TRACK OBJECT FOR ALL THE DETECTIONS //////////////////
     // For all detections, extract features, create tracks and classify on the segregate of confidence
     _frame_id++;
-    std::vector<std::shared_ptr<Track>> detections_high_conf, detections_low_conf;
     std::vector<std::shared_ptr<Track>> activated_tracks, refind_tracks;
+    std::vector<std::shared_ptr<Track>> detections_high_conf, detections_low_conf;
+    detections_low_conf.reserve(detections.size()), detections_high_conf.reserve(detections.size());
 
     if (!detections.empty()) {
         for (Detection &detection: const_cast<std::vector<Detection> &>(detections)) {
