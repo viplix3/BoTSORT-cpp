@@ -109,7 +109,7 @@ private:
 
 
 public:
-    explicit OpenCV_VideoStab_GMC(float downscale = 2.0, int num_features = 4000, bool detections_masking = false);
+    explicit OpenCV_VideoStab_GMC(float downscale = 2.0, int num_features = 4000, bool detections_masking = true);
     HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections = {}) override;
 };
 
