@@ -1,10 +1,13 @@
 #include "GlobalMotionCompensation.h"
+#include <opencv2/videostab/global_motion.hpp>
+#include <opencv2/videostab/motion_core.hpp>
 
 std::map<std::string, GMC_Method> GlobalMotionCompensation::GMC_method_map = {
         {"orb", GMC_Method::ORB},
         {"ecc", GMC_Method::ECC},
         {"sparseOptFlow", GMC_Method::SparseOptFlow},
         {"optFlowModified", GMC_Method::OptFlowModified},
+        {"OpenCV_VideoStab", GMC_Method::OpenCV_VideoStab},
 };
 
 
@@ -17,8 +20,10 @@ GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, float down
         _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(downscale);
     } else if (method == GMC_Method::OptFlowModified) {
         _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(downscale);
+    } else if (method == GMC_Method::OpenCV_VideoStab) {
+        _gmc_algorithm = std::make_unique<OpenCV_VideoStab_GMC>(downscale);
     } else {
-        throw std::runtime_error("Unknown global motion compensation method: " + method);
+        throw std::runtime_error("Unknown global motion compensation method: " + std::to_string(method));
     }
 }
 
@@ -321,6 +326,76 @@ HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame_raw, const std::v
 
     _prev_frame = frame.clone();
     _prev_keypoints = keypoints;
+    return H;
+}
+
+
+// OpenCV VideoStab
+OpenCV_VideoStab_GMC::OpenCV_VideoStab_GMC(float downscale, int num_features, bool detections_masking)
+    : _detections_masking(detections_masking) {
+    if (0 < downscale && downscale < 8) {
+        _downscale = downscale;
+    }
+
+    if (0 < num_features) {
+        _num_features = num_features;
+    }
+
+    _motion_estimator = cv::makePtr<cv::videostab::MotionEstimatorRansacL2>(cv::videostab::MM_SIMILARITY);
+
+    _keypoint_motion_estimator = cv::makePtr<cv::videostab::KeypointBasedMotionEstimator>(_motion_estimator);
+    _keypoint_motion_estimator->setDetector(cv::GFTTDetector::create(_num_features));
+}
+HomographyMatrix OpenCV_VideoStab_GMC::apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) {
+    // Initialization
+    int height = frame_raw.rows;
+    int width = frame_raw.cols;
+
+    HomographyMatrix H;
+    H.setIdentity();
+    cv::Mat frame = frame_raw.clone();
+
+    if (frame_raw.empty()) {
+        return H;
+    }
+
+    // Downscale
+    if (_downscale > 1.0F) {
+        width /= _downscale, height /= _downscale;
+        cv::resize(frame_raw, frame, cv::Size(width, height));
+    }
+
+    cv::Mat homography = cv::Mat::eye(3, 3, CV_32F);
+
+    if (!_prev_frame.empty()) {
+        if (_detections_masking) {
+            cv::Mat mask = cv::Mat::zeros(frame.size(), CV_8U);
+            for (const Detection &detection: detections) {
+                cv::Rect rect = detection.bbox_tlwh;
+                rect.x /= _downscale;
+                rect.y /= _downscale;
+                rect.width /= _downscale;
+                rect.height /= _downscale;
+                mask(rect) = 255;
+            }
+
+            _keypoint_motion_estimator->setFrameMask(mask);
+        }
+
+        bool ok;
+        homography = _keypoint_motion_estimator->estimate(_prev_frame, frame, &ok);
+
+        if (ok) {
+            cv2eigen(homography, H);
+            if (_downscale > 1.0) {
+                H(0, 2) *= _downscale;
+                H(1, 2) *= _downscale;
+            }
+        }
+    }
+
+    frame.copyTo(_prev_frame);
+    homography.copyTo(_prev_homography);
     return H;
 }
 

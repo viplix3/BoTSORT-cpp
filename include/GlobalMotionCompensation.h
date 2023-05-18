@@ -4,12 +4,15 @@
 
 #include <map>
 #include <numeric>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/videostab/global_motion.hpp>
 #include <string>
 
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/videostab.hpp>
 
 
 enum GMC_Method {
@@ -17,13 +20,14 @@ enum GMC_Method {
     ECC,
     SparseOptFlow,
     OptFlowModified,
+    OpenCV_VideoStab
 };
 
 
 class GMC_Algorithm {
 public:
     virtual ~GMC_Algorithm() = default;
-    virtual HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) = 0;
+    virtual HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) = 0;
 };
 
 class ORB_GMC : public GMC_Algorithm {
@@ -43,7 +47,7 @@ private:
 public:
     explicit ORB_GMC(float downscale);
 
-    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
+    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
 };
 
 class ECC_GMC : public GMC_Algorithm {
@@ -58,7 +62,7 @@ private:
 
 public:
     explicit ECC_GMC(float downscale, int max_iterations = 100, int termination_eps = static_cast<int>(1e-6));
-    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
+    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
 };
 
 class SparseOptFlow_GMC : public GMC_Algorithm {
@@ -78,7 +82,7 @@ private:
 
 public:
     explicit SparseOptFlow_GMC(float downscale);
-    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
+    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
 };
 
 class OptFlowModified_GMC : public GMC_Algorithm {
@@ -88,7 +92,25 @@ private:
 
 public:
     explicit OptFlowModified_GMC(float downscale);
-    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections) override;
+    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
+};
+
+class OpenCV_VideoStab_GMC : public GMC_Algorithm {
+private:
+    float _downscale;
+    int _num_features;
+    bool _detections_masking;
+
+    cv::Mat _prev_frame;
+    cv::Mat _prev_homography;
+
+    cv::Ptr<cv::videostab::MotionEstimatorRansacL2> _motion_estimator;
+    cv::Ptr<cv::videostab::KeypointBasedMotionEstimator> _keypoint_motion_estimator;
+
+
+public:
+    explicit OpenCV_VideoStab_GMC(float downscale = 2.0, int num_features = 4000, bool detections_masking = false);
+    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections = {}) override;
 };
 
 
@@ -104,5 +126,5 @@ public:
     explicit GlobalMotionCompensation(GMC_Method method, float downscale = 2.0);
     ~GlobalMotionCompensation() = default;
 
-    HomographyMatrix apply(const cv::Mat &frame, const std::vector<Detection> &detections);
+    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections);
 };
