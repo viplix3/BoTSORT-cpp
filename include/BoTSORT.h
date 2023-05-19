@@ -60,7 +60,7 @@ public:
             float match_thresh = 0.7,
             float proximity_thresh = 0.5,
             float appearance_thresh = 0.25,
-            const char *gmc_method = "OpenCV_VideoStab",
+            const char *gmc_method = "sparseOptFlow",
             uint8_t frame_rate = 30,
             float lambda = 0.985);
     ~BoTSORT() = default;

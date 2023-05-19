@@ -4,22 +4,44 @@
 #include "track.h"
 
 /**
- * @brief Calculate the IoU distance (1 - IoU) between tracks and detections
+ * @brief Calculate the IoU distance between tracks and detections and create a mask for the cost matrix
+ *  when the IoU distance is greater than the threshold
  * 
- * @param tracks Tracks
- * @param detections Tracks created from detections
- * @return CostMatrix IoU distance matrix
+ * @param tracks Tracks used to create the cost matrix
+ * @param detections Tracks created from detections used to create the cost matrix
+ * @param max_iou_distance Threshold for IoU distance
+ * @param iou_dists_mask Mask for the cost matrix (would be modified in-place)
+ * @return CostMatrix IoU distance cost matrix
  */
-CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks, const std::vector<std::shared_ptr<Track>> &detections);
+CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                        const std::vector<std::shared_ptr<Track>> &detections,
+                        float max_iou_distance,
+                        CostMatrix &iou_dists_mask);
 
 /**
- * @brief Calculate the embedding distance between tracks and detections using cosine distance
+ * @brief Calculate the IoU distance between tracks and detections
  * 
- * @param tracks Confirmed tracks
- * @param detections Tracks created from detections
- * @return CostMatrix Embedding distance matrix
+ * @param tracks Tracks used to create the cost matrix
+ * @param detections Tracks created from detections used to create the cost matrix
+ * @return CostMatrix IoU distance cost matrix
  */
-CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks, const std::vector<std::shared_ptr<Track>> &detections);
+CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                        const std::vector<std::shared_ptr<Track>> &detections);
+
+
+/**
+ * @brief Calculate the embedding distance between tracks and detections and create a mask for the cost matrix
+ * 
+ * @param tracks Tracks used to create the cost matrix
+ * @param detections Tracks created from detections used to create the cost matrix
+ * @param max_embedding_distance Threshold for embedding distance
+ * @param embedding_dists_mask Mask for the cost matrix (would be modified in-place)
+ * @return CostMatrix Embedding distance cost matrix
+ */
+CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                              const std::vector<std::shared_ptr<Track>> &detections,
+                              float max_embedding_distance,
+                              CostMatrix &embedding_dists_mask);
 
 /**
  * @brief Fuses the detection score into the cost matrix in-place
@@ -38,26 +60,29 @@ void fuse_score(CostMatrix &cost_matrix, const std::vector<std::shared_ptr<Track
  * @param cost_matrix Cost matrix in which to fuse motion
  * @param tracks Tracks used to create the cost matrix
  * @param detections Tracks created from detections used to create the cost matrix
- * @param only_position Set to true only position should be used for gating distance
  * @param lambda Weighting factor for motion (default: 0.98)
+ * @param only_position Set to true only position should be used for gating distance
  */
 void fuse_motion(const KalmanFilter &KF,
                  CostMatrix &cost_matrix,
                  const std::vector<std::shared_ptr<Track>> &tracks,
                  const std::vector<std::shared_ptr<Track>> &detections,
-                 bool only_position = false,
-                 float lambda = 0.98F);
+                 float lambda = 0.98F,
+                 bool only_position = false);
 
 /**
- * @brief Fuses IoU and embedding distance into a single cost matrix
+ * @brief Fuse IoU distance with embedding distance keeping the mask in mind
  * 
- * @param iou_matrix IoU distance matrix
- * @param emb_matrix Embedding distance matrix
- * @param iou_threshold Threshold for IoU distance
- * @param appearance_threshold Threshold for embedding distance
- * @return CostMatrix Fused cost matrix
+ * @param iou_dist Score fused IoU distance cost matrix
+ * @param emb_dist Motion fused embedding distance cost matrix
+ * @param iou_dists_mask IoU distance mask
+ * @param emb_dists_mask Embedding distance mask
+ * @return CostMatrix Fused and masked cost matrix
  */
-CostMatrix fuse_iou_with_emb(CostMatrix &iou_matrix, CostMatrix &emb_matrix, float iou_threshold, float appearance_threshold);
+CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
+                             CostMatrix &emb_dist,
+                             const CostMatrix &iou_dists_mask,
+                             const CostMatrix &emb_dists_mask);
 
 /**
  * @brief Performs linear assignment using the LAPJV algorithm

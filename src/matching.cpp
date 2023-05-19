@@ -1,7 +1,34 @@
 #include "matching.h"
+#include "DataType.h"
 #include "utils.h"
 
-CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks, const std::vector<std::shared_ptr<Track>> &detections) {
+CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                        const std::vector<std::shared_ptr<Track>> &detections,
+                        float max_iou_distance,
+                        CostMatrix &iou_dists_mask) {
+    int num_tracks = tracks.size();
+    int num_detections = detections.size();
+
+    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(num_tracks, num_detections);
+    iou_dists_mask.Zero(num_tracks, num_detections);
+
+    if (num_tracks > 0 && num_detections > 0) {
+        for (int i = 0; i < num_tracks; i++) {
+            for (int j = 0; j < num_detections; j++) {
+                cost_matrix(i, j) = 1.0F - iou(tracks[i]->get_tlwh(), detections[j]->get_tlwh());
+
+                if (cost_matrix(i, j) > max_iou_distance) {
+                    iou_dists_mask(i, j) = 1.0F;
+                }
+            }
+        }
+    }
+
+    return cost_matrix;
+}
+
+CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                        const std::vector<std::shared_ptr<Track>> &detections) {
     int num_tracks = tracks.size();
     int num_detections = detections.size();
 
@@ -17,15 +44,24 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks, const
     return cost_matrix;
 }
 
-CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks, const std::vector<std::shared_ptr<Track>> &detections) {
+CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                              const std::vector<std::shared_ptr<Track>> &detections,
+                              float max_embedding_distance,
+                              CostMatrix &embedding_dists_mask) {
     int num_tracks = tracks.size();
     int num_detections = detections.size();
 
     CostMatrix cost_matrix = Eigen::MatrixXf::Zero(num_tracks, num_detections);
+    embedding_dists_mask.Zero(num_tracks, num_detections);
+
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
             for (int j = 0; j < num_detections; j++) {
                 cost_matrix(i, j) = std::max(0.0f, cosine_distance(tracks[i]->smooth_feat, detections[j]->curr_feat));
+
+                if (cost_matrix(i, j) > max_embedding_distance) {
+                    embedding_dists_mask(i, j) = 1.0F;
+                }
             }
         }
     }
@@ -49,8 +85,8 @@ void fuse_motion(const KalmanFilter &KF,
                  CostMatrix &cost_matrix,
                  const std::vector<std::shared_ptr<Track>> &tracks,
                  const std::vector<std::shared_ptr<Track>> &detections,
-                 bool only_position,
-                 float lambda) {
+                 float lambda,
+                 bool only_position) {
     if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0) {
         return;
     }
@@ -85,34 +121,46 @@ void fuse_motion(const KalmanFilter &KF,
     }
 }
 
-CostMatrix fuse_iou_with_emb(CostMatrix &iou_matrix, CostMatrix &emb_matrix, float iou_threshold, float appearance_threshold) {
-    if (emb_matrix.rows() == 0 || emb_matrix.cols() == 0) {
-        return iou_matrix;
+CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
+                             CostMatrix &emb_dist,
+                             const CostMatrix &iou_dists_mask,
+                             const CostMatrix &emb_dists_mask) {
+
+    if (emb_dist.rows() == 0 || emb_dist.cols() == 0) {
+        // Embedding distance is not available, mask off iou distance
+        for (size_t i = 0; i < iou_dist.rows(); i++) {
+            for (size_t j = 0; j < iou_dist.cols(); j++) {
+                if (iou_dists_mask(i, j)) {
+                    iou_dist(i, j) = 1.0F;
+                }
+            }
+        }
+        return iou_dist;
     }
 
-    // If iou distance is larger than threshold, set emb distance to inf
-    for (size_t i = 0; i < iou_matrix.rows(); i++) {
-        for (size_t j = 0; j < iou_matrix.cols(); j++) {
-            if (iou_matrix(i, j) < iou_threshold) {
-                emb_matrix(i, j) = std::numeric_limits<float>::infinity();
+    // If IoU distance is larger than threshold, don't use embedding at all
+    for (size_t i = 0; i < iou_dist.rows(); i++) {
+        for (size_t j = 0; j < iou_dist.cols(); j++) {
+            if (iou_dists_mask(i, j)) {
+                emb_dist(i, j) = 1.0F;
             }
         }
     }
 
     // If emb distance is larger than threshold, set the emb distance to inf
-    for (size_t i = 0; i < emb_matrix.rows(); i++) {
-        for (size_t j = 0; j < emb_matrix.cols(); j++) {
-            if (emb_matrix(i, j) > appearance_threshold) {
-                emb_matrix(i, j) = std::numeric_limits<float>::infinity();
+    for (size_t i = 0; i < emb_dist.rows(); i++) {
+        for (size_t j = 0; j < emb_dist.cols(); j++) {
+            if (emb_dists_mask(i, j)) {
+                emb_dist(i, j) = 1.0F;
             }
         }
     }
 
     // Fuse iou and emb distance by taking the element-wise minimum
-    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(iou_matrix.rows(), iou_matrix.cols());
-    for (size_t i = 0; i < iou_matrix.rows(); i++) {
-        for (size_t j = 0; j < iou_matrix.cols(); j++) {
-            cost_matrix(i, j) = std::min(iou_matrix(i, j), emb_matrix(i, j));
+    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(iou_dist.rows(), iou_dist.cols());
+    for (size_t i = 0; i < iou_dist.rows(); i++) {
+        for (size_t j = 0; j < iou_dist.cols(); j++) {
+            cost_matrix(i, j) = std::min(iou_dist(i, j), emb_dist(i, j));
         }
     }
 

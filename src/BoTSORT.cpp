@@ -110,20 +110,33 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     ////////////////// ASSOCIATION ALGORITHM STARTS HERE //////////////////
     ////////////////// First association, with high score detection boxes //////////////////
-    CostMatrix iou_dists, raw_emd_dist;
+    CostMatrix iou_dists, raw_emd_dist, iou_dists_mask_1st_association, emd_dist_mask_1st_association;
 
     // Find IoU distance between all tracked tracks and high confidence detections
-    iou_dists = iou_distance(tracks_pool, detections_high_conf);
+    iou_dists = iou_distance(tracks_pool,
+                             detections_high_conf,
+                             _proximity_thresh,
+                             iou_dists_mask_1st_association);
     fuse_score(iou_dists, detections_high_conf);// Fuse the score with IoU distance
 
     if (_reid_enabled) {
         // If re-ID is enabled, find the embedding distance between all tracked tracks and high confidence detections
-        raw_emd_dist = embedding_distance(tracks_pool, detections_high_conf);
-        fuse_motion(*_kalman_filter, raw_emd_dist, tracks_pool, detections_high_conf, false, _lambda);// Fuse the motion with embedding distance
+        raw_emd_dist = embedding_distance(tracks_pool,
+                                          detections_high_conf,
+                                          _appearance_thresh,
+                                          emd_dist_mask_1st_association);
+        fuse_motion(*_kalman_filter,
+                    raw_emd_dist,
+                    tracks_pool,
+                    detections_high_conf,
+                    _lambda);// Fuse the motion with embedding distance
     }
 
     // Fuse the IoU distance and embedding distance to get the final distance matrix
-    CostMatrix distances_first_association = fuse_iou_with_emb(iou_dists, raw_emd_dist, _proximity_thresh, _appearance_thresh);
+    CostMatrix distances_first_association = fuse_iou_with_emb(iou_dists,
+                                                               raw_emd_dist,
+                                                               iou_dists_mask_1st_association,
+                                                               emd_dist_mask_1st_association);
 
     // Perform linear assignment on the final distance matrix, LAPJV algorithm is used here
     AssociationData first_associations;
@@ -203,18 +216,31 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
     }
 
     //Find IoU distance between unconfirmed tracks and high confidence detections left after the first association
-    CostMatrix iou_dists_unconfirmed, raw_emd_dist_unconfirmed;
-    iou_dists_unconfirmed = iou_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
+    CostMatrix iou_dists_unconfirmed, raw_emd_dist_unconfirmed, iou_dists_mask_unconfirmed, emd_dist_mask_unconfirmed;
+    iou_dists_unconfirmed = iou_distance(unconfirmed_tracks,
+                                         unmatched_detections_after_1st_association,
+                                         _proximity_thresh,
+                                         iou_dists_mask_unconfirmed);
     fuse_score(iou_dists_unconfirmed, unmatched_detections_after_1st_association);
 
     if (_reid_enabled) {
         // Find embedding distance between unconfirmed tracks and high confidence detections left after the first association
-        raw_emd_dist_unconfirmed = embedding_distance(unconfirmed_tracks, unmatched_detections_after_1st_association);
-        fuse_motion(*_kalman_filter, raw_emd_dist_unconfirmed, unconfirmed_tracks, unmatched_detections_after_1st_association, false, _lambda);
+        raw_emd_dist_unconfirmed = embedding_distance(unconfirmed_tracks,
+                                                      unmatched_detections_after_1st_association,
+                                                      _appearance_thresh,
+                                                      emd_dist_mask_unconfirmed);
+        fuse_motion(*_kalman_filter,
+                    raw_emd_dist_unconfirmed,
+                    unconfirmed_tracks,
+                    unmatched_detections_after_1st_association,
+                    _lambda);
     }
 
     // Fuse the IoU distance and the embedding distance
-    CostMatrix distances_unconfirmed = fuse_iou_with_emb(iou_dists_unconfirmed, raw_emd_dist_unconfirmed, _proximity_thresh, _appearance_thresh);
+    CostMatrix distances_unconfirmed = fuse_iou_with_emb(iou_dists_unconfirmed,
+                                                         raw_emd_dist_unconfirmed,
+                                                         iou_dists_mask_unconfirmed,
+                                                         emd_dist_mask_unconfirmed);
 
     // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
     AssociationData unconfirmed_associations;

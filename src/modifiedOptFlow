@@ -1,0 +1,180 @@
+#include <Eigen/Dense>
+#include <map>
+#include <numeric>
+#include <opencv2/opencv.hpp>
+#include <vector>
+
+using namespace std;
+using namespace cv;
+using namespace Eigen;
+
+// Assume the following classes and methods are defined somewhere
+class Track;
+int intersection();
+Mat crop();
+double mask_area();
+vector<Point2f> numba_utils_rect_filter();
+double numba_utils_estimate_feature_dist();
+vector<Point2f> numba_utils_ellipse_filter();
+vector<Point2f> numba_utils_unscale_pts();
+vector<Point2f> numba_utils_get_good_match();
+vector<Point2f> numba_utils_get_inliers();
+vector<Point2f> numba_utils_estimate_tlbr();
+void logger_warning();
+
+pair<map<int, Rect>, Mat> predict(Mat frame, vector<Track> tracks) {
+    // PRE-PROCESS IMAGE
+    cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
+    resize(frame_gray, frame_small, frame_small.size());
+
+    // ORDER TRACKS FROM CLOSEST TO FARTHEST
+    sort(tracks.rbegin(), tracks.rend());
+
+    // DETECT TARGET (BOUNDING BOX) FEATURE POINTS
+    vector<vector<Point2f>> all_prev_pts;
+    fg_mask = Scalar(255);
+
+    for (Track track: tracks) {
+        Rect inside_tlbr = intersection(track.tlbr, frame_rect);
+
+        if (inside_tlbr.empty()) {
+            logger_warning("Out of bounds track: {}", track);
+            continue;
+        }
+
+        Mat target_mask = crop(fg_mask, inside_tlbr);
+        double target_area = mask_area(target_mask);
+        vector<Point2f> keypoints = numba_utils_rect_filter(track.keypoints, inside_tlbr, fg_mask);
+
+        if (keypoints.size() < feat_density * target_area) {
+            Mat img = crop(prev_frame_gray, inside_tlbr);
+            double feature_dist = numba_utils_estimate_feature_dist(target_area, feat_dist_factor);
+            goodFeaturesToTrack(img, keypoints, mask = target_mask, minDistance = feature_dist, obj_feat_params);
+
+            if (keypoints.empty()) {
+                keypoints = vector<Point2f>();
+            } else {
+                keypoints = numba_utils_ellipse_filter(keypoints, track.tlbr, Point(inside_tlbr.tl().x, inside_tlbr.tl().y));
+            }
+        }
+
+        all_prev_pts.push_back(keypoints);
+        target_mask = Scalar(0);
+    }
+
+    vector<int> target_ends;
+    for (auto const &pts: all_prev_pts) {
+        target_ends.push_back(pts.size());
+    }
+    partial_sum(target_ends.begin(), target_ends.end(), target_ends.begin());
+    if (target_ends.empty()) {
+        target_ends.push_back(0);
+    }
+    vector<int> target_begins(target_ends.begin(), target_ends.end() - 1);
+    target_begins.insert(target_begins.begin(), 0);
+
+    // DETECT BACKGROUND FEATURE POINTS
+    resize(prev_frame_gray, prev_frame_bg, prev_frame_bg.size());
+
+    // NOTE: using the foreground mask as the background mask (when all the bounding box regions in the foreground mask are zeroed out)
+    resize(fg_mask, bg_mask_small, bg_mask_small.size(), INTER_NEAREST);
+
+    vector<KeyPoint> keypoints;
+    bg_feat_detector.detect(prev_frame_bg, keypoints, bg_mask_small);
+
+    // part of the previous code
+    // ...
+
+    if (keypoints.empty()) {
+        // If no background points are detected, we cannot estimate the camera motion
+        swap(prev_frame_gray, frame_gray);
+        swap(prev_frame_small, frame_small);
+        logger_warning("Camera motion estimation failed, no background features detected");
+        return make_pair(map<int, Rect>(), Mat());
+    }
+
+    vector<Point2f> keypoints_float;
+    KeyPoint::convert(keypoints, keypoints_float);
+    keypoints_float = numba_utils_unscale_pts(keypoints_float, bg_feat_scale_factor);
+    int bg_begin = target_ends.back();
+    all_prev_pts.push_back(keypoints_float);
+
+    // MATCH FEATURES USING OPTICAL FLOW
+    vector<Point2f> all_prev_pts_flat;
+    for (const auto &pts: all_prev_pts) {
+        all_prev_pts_flat.insert(all_prev_pts_flat.end(), pts.begin(), pts.end());
+    }
+    vector<Point2f> scaled_prev_pts = numba_utils_scale_pts(all_prev_pts_flat, opt_flow_scale_factor);
+    vector<uchar> status;
+    vector<float> err;
+    vector<Point2f> all_cur_pts;
+    calcOpticalFlowPyrLK(prev_frame_small, frame_small, scaled_prev_pts, all_cur_pts, status, err, opt_flow_params);
+    status = numba_utils_get_status(status, err, max_error);
+    all_cur_pts = numba_utils_unscale_pts(all_cur_pts, opt_flow_scale_factor, status);
+
+    swap(prev_frame_gray, frame_gray);
+    swap(prev_frame_small, frame_small);
+
+    // ESTIMATE CAMERA MOTION
+    Mat homography;
+    vector<Point2f> prev_bg_pts, matched_bg_pts;
+    tie(prev_bg_pts, matched_bg_pts) = numba_utils_get_good_match(all_prev_pts_flat, all_cur_pts, status, bg_begin, -1);
+    if (matched_bg_pts.size() < min_bg_matches) {
+        logger_warning("Camera motion estimation failed, not enough background matches found");
+        return make_pair(map<int, Rect>(), Mat());
+    }
+
+    vector<uchar> inlier_mask;
+    homography = findHomography(prev_bg_pts, matched_bg_pts, RANSAC, ransac_max_iter, inlier_mask, ransac_conf);
+    tie(prev_bg_keypoints, bg_keypoints) = numba_utils_get_inliers(prev_bg_pts, matched_bg_pts, inlier_mask);
+
+    if (homography.empty() || bg_keypoints.size() < inlier_thresh) {
+        bg_keypoints = vector<Point2f>();
+        logger_warning("Camera motion estimation failed, not enough inliers found in background matches to estimate homography");
+        return make_pair(map<int, Rect>(), Mat());
+    }
+
+    // ESTIMATE TARGET BOUNDING BOXES
+    map<int, Rect> next_bboxes;
+    fg_mask = Scalar(255);
+    for (int i = 0; i < tracks.size(); ++i) {
+        int begin = target_begins[i];
+        int end = target_ends[i];
+        Track track = tracks[i];
+        vector<Point2f> prev_pts, matched_pts;
+        tie(prev_pts, matched_pts) = numba_utils_get_good_match(all_prev_pts_flat, all_cur_pts, status, begin, end);
+        tie(prev_pts, matched_pts) = numba_utils_fg_filter(prev_pts, matched_pts, fg_mask, image_size);
+
+        if (matched_pts.size() < min_fg_matches) {
+            track.keypoints = vector<Point2f>();
+            continue;
+        }
+
+        Mat affine_matrix;
+        tie(affine_matrix, inlier_mask)
+                // Estimate affine partial 2D transformation
+                affine_matrix = estimateAffinePartial2D(prev_pts, matched_pts, inlier_mask, RANSAC, ransac_max_iter, ransac_conf);
+
+        if (affine_matrix.empty() || countNonZero(inlier_mask) < inlier_thresh) {
+            track.keypoints.clear();
+            continue;
+        }
+
+        Rect estimated_tlbr = numba_utils_estimate_tlbr(track.tlbr, affine_matrix);
+        tie(track.prev_keypoints, track.keypoints) = numba_utils_get_inliers(prev_pts, matched_pts, inlier_mask);
+
+        if (estimated_tlbr.intersection(frame_rect).empty() || track.keypoints.size() < inlier_thresh) {
+            track.keypoints.clear();
+            continue;
+        }
+
+        next_bboxes[track.track_id] = estimated_tlbr;
+        track.inlier_ratio = (float) track.keypoints.size() / matched_pts.size();
+
+        // Zero out predicted target region in foreground mask
+        Mat target_mask = crop(fg_mask, estimated_tlbr);
+        target_mask = Scalar(0);
+    }
+
+    return make_pair(next_bboxes, homography);
+}

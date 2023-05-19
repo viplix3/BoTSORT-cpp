@@ -11,8 +11,8 @@
     "cmake.debugConfig": {
         "args": [
             "/home/vipin/datasets/extracted/MOT20/train/MOT20-02/img1",
-            "/home/vipin/GitRepos/ObjectDetectors/yolov8/runs/detect/predict/labels",
-            "/home/vipin/GitRepos/MultiObjectTracking/mot-cpp-jetson/output"
+            "/home/vipin/datasets/extracted/MOT20/train/MOT20-02/gt/gt.txt",
+            "/home/vipin/GitRepos/MultiObjectTracking/mot-cpp-jetson/output/gt_as_preds/MOT20-02"
         ]
     }
 }
