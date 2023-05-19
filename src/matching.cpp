@@ -10,7 +10,7 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
     int num_detections = detections.size();
 
     CostMatrix cost_matrix = Eigen::MatrixXf::Zero(num_tracks, num_detections);
-    iou_dists_mask.Zero(num_tracks, num_detections);
+    iou_dists_mask = Eigen::MatrixXf::Zero(num_tracks, num_detections);
 
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
@@ -52,7 +52,7 @@ CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
     int num_detections = detections.size();
 
     CostMatrix cost_matrix = Eigen::MatrixXf::Zero(num_tracks, num_detections);
-    embedding_dists_mask.Zero(num_tracks, num_detections);
+    embedding_dists_mask = Eigen::MatrixXf::Zero(num_tracks, num_detections);
 
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
