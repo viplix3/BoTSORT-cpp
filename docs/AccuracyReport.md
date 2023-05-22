@@ -24,3 +24,10 @@ The MOT Ground Truth provided by the MOT benchmark for 4 sequences (MOT-20-01, M
 - While both versions provide almost identical results due to the ground truth being used as predictions, we can observe a small variation in some metrics. This could be due to differences in how the two programming languages handle numerical computations
 - It can be inferred that the tracking algorithm has been successfully ported to C++ from Python with very high fidelity
 - It is observed that the MOTP (Multiple Object Tracking Precision) is quite low for both the Python and C++ implementations of the tracker. According to the literature, higher numbers indicate better accuracy for MOTP. The reason for the low MOTP score in this case is due to the definition of MOTP used in py-motmetrics. It is calculated as average distance over number of assigned objects. To convert this to a percentage, like in the MOTChallenge benchmarks, we would compute `(1 - MOTP) * 100`.
+- The change in MOTP seems to be due to the precision errors (as can be seen in the screenshot attached below)
+  - Left: Python output for MOT20-01 sequence
+  - Right: C++ output for MOT20-01 sequence
+  - Text format: `frame_no, object_id, bb_left, bb_top, bb_width, bb_height, score, X, Y, Z`
+  - The minor precision mismatch between Python and C++ floating point numbers is adding up to result in MOTP mismatch
+
+[![Precision Error](../assets/Python_vs_C++.png)](PrecisionMismatch)
