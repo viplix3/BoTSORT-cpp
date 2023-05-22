@@ -13,8 +13,9 @@
 #include "track.h"
 
 
-#define GT_AS_PREDS
-
+#define TEST_GMC 0
+#define GT_AS_PREDS 0
+#define YOLOv8_PREDS 1
 
 /**
  * @brief Read detections from MOTChallenge format file
@@ -164,7 +165,7 @@ int main(int argc, char **argv) {
 
 
 // // Initialize GlobalMotionCompensation
-#ifdef TEST_GMC
+#if (TEST_GMC == 1)
     /*
         {"orb", GMC_Method::ORB},
         {"ecc", GMC_Method::ECC},
@@ -198,7 +199,7 @@ int main(int argc, char **argv) {
     double tracker_time_sum = 0, tracker_time_total = 0;
     std::string output_file_txt = output_dir_mot + "/all.txt";
 
-#ifdef YOLOv8_PREDS
+#if (YOLOv8_PREDS == 1)
     // Read detections and execute MultiObjectTracker
     for (const auto &filepath: image_filepaths) {
         std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
@@ -238,7 +239,7 @@ int main(int argc, char **argv) {
 #endif
 
 
-#ifdef GT_AS_PREDS
+#if (GT_AS_PREDS == 1)
     std::vector<std::vector<Detection>> gt_per_frame = read_mot_gt_from_file(detection_dir);
 
     for (const auto &filepath: image_filepaths) {
