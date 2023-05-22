@@ -48,6 +48,12 @@ Step 4. Build BoT-SORT tracker
     ./bot-sort-tracker <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>
     ```
 
+## Sample Results
+
+These results use the MOT provided detections and run the BoT-SORT tracker implemented in this repository.
+
+[![MOT20-01](assets/MOT20-01.gif)](MOT20-01)
+
 # Performance Analysis Report
 
 ## Test settings
