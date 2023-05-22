@@ -16,8 +16,8 @@
 
 
 #define TEST_GMC 0
-#define GT_AS_PREDS 0
-#define YOLOv8_PREDS 1
+#define GT_AS_PREDS 1
+#define YOLOv8_PREDS 0
 
 /**
  * @brief Read detections from MOTChallenge format file
@@ -29,7 +29,6 @@ void mot_format_writer(const std::vector<std::shared_ptr<Track>> &tracks, const 
     std::ofstream mot_file(output_file, std::ios::app);
     for (const std::shared_ptr<Track> &track: tracks) {
         std::vector<float> bbox_tlwh = track->get_tlwh();
-        float score = track->get_score();
 
         mot_file << track->frame_id << "," << track->track_id << "," << bbox_tlwh[0] << ","
                  << bbox_tlwh[1] << "," << bbox_tlwh[2] << "," << bbox_tlwh[3] << ",-1,-1,-1,0" << std::endl;
@@ -93,7 +92,7 @@ std::vector<std::vector<Detection>> read_mot_gt_from_file(const std::string &gt_
         det.confidence = static_cast<float>(values[6]) == 0 ? 1.0f : static_cast<float>(values[6]);
 
         while (all_gt_for_curr_sequence.size() < frame_id) {
-            all_gt_for_curr_sequence.push_back(std::vector<Detection>());
+            all_gt_for_curr_sequence.emplace_back();
         }
         all_gt_for_curr_sequence[frame_id - 1].push_back(det);
     }
@@ -172,7 +171,7 @@ int main(int argc, char **argv) {
     std::sort(image_filepaths.begin(), image_filepaths.end());
 
 
-    // Initialize BoTSORT tracker with all the deault params
+    // Initialize BoTSORT tracker with all the default params
     // TODO: Load BoTSORT params from a config file
     BoTSORT tracker = BoTSORT();
 
