@@ -4,6 +4,8 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <opencv2/highgui.hpp>
+#include <string>
 
 #include "BoTSORT.h"
 #include "DataType.h"
@@ -11,18 +13,34 @@
 #include "track.h"
 
 
-void mot_format_writer(const std::vector<Track> &tracks, const std::string &output_file) {
-    std::ofstream mot_file(output_file, std::ios::app);
-    for (const Track &track: tracks) {
-        std::vector<float> bbox_tlwh = track.get_tlwh();
-        float score = track.get_score();
+#define GT_AS_PREDS
 
-        mot_file << track.frame_id << "," << track.track_id << "," << bbox_tlwh[0] << ","
-                 << bbox_tlwh[1] << "," << bbox_tlwh[2] << "," << bbox_tlwh[3] << "," << score << ",-1,-1,-1" << std::endl;
+
+/**
+ * @brief Read detections from MOTChallenge format file
+ * 
+ * @param tracks Tracks
+ * @param output_file Output file where the tracks will be written
+ */
+void mot_format_writer(const std::vector<std::shared_ptr<Track>> &tracks, const std::string &output_file) {
+    std::ofstream mot_file(output_file, std::ios::app);
+    for (const std::shared_ptr<Track> &track: tracks) {
+        std::vector<float> bbox_tlwh = track->get_tlwh();
+        float score = track->get_score();
+
+        mot_file << track->frame_id << "," << track->track_id << "," << bbox_tlwh[0] << ","
+                 << bbox_tlwh[1] << "," << bbox_tlwh[2] << "," << bbox_tlwh[3] << ",-1,-1,-1,0" << std::endl;
     }
     mot_file.close();
 }
-
+/**
+ * @brief Read detections from YOLOv8 format file
+ * 
+ * @param detection_file Detection file
+ * @param frame_width Image width (used to convert normalized bounding box to absolute coordinates)
+ * @param frame_height Image height (used to convert normalized bounding box to absolute coordinates)
+ * @return std::vector<Detection> Detections
+ */
 std::vector<Detection> read_detections_from_file(const std::string &detection_file, int frame_width, int frame_height) {
     std::vector<Detection> detections;
     std::ifstream det_file(detection_file);
@@ -32,7 +50,9 @@ std::vector<Detection> read_detections_from_file(const std::string &detection_fi
         std::vector<float> values(std::istream_iterator<float>{iss}, std::istream_iterator<float>());
 
         Detection det;
-        det.class_id = values[0];
+        if (values[0] != 0)
+            continue;
+        det.class_id = static_cast<int>(values[0]);
         det.bbox_tlwh = cv::Rect_(values[1] - values[3] / 2, values[2] - values[4] / 2, values[3], values[4]);
         // bounding box is normalized, so convert to absolute coordinates
         det.bbox_tlwh.x *= frame_width;
@@ -47,23 +67,68 @@ std::vector<Detection> read_detections_from_file(const std::string &detection_fi
     return detections;
 }
 
-void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<Track> &tracks) {
+
+std::vector<std::vector<Detection>> read_mot_gt_from_file(const std::string &gt_filepath) {
+    // https://stackoverflow.com/questions/57678677/multiple-object-tracking-mot-benchmark-data-set-format-for-ground-truth-tracki
+    // BB format is: frame_no,object_id,bb_left,bb_top,bb_width,bb_height,score,X,Y,Z
+
+    std::vector<std::vector<Detection>> all_gt_for_curr_sequence;
+    std::ifstream gt_file(gt_filepath);
+    std::string line;
+    while (std::getline(gt_file, line)) {
+        std::istringstream iss(line);
+        std::vector<float> values;
+
+        while (std::getline(iss, line, ',')) {
+            values.push_back(std::stof(line));
+        }
+
+        Detection det;
+        int frame_id = static_cast<int>(values[0]);
+        det.class_id = 0;// class_id is not provided in MOTChallenge format, so set it to 0 to indicate person
+        det.bbox_tlwh = cv::Rect_(values[2], values[3], values[4], values[5]);
+        det.confidence = static_cast<float>(values[6]) == 0 ? 1.0f : static_cast<float>(values[6]);
+
+        while (all_gt_for_curr_sequence.size() < frame_id) {
+            all_gt_for_curr_sequence.push_back(std::vector<Detection>());
+        }
+        all_gt_for_curr_sequence[frame_id - 1].push_back(det);
+    }
+
+    return all_gt_for_curr_sequence;
+}
+
+
+/**
+ * @brief Plot tracks on the frame
+ * 
+ * @param frame Input frame
+ * @param detections Detections
+ * @param tracks Tracks
+ */
+void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<std::shared_ptr<Track>> &tracks) {
     static std::map<int, cv::Scalar> track_colors;
     for (const auto &det: detections) {
         cv::rectangle(frame, det.bbox_tlwh, cv::Scalar(0, 0, 0), 1);
     }
 
-    for (const auto &track: tracks) {
-        std::vector<float> bbox_tlwh = track.get_tlwh();
+    for (const std::shared_ptr<Track> &track: tracks) {
+        std::vector<float> bbox_tlwh = track->get_tlwh();
         cv::Scalar color = cv::Scalar(rand() % 255, rand() % 255, rand() % 255);
 
-        if (track_colors.find(track.track_id) == track_colors.end()) {
-            track_colors[track.track_id] = color;
+        if (track_colors.find(track->track_id) == track_colors.end()) {
+            track_colors[track->track_id] = color;
         } else {
-            color = track_colors[track.track_id];
+            color = track_colors[track->track_id];
         }
 
-        cv::rectangle(frame, cv::Rect(bbox_tlwh[0], bbox_tlwh[1], bbox_tlwh[2], bbox_tlwh[3]), color, 2);
+        cv::rectangle(frame,
+                      cv::Rect(static_cast<int>(bbox_tlwh[0]),
+                               static_cast<int>(bbox_tlwh[1]),
+                               static_cast<int>(bbox_tlwh[2]),
+                               static_cast<int>(bbox_tlwh[3])),
+                      color,
+                      2);
     }
 }
 
@@ -98,10 +163,43 @@ int main(int argc, char **argv) {
     BoTSORT tracker = BoTSORT();
 
 
-    // Read detections and execute MultiObjectTracker
+// // Initialize GlobalMotionCompensation
+#ifdef TEST_GMC
+    /*
+        {"orb", GMC_Method::ORB},
+        {"ecc", GMC_Method::ECC},
+        {"sparseOptFlow", GMC_Method::SparseOptFlow},
+        {"optFlowModified", GMC_Method::OptFlowModified},
+        {"OpenCV_VideoStab", GMC_Method::OpenCV_VideoStab},
+    */
+    GlobalMotionCompensation gmc = GlobalMotionCompensation(GlobalMotionCompensation::GMC_method_map["OpenCV_VideoStab"], 2.0);
+    cv::VideoCapture cap("/home/vipin/datasets/test_videos/0x100000A9_424_20220427_094317.mp4");
+    cv::Mat frame;
+
+    while (cap.read(frame)) {
+        HomographyMatrix H = gmc.apply(frame, {});
+        cv::Mat H_cv;
+        cv::eigen2cv(H, H_cv);
+        cv::Mat warped_frame;
+        cv::warpPerspective(frame, warped_frame, H_cv, frame.size());
+
+        cv::imshow("frame", frame);
+        cv::imshow("warped", warped_frame);
+
+        if (cv::waitKey(1) == 27) {
+            break;
+        }
+    }
+    return 0;
+#endif
+
+
     int frame_counter = 0;
-    double tracker_time_sum = 0;
+    double tracker_time_sum = 0, tracker_time_total = 0;
     std::string output_file_txt = output_dir_mot + "/all.txt";
+
+#ifdef YOLOv8_PREDS
+    // Read detections and execute MultiObjectTracker
     for (const auto &filepath: image_filepaths) {
         std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
         filename = filename.substr(0, filename.find_last_of('.'));
@@ -114,7 +212,7 @@ int main(int argc, char **argv) {
 
         // Execute tracker
         auto start = std::chrono::high_resolution_clock::now();
-        std::vector<Track> tracks = tracker.track(detections, frame);
+        std::vector<std::shared_ptr<Track>> tracks = tracker.track(detections, frame);
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         tracker_time_sum += elapsed.count();
@@ -129,10 +227,54 @@ int main(int argc, char **argv) {
 
         if (frame_counter % 100 == 0) {
             std::cout << "Processed " << frame_counter << " frames\t";
-            std::cout << "Tracker FPS: " << frame_counter / tracker_time_sum << std::endl;
+            std::cout << "Tracker FPS (last 100 frames): " << 100 / tracker_time_sum << std::endl;
+            tracker_time_total += tracker_time_sum;
+            tracker_time_sum = 0;
+        }
+
+        // if (frame_counter == 10)
+        //     break;
+    }
+#endif
+
+
+#ifdef GT_AS_PREDS
+    std::vector<std::vector<Detection>> gt_per_frame = read_mot_gt_from_file(detection_dir);
+
+    for (const auto &filepath: image_filepaths) {
+        std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
+        filename = filename.substr(0, filename.find_last_of('.'));
+        std::string output_file_img = output_dir_img + "/" + filename + ".jpg";
+
+        // Read image and detections
+        cv::Mat frame = cv::imread(filepath);
+
+        // Execute tracker
+        auto start = std::chrono::high_resolution_clock::now();
+        std::vector<std::shared_ptr<Track>> tracks = tracker.track(gt_per_frame[frame_counter], frame);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        tracker_time_sum += elapsed.count();
+
+        // Outputs
+        mot_format_writer(tracks, output_file_txt);
+
+        plot_tracks(frame, gt_per_frame[frame_counter], tracks);
+        cv::imwrite(output_file_img, frame);
+
+        frame_counter++;
+
+        if (frame_counter % 100 == 0) {
+            std::cout << "Processed " << frame_counter << " frames\t";
+            std::cout << "Tracker FPS (last 100 frames): " << 100 / tracker_time_sum << std::endl;
+            tracker_time_total += tracker_time_sum;
+            tracker_time_sum = 0;
         }
     }
-    std::cout << "Average tracker FPS: " << frame_counter / tracker_time_sum << std::endl;
+#endif
+
+    std::cout << "Average tracker FPS: " << frame_counter / tracker_time_total << std::endl;
+    std::cout << "Average processing time per frame (ms): " << (tracker_time_total / frame_counter) * 1000 << std::endl;
 
     return 0;
 }

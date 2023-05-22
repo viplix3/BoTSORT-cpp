@@ -1,9 +1,11 @@
 #pragma once
 
 #include "KalmanFilter.h"
+#include "KalmanFilterAccBased.h"
 #include <deque>
+#include <memory>
 
-using KalmanFilter = byte_kalman::KalmanFilter;
+using KalmanFilter = bot_kalman::KalmanFilter;
 
 enum TrackState {
     New = 0,
@@ -24,7 +26,8 @@ public:
     int start_frame;
 
     std::vector<float> det_tlwh;
-    FeatureVector curr_feat, smooth_feat;
+    std::shared_ptr<FeatureVector> curr_feat;
+    std::unique_ptr<FeatureVector> smooth_feat;
     KFStateSpaceVec mean;
     KFStateSpaceMatrix covariance;
 
@@ -36,7 +39,7 @@ private:
     static constexpr float _alpha = 0.9;
 
     int _feat_history_size;
-    std::deque<FeatureVector> _feat_history;
+    std::deque<std::shared_ptr<FeatureVector>> _feat_history;
 
 
 public:
@@ -50,21 +53,20 @@ public:
      * @param feat_history_size Size of the feature history (default: 50)
      */
     Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat = std::nullopt, int feat_history_size = 50);
-    ~Track();
 
     /**
      * @brief Get the next track ID
      * 
      * @return int Next track ID
      */
-    int next_id();
+    static int next_id();
 
     /**
      * @brief Get end frame-id of the track
      * 
      * @return int End frame-id of the track
      */
-    int end_frame();
+    int end_frame() const;
 
     /**
      * @brief Upates the track state to Lost
@@ -127,7 +129,7 @@ public:
      * @param tracks Tracks on which to perform the prediction step
      * @param kalman_filter Kalman filter object for the tracks
      */
-    void static multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter);
+    void static multi_predict(std::vector<std::shared_ptr<Track>> &tracks, KalmanFilter &kalman_filter);
 
     /**
      * @brief Apply camera motion to the track
@@ -142,7 +144,7 @@ public:
      * @param tracks Tracks on which to apply the camera motion
      * @param H Homography matrix
      */
-    void static multi_gmc(std::vector<Track *> &tracks, const HomographyMatrix &H);
+    void static multi_gmc(std::vector<std::shared_ptr<Track>> &tracks, const HomographyMatrix &H);
 
     /**
      * @brief Update the track state using the new detection
@@ -159,7 +161,7 @@ private:
      * 
      * @param feat Current feature vector
      */
-    void _update_features(FeatureVector &feat);
+    void _update_features(const std::shared_ptr<FeatureVector> &feat);
 
     /**
      * @brief Populate a DetVec bbox object (xywh) from the detection bounding box (tlwh)
@@ -167,7 +169,7 @@ private:
      * @param bbox_xywh DetVec bbox object (xywh) to be populated
      * @param tlwh Detection bounding box (tlwh)
      */
-    void _populate_DetVec_xywh(DetVec &bbox_xywh, const std::vector<float> &tlwh);
+    static void _populate_DetVec_xywh(DetVec &bbox_xywh, const std::vector<float> &tlwh);
 
     /**
      * @brief Update the tracklet bounding box (stored as tlwh) inplace accoding to the tracker state

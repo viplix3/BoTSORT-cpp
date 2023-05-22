@@ -2,7 +2,7 @@
 
 #include "DataType.h"
 
-namespace byte_kalman {
+namespace bot_kalman {
 class KalmanFilter {
 public:
     static constexpr double chi2inv95[10] = {
@@ -30,7 +30,7 @@ public:
      * 
      * @param dt Time interval between consecutive measurements (dt = 1/FPS)
      */
-    KalmanFilter(double dt);
+    explicit KalmanFilter(double dt);
 
     /**
      * @brief Initialize the Kalman Filter with a measurement (detection).
@@ -38,7 +38,7 @@ public:
      * @param det Detection [x-center, y-center, width, height].
      * @return KFDataStateSpace Kalman filter state space data [mean, covariance].
      */
-    KFDataStateSpace init(const DetVec &det);
+    KFDataStateSpace init(const DetVec &det) const;
 
     /**
      * @brief Predict the next Kalman Filter state space data (mean, covariance) given the current state space data.
@@ -55,7 +55,7 @@ public:
      * @param covariance Kalman Filter state space covariance.
      * @return KFDataMeasurementSpace Kalman Filter measurement space data [mean, covariance]. 
      */
-    KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance);
+    KFDataMeasurementSpace project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance) const;
 
     /**
      * @brief Update the Kalman Filter state space data (mean, covariance) given the measurement (detection).
@@ -74,13 +74,14 @@ public:
      * @param mean Kalman Filter state space mean.
      * @param covariance Kalman Filter state space covariance.
      * @param measurements Detection [x-center, y-center, width, height].
+     * @param only_position If true, only the position (x-center, y-center) is used to compute the gating distance.
      * @return Eigen::Matrix<float, 1, Eigen::Dynamic> Gating distance.
      */
     Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance(
             const KFStateSpaceVec &mean,
             const KFStateSpaceMatrix &covariance,
             const std::vector<DetVec> &measurements,
-            bool only_position = false);
+            bool only_position = false) const;
 
 private:
     /**
@@ -90,4 +91,4 @@ private:
      */
     void _init_kf_matrices(double dt);
 };
-}// namespace byte_kalman
+}// namespace bot_kalman

@@ -2,6 +2,7 @@
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
+# noinspection YAMLSchemaValidation
 AlignConsecutiveAssignments: false
 AlignOperands: true
 AllowAllArgumentsOnNextLine: false

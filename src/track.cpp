@@ -1,30 +1,26 @@
 #include "track.h"
 
-Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat, int feat_history_size) {
-    // Save the detection in the det_tlwh vector
-    det_tlwh.resize(DET_ELEMENTS);
-    det_tlwh.assign(tlwh.begin(), tlwh.end());
+#include <utility>
 
-    _score = score;
-    _class_id = -1;
-
-    tracklet_len = 0;
-    is_activated = false;
-    state = TrackState::New;
-    _feat_history_size = feat_history_size;
+Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat, int feat_history_size)
+    : det_tlwh(std::move(tlwh)),
+      _score(score),
+      _class_id(class_id),
+      tracklet_len(0),
+      is_activated(false),
+      state(TrackState::New) {
 
     if (feat) {
-        _update_features(*feat);
+        _feat_history_size = feat_history_size;
+        _update_features(std::make_shared<FeatureVector>(feat.value()));
+    } else {
+        curr_feat = nullptr;
+        smooth_feat = nullptr;
+        _feat_history_size = 0;
     }
-
-    _feat_history = std::deque<FeatureVector>(_feat_history_size);
 
     _update_class_id(class_id, score);
     _update_tracklet_tlwh_inplace();
-}
-
-Track::~Track() {
-    // Nothing to do here
 }
 
 void Track::activate(KalmanFilter &kalman_filter, int frame_id) {
@@ -57,7 +53,7 @@ void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame
     mean = state_space.first;
     covariance = state_space.second;
 
-    if (new_track.curr_feat.size() > 0) {
+    if (new_track.curr_feat) {
         _update_features(new_track.curr_feat);
     }
 
@@ -84,9 +80,9 @@ void Track::predict(KalmanFilter &kalman_filter) {
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::multi_predict(std::vector<Track *> &tracks, KalmanFilter &kalman_filter) {
-    for (size_t i = 0; i < tracks.size(); i++) {
-        tracks[i]->predict(kalman_filter);
+void Track::multi_predict(std::vector<std::shared_ptr<Track>> &tracks, KalmanFilter &kalman_filter) {
+    for (std::shared_ptr<Track> &track: tracks) {
+        track->predict(kalman_filter);
     }
 }
 
@@ -102,9 +98,9 @@ void Track::apply_camera_motion(const HomographyMatrix &H) {
     covariance = R8x8 * covariance * R8x8.transpose();
 }
 
-void Track::multi_gmc(std::vector<Track *> &tracks, const HomographyMatrix &H) {
-    for (size_t i = 0; i < tracks.size(); i++) {
-        tracks[i]->apply_camera_motion(H);
+void Track::multi_gmc(std::vector<std::shared_ptr<Track>> &tracks, const HomographyMatrix &H) {
+    for (std::shared_ptr<Track> &track: tracks) {
+        track->apply_camera_motion(H);
     }
 }
 
@@ -115,7 +111,7 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
 
     KFDataStateSpace state_space = kalman_filter.update(mean, covariance, new_track_bbox);
 
-    if (new_track.curr_feat.size() > 0) {
+    if (new_track.curr_feat) {
         _update_features(new_track.curr_feat);
     }
 
@@ -131,21 +127,21 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) 
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::_update_features(FeatureVector &feat) {
-    feat /= feat.norm();
-    curr_feat = feat;
+void Track::_update_features(const std::shared_ptr<FeatureVector>& feat) {
+    *feat /= feat->norm();
 
-    if (_feat_history.size() == 0) {
-        smooth_feat = feat;
+    if (_feat_history.empty()) {
+        curr_feat = feat;
+        smooth_feat = std::make_unique<FeatureVector>(*curr_feat);
     } else {
-        smooth_feat = _alpha * smooth_feat + (1 - _alpha) * feat;
+        *smooth_feat = _alpha * (*smooth_feat) + (1 - _alpha) * (*feat);
     }
 
     if (_feat_history.size() == _feat_history_size) {
         _feat_history.pop_front();
     }
-    _feat_history.push_back(feat);
-    smooth_feat /= smooth_feat.norm();
+    _feat_history.push_back(curr_feat);
+    *smooth_feat /= smooth_feat->norm();
 }
 
 int Track::next_id() {
@@ -166,7 +162,7 @@ void Track::mark_removed() {
     state = TrackState::Removed;
 }
 
-int Track::end_frame() {
+int Track::end_frame() const {
     return frame_id;
 }
 
@@ -195,7 +191,7 @@ float Track::get_score() const {
 }
 
 void Track::_update_class_id(uint8_t class_id, float score) {
-    if (_class_hist.size() > 0) {
+    if (!_class_hist.empty()) {
         int max_freq = 0;
         bool found = false;
 
@@ -211,11 +207,11 @@ void Track::_update_class_id(uint8_t class_id, float score) {
         }
 
         if (!found) {
-            _class_hist.push_back({class_id, score});
+            _class_hist.emplace_back(class_id, score);
             _class_id = class_id;
         }
     } else {
-        _class_hist.push_back({class_id, score});
+        _class_hist.emplace_back(class_id, score);
         _class_id = class_id;
     }
 }

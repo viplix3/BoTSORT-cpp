@@ -1,7 +1,7 @@
 #include "KalmanFilterAccBased.h"
 #include <eigen3/Eigen/Cholesky>
 
-namespace kalman_modified {
+namespace acc_kalman {
 KalmanFilter::KalmanFilter(double dt)
     : _init_pos_weight(5.0),
       _init_vel_weight(15.0),
@@ -13,6 +13,7 @@ KalmanFilter::KalmanFilter(double dt)
       _min_std_motion_compensated_detection(5.0),
       _velocity_coupling_factor(0.6),
       _velocity_half_life(2) {
+
     _init_kf_matrices(dt);
 }
 
@@ -41,7 +42,7 @@ void KalmanFilter::_init_kf_matrices(double dt) {
     }
 }
 
-KFDataStateSpace KalmanFilter::init(const DetVec &measurement) {
+KFDataStateSpace KalmanFilter::init(const DetVec &measurement) const {
     constexpr float init_velocity = 0.0;
 
     KFStateSpaceVec mean_state_space;
@@ -65,20 +66,18 @@ void KalmanFilter::predict(KFStateSpaceVec &mean, KFStateSpaceMatrix &covariance
     covariance = _state_transition_matrix * covariance * _state_transition_matrix.transpose() + motion_cov;
 }
 
-KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, bool motion_compensated) {
+KFDataMeasurementSpace KalmanFilter::project(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, bool motion_compensated) const {
     float std_factor = motion_compensated ? _std_factor_motion_compensated_detection : _std_factor_detection;
     float min_std = motion_compensated ? _min_std_motion_compensated_detection : _min_std_detection;
 
-    KFMeasSpaceMatrix measurement_cov;
-    measurement_cov << std::max(std_factor * mean(2), min_std),
-            std::max(std_factor * mean(3), min_std),
-            std::max(std_factor * mean(2), min_std),
-            std::max(std_factor * mean(3), min_std);
-    measurement_cov = measurement_cov.array().square().matrix();
+    Eigen::Vector4f std;
+    std << std::max(std_factor * mean(2), min_std), std::max(std_factor * mean(3), min_std), std::max(std_factor * mean(2), min_std), std::max(std_factor * mean(3), min_std);
+    KFMeasSpaceMatrix measurement_cov = KFMeasSpaceMatrix::Zero();
+    measurement_cov.diagonal() = std.array().square();
 
-    KFMeasSpaceVec mean_updated = _measurement_matrix * mean.transpose();
-    KFMeasSpaceMatrix covariance_updated = _measurement_matrix * covariance * _measurement_matrix.transpose() + measurement_cov;
-    return std::make_pair(mean_updated, covariance_updated);
+    KFMeasSpaceVec mean_projected = _measurement_matrix * mean.transpose();
+    KFMeasSpaceMatrix covariance_projected = _measurement_matrix * covariance * _measurement_matrix.transpose() + measurement_cov;
+    return std::make_pair(mean_projected, covariance_projected);
 }
 
 KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance, const DetVec &measurement) {
@@ -99,7 +98,7 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
         const KFStateSpaceVec &mean,
         const KFStateSpaceMatrix &covariance,
         const std::vector<DetVec> &measurements,
-        bool only_position) {
+        bool only_position) const {
     KFDataMeasurementSpace projected = this->project(mean, covariance);
     KFMeasSpaceVec projected_mean = projected.first;
     KFMeasSpaceMatrix projected_covariance = projected.second;
@@ -120,4 +119,4 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
     return mahalanobis_distance.array().square().matrix().rowwise().sum();
 }
 
-}// namespace kalman_modified
+}// namespace acc_kalman
