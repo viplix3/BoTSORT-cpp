@@ -21,9 +21,7 @@ public:
     int track_id;
     int state;
 
-    int frame_id;
-    int tracklet_len;
-    int start_frame;
+    uint32_t frame_id, tracklet_len, start_frame;
 
     std::vector<float> det_tlwh;
     std::shared_ptr<FeatureVector> curr_feat;
@@ -66,7 +64,7 @@ public:
      * 
      * @return int End frame-id of the track
      */
-    int end_frame() const;
+    uint32_t end_frame() const;
 
     /**
      * @brief Upates the track state to Lost
@@ -104,7 +102,7 @@ public:
      * @param kalman_filter Kalman filter object for the track
      * @param frame_id Current frame-id
      */
-    void activate(KalmanFilter &kalman_filter, int frame_id);
+    void activate(KalmanFilter &kalman_filter, uint32_t frame_id);
 
     /**
      * @brief Re-activates the track
@@ -114,7 +112,7 @@ public:
      * @param frame_id Current frame-id
      * @param new_id Whether to assign a new ID to the track (default: false)
      */
-    void re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame_id, bool new_id = false);
+    void re_activate(KalmanFilter &kalman_filter, Track &new_track, uint32_t frame_id, bool new_id = false);
 
     /**
      * @brief Predict the next state of the track using the Kalman filter
@@ -152,7 +150,7 @@ public:
      * @param new_track New track object to be used to update the old track
      * @param frame_id Current frame-id
      */
-    void update(KalmanFilter &kalman_filter, Track &new_track, int frame_id);
+    void update(KalmanFilter &kalman_filter, Track &new_track, uint32_t frame_id);
 
 private:
     /**
@@ -172,7 +170,7 @@ private:
     static void _populate_DetVec_xywh(DetVec &bbox_xywh, const std::vector<float> &tlwh);
 
     /**
-     * @brief Update the tracklet bounding box (stored as tlwh) inplace accoding to the tracker state
+     * @brief Update the tracklet bounding box (stored as tlwh) inplace according to the tracker state
      * 
      */
     void _update_tracklet_tlwh_inplace();
