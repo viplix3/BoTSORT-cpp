@@ -21,10 +21,6 @@ constexpr uint8_t KALMAN_MEASUREMENT_SPACE_DIM = 4;
  */
 using DetVec = Eigen::Matrix<float, 1, DET_ELEMENTS>;
 /**
- * @brief Detection matrix with dynamic rows and DET_ELEMENTS columns.
- */
-using DetMatrix = Eigen::Matrix<float, Eigen::Dynamic, DET_ELEMENTS>;
-/**
  * @brief Struct representing a detection
  * 
  * cv::Rect_<float> bbox_tlwh: Bounding box of the detection in the format (top left x, top left y, width, height)
@@ -109,10 +105,3 @@ struct AssociationData {
     std::vector<int> unmatched_track_indices;///< Unmatched track indices.
     std::vector<int> unmatched_det_indices;  ///< Unmatched detection indices
 };
-
-
-// Result
-/**
- * @brief Tracking result data containing a track ID and a detection vector.
- */
-using ResultData = std::pair<int, DetVec>;
