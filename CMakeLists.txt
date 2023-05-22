@@ -15,7 +15,7 @@ cmake_policy(SET CMP0028 NEW)
 # Support new IN_LIST if() operator
 cmake_policy(SET CMP0057 NEW)
 
-PROJECT(multi_object_tracking VERSION 1.0 LANGUAGES CXX)
+PROJECT(bot-sort-tracker VERSION 1.0 LANGUAGES CXX)
 
 # Set C++ Standard
 set(CMAKE_CXX_STANDARD 17)

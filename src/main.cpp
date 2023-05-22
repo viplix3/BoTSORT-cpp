@@ -149,7 +149,7 @@ void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector
 int main(int argc, char **argv) {
 
     if (argc < 4) {
-        std::cout << "Usage: ./multi_object_tracking <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
+        std::cout << "Usage: ./bot-sort-tracker <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
         return -1;
     }
 
