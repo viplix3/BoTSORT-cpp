@@ -93,7 +93,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
     ////////////////// CREATE TRACK OBJECT FOR ALL THE DETECTIONS //////////////////
 
 
-    ////////////////// Apply KF predict and GMC before running assocition algorithm //////////////////
+    ////////////////// Apply KF predict and GMC before running association algorithm //////////////////
     // Merge currently tracked tracks and lost tracks
     std::vector<std::shared_ptr<Track>> tracks_pool;
     tracks_pool = _merge_track_lists(tracked_tracks, _lost_tracks);
@@ -105,7 +105,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
     HomographyMatrix H = _gmc_algo->apply(frame, detections);
     Track::multi_gmc(tracks_pool, H);
     Track::multi_gmc(unconfirmed_tracks, H);
-    ////////////////// Apply KF predict and GMC before running assocition algorithm //////////////////
+    ////////////////// Apply KF predict and GMC before running association algorithm //////////////////
 
 
     ////////////////// ASSOCIATION ALGORITHM STARTS HERE //////////////////
@@ -315,7 +315,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     ////////////////// Update output tracks //////////////////
     std::vector<std::shared_ptr<Track>> output_tracks;
-    for (std::shared_ptr<Track> track: _tracked_tracks) {
+    for (const std::shared_ptr<Track>& track: _tracked_tracks) {
         if (track->is_activated) {
             output_tracks.push_back(track);
         }
@@ -376,11 +376,11 @@ void BoTSORT::_remove_duplicate_tracks(
     CostMatrix iou_dists = iou_distance(tracks_list_a, tracks_list_b);
 
     std::unordered_set<size_t> dup_a, dup_b;
-    for (size_t i = 0; i < iou_dists.rows(); i++) {
-        for (size_t j = 0; j < iou_dists.cols(); j++) {
+    for (Eigen::Index i = 0; i < iou_dists.rows(); i++) {
+        for (Eigen::Index j = 0; j < iou_dists.cols(); j++) {
             if (iou_dists(i, j) < 0.15) {
-                int time_a = tracks_list_a[i]->frame_id - tracks_list_a[i]->start_frame;
-                int time_b = tracks_list_b[j]->frame_id - tracks_list_b[j]->start_frame;
+                int time_a = static_cast<int>(tracks_list_a[i]->frame_id - tracks_list_a[i]->start_frame);
+                int time_b = static_cast<int>(tracks_list_b[j]->frame_id - tracks_list_b[j]->start_frame);
 
                 // We make an assumption that the longer trajectory is the correct one
                 if (time_a > time_b) {
