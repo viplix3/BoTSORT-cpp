@@ -19,4 +19,8 @@ The MOT Ground Truth provided by the MOT benchmark for 4 sequences (MOT-20-01, M
 | MOT-20-05      | BoT-SORT (without Re-ID CNN): Reference Python project   | 3315    | 751330 | 750247     | 0.7992| 99.8509| 99.8243 | 37          | 100.00   | 99.8559| 750247| 0                | 0  | 1083 |
 | MOT-20-05      | BoT-SORT (without Re-ID CNN): C++ implementation        | 3315    | 751330 | 750345     | 2.2765| 99.8644| 99.6920 | 18          | 99.9989  | 99.8678| 750337| 8                | 8  | 993 |
 
-It is observed that the MOTP (Multiple Object Tracking Precision) is quite low for both the Python and C++ implementations of the tracker. According to the literature, higher numbers indicate better accuracy for MOTP. The reason for the low MOTP score in this case is due to the definition of MOTP used in py-motmetrics. It is calculated as average distance over number of assigned objects. To convert this to a percentage, like in the MOTChallenge benchmarks, we would compute `(1 - MOTP) * 100`.
+## Conclusions
+
+- While both versions provide almost identical results due to the ground truth being used as predictions, we can observe a small variation in some metrics. This could be due to differences in how the two programming languages handle numerical computations
+- It can be inferred that the tracking algorithm has been successfully ported to C++ from Python with very high fidelity
+- It is observed that the MOTP (Multiple Object Tracking Precision) is quite low for both the Python and C++ implementations of the tracker. According to the literature, higher numbers indicate better accuracy for MOTP. The reason for the low MOTP score in this case is due to the definition of MOTP used in py-motmetrics. It is calculated as average distance over number of assigned objects. To convert this to a percentage, like in the MOTChallenge benchmarks, we would compute `(1 - MOTP) * 100`.
