@@ -58,12 +58,12 @@ To run the tracker on a video sequence, use the following command:
 ./bot-sort-tracker <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>
 ```
 
-## Performance
+## Performance Analysis
 
 The performance of the BoT-SORT tracker, implemented in this repository, was evaluated on the MOT20 dataset.
 Details are provided in [this](docs/PerformanceReport.md) document.
 
-## Accuracy
+## Accuracy Analysis
 
 The accuracy of the BoT-SORT tracker, implemented in this repository, was evaluated on the MOT20 train set.
 Details are provided in [this](docs/AccuracyReport.md) document.
