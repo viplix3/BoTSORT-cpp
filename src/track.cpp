@@ -23,7 +23,7 @@ Track::Track(std::vector<float> tlwh, float score, uint8_t class_id, std::option
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::activate(KalmanFilter &kalman_filter, int frame_id) {
+void Track::activate(KalmanFilter &kalman_filter, uint32_t frame_id) {
     track_id = next_id();
 
     // Create DetVec from det_tlwh
@@ -45,7 +45,7 @@ void Track::activate(KalmanFilter &kalman_filter, int frame_id) {
     _update_tracklet_tlwh_inplace();
 }
 
-void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, int frame_id, bool new_id) {
+void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track, uint32_t frame_id, bool new_id) {
     DetVec new_track_bbox;
     _populate_DetVec_xywh(new_track_bbox, new_track._tlwh);
 
@@ -104,7 +104,7 @@ void Track::multi_gmc(std::vector<std::shared_ptr<Track>> &tracks, const Homogra
     }
 }
 
-void Track::update(KalmanFilter &kalman_filter, Track &new_track, int frame_id) {
+void Track::update(KalmanFilter &kalman_filter, Track &new_track, uint32_t frame_id) {
 
     DetVec new_track_bbox;
     _populate_DetVec_xywh(new_track_bbox, new_track._tlwh);
@@ -162,7 +162,7 @@ void Track::mark_removed() {
     state = TrackState::Removed;
 }
 
-int Track::end_frame() const {
+uint32_t Track::end_frame() const {
     return frame_id;
 }
 
@@ -200,8 +200,8 @@ void Track::_update_class_id(uint8_t class_id, float score) {
                 class_hist.second += score;
                 found = true;
             }
-            if (class_hist.second > max_freq) {
-                max_freq = class_hist.second;
+            if (static_cast<int>(class_hist.second) > max_freq) {
+                max_freq = static_cast<int>(class_hist.second);
                 _class_id = class_hist.first;
             }
         }

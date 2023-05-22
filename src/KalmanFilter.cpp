@@ -14,11 +14,11 @@ void KalmanFilter::_init_kf_matrices(double dt) {
     // to the 4-dimensional measurement space vector [x, y, w, h]
     _measurement_matrix.setIdentity();
 
-    // This is an 8x8 matrix that defines the state transition function.
+    // This is a 8x8 matrix that defines the state transition function.
     // It maps the current state space vector to the next state space vector.
     _state_transition_matrix.setIdentity();
-    for (size_t i = 0; i < 4; i++) {
-        _state_transition_matrix(i, i + 4) = dt;
+    for (Eigen::Index i = 0; i < 4; i++) {
+        _state_transition_matrix(i, i + 4) = static_cast<float>(dt);
     }
 }
 
@@ -89,7 +89,7 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
     }
 
     Eigen::MatrixXf diff(measurements.size(), 4);
-    for (size_t i = 0; i < measurements.size(); i++) {
+    for (Eigen::Index i = 0; i < measurements.size(); i++) {
         diff.row(i) = measurements[i] - projected_mean;
     }
 

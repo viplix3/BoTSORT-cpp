@@ -6,11 +6,11 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
                         const std::vector<std::shared_ptr<Track>> &detections,
                         float max_iou_distance,
                         CostMatrix &iou_dists_mask) {
-    int num_tracks = tracks.size();
-    int num_detections = detections.size();
+    size_t num_tracks = tracks.size();
+    size_t num_detections = detections.size();
 
-    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(num_tracks, num_detections);
-    iou_dists_mask = Eigen::MatrixXf::Zero(num_tracks, num_detections);
+    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
+    iou_dists_mask = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
 
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
@@ -29,10 +29,10 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
 
 CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
                         const std::vector<std::shared_ptr<Track>> &detections) {
-    int num_tracks = tracks.size();
-    int num_detections = detections.size();
+    size_t num_tracks = tracks.size();
+    size_t num_detections = detections.size();
 
-    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(num_tracks, num_detections);
+    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
             for (int j = 0; j < num_detections; j++) {
@@ -48,11 +48,11 @@ CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
                               const std::vector<std::shared_ptr<Track>> &detections,
                               float max_embedding_distance,
                               CostMatrix &embedding_dists_mask) {
-    int num_tracks = tracks.size();
-    int num_detections = detections.size();
+    size_t num_tracks = tracks.size();
+    size_t num_detections = detections.size();
 
-    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(num_tracks, num_detections);
-    embedding_dists_mask = Eigen::MatrixXf::Zero(num_tracks, num_detections);
+    CostMatrix cost_matrix = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
+    embedding_dists_mask = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
 
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
@@ -74,8 +74,8 @@ void fuse_score(CostMatrix &cost_matrix, const std::vector<std::shared_ptr<Track
         return;
     }
 
-    for (size_t i = 0; i < cost_matrix.rows(); i++) {
-        for (size_t j = 0; j < cost_matrix.cols(); j++) {
+    for (Eigen::Index i = 0; i < cost_matrix.rows(); i++) {
+        for (Eigen::Index j = 0; j < cost_matrix.cols(); j++) {
             cost_matrix(i, j) = 1.0F - ((1.0F - cost_matrix(i, j)) * detections[j]->get_score());
         }
     }
@@ -104,14 +104,14 @@ void fuse_motion(const KalmanFilter &KF,
         measurements.emplace_back(det);
     }
 
-    for (size_t i = 0; i < tracks.size(); i++) {
+    for (Eigen::Index i = 0; i < tracks.size(); i++) {
         Eigen::Matrix<float, 1, Eigen::Dynamic> gating_distance = KF.gating_distance(
                 tracks[i]->mean,
                 tracks[i]->covariance,
                 measurements,
                 only_position);
 
-        for (size_t j = 0; j < gating_distance.size(); j++) {
+        for (Eigen::Index j = 0; j < gating_distance.size(); j++) {
             if (gating_distance(0, j) > gating_threshold) {
                 cost_matrix(i, j) = std::numeric_limits<float>::infinity();
             }
@@ -128,9 +128,9 @@ CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
 
     if (emb_dist.rows() == 0 || emb_dist.cols() == 0) {
         // Embedding distance is not available, mask off iou distance
-        for (size_t i = 0; i < iou_dist.rows(); i++) {
-            for (size_t j = 0; j < iou_dist.cols(); j++) {
-                if (iou_dists_mask(i, j)) {
+        for (Eigen::Index i = 0; i < iou_dist.rows(); i++) {
+            for (Eigen::Index j = 0; j < iou_dist.cols(); j++) {
+                if (static_cast<bool>(iou_dists_mask(i, j))) {
                     iou_dist(i, j) = 1.0F;
                 }
             }
@@ -139,18 +139,18 @@ CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
     }
 
     // If IoU distance is larger than threshold, don't use embedding at all
-    for (size_t i = 0; i < iou_dist.rows(); i++) {
-        for (size_t j = 0; j < iou_dist.cols(); j++) {
-            if (iou_dists_mask(i, j)) {
+    for (Eigen::Index i = 0; i < iou_dist.rows(); i++) {
+        for (Eigen::Index j = 0; j < iou_dist.cols(); j++) {
+            if (static_cast<bool>(iou_dists_mask(i, j))) {
                 emb_dist(i, j) = 1.0F;
             }
         }
     }
 
     // If emb distance is larger than threshold, set the emb distance to inf
-    for (size_t i = 0; i < emb_dist.rows(); i++) {
-        for (size_t j = 0; j < emb_dist.cols(); j++) {
-            if (emb_dists_mask(i, j)) {
+    for (Eigen::Index i = 0; i < emb_dist.rows(); i++) {
+        for (Eigen::Index j = 0; j < emb_dist.cols(); j++) {
+            if (static_cast<bool>(emb_dists_mask(i, j))) {
                 emb_dist(i, j) = 1.0F;
             }
         }
@@ -158,8 +158,8 @@ CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
 
     // Fuse iou and emb distance by taking the element-wise minimum
     CostMatrix cost_matrix = Eigen::MatrixXf::Zero(iou_dist.rows(), iou_dist.cols());
-    for (size_t i = 0; i < iou_dist.rows(); i++) {
-        for (size_t j = 0; j < iou_dist.cols(); j++) {
+    for (Eigen::Index i = 0; i < iou_dist.rows(); i++) {
+        for (Eigen::Index j = 0; j < iou_dist.cols(); j++) {
             cost_matrix(i, j) = std::min(iou_dist(i, j), emb_dist(i, j));
         }
     }
@@ -182,7 +182,7 @@ void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &a
     }
 
     std::vector<int> rowsol, colsol;
-    float total_cost = lapjv(cost_matrix, rowsol, colsol, true, thresh);
+    double total_cost = lapjv(cost_matrix, rowsol, colsol, true, thresh);
 
     for (int i = 0; i < rowsol.size(); i++) {
         if (rowsol[i] >= 0) {

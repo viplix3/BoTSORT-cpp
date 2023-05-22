@@ -22,23 +22,23 @@ void KalmanFilter::_init_kf_matrices(double dt) {
     // to the 4-dimensional measurement space vector [x, y, w, h]
     _measurement_matrix.setIdentity();
 
-    // This is an 8x8 matrix that defines the state transition function.
+    // This is a 8x8 matrix that defines the state transition function.
     // It maps the current state space vector to the next state space vector.
     _state_transition_matrix.setIdentity();
-    for (size_t i = 0; i < 4; i++) {
-        _state_transition_matrix(i, i + 4) = _velocity_coupling_factor * dt;
-        _state_transition_matrix(i, (i + 2) % 4 + 4) = (1.0 - _velocity_coupling_factor) * dt;
-        _state_transition_matrix(i + 4, i + 4) = std::pow(0.5, (dt / _velocity_half_life));
+    for (Eigen::Index i = 0; i < 4; i++) {
+        _state_transition_matrix(i, i + 4) = static_cast<float>(_velocity_coupling_factor * dt);
+        _state_transition_matrix(i, (i + 2) % 4 + 4) = static_cast<float>((1.0F - _velocity_coupling_factor) * dt);
+        _state_transition_matrix(i + 4, i + 4) = static_cast<float>(std::pow(0.5, (dt / _velocity_half_life)));
     }
 
-    // This is an 8x8 matrix that defines the process noise covariance matrix.
+    // This is a 8x8 matrix that defines the process noise covariance matrix.
     // This takes into account acceleration and jerk for modeling the process noise.
     _process_noise_covariance = Eigen::MatrixXf::Identity(KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM);
-    for (size_t i = 0; i < 4; i++) {
-        _process_noise_covariance(i, i) = std::pow(dt, 4) / 4 + std::pow(dt, 2);
-        _process_noise_covariance(i, i + 4) = std::pow(dt, 3) / 2;
-        _process_noise_covariance(i + 4, i) = std::pow(dt, 3) / 2;
-        _process_noise_covariance(i + 4, i + 4) = std::pow(dt, 2);
+    for (Eigen::Index i = 0; i < 4; i++) {
+        _process_noise_covariance(i, i) = static_cast<float>(std::pow(dt, 4) / 4 + std::pow(dt, 2));
+        _process_noise_covariance(i, i + 4) = static_cast<float>(std::pow(dt, 3) / 2);
+        _process_noise_covariance(i + 4, i) = static_cast<float>(std::pow(dt, 3) / 2);
+        _process_noise_covariance(i + 4, i + 4) = static_cast<float>(std::pow(dt, 2));
     }
 }
 
@@ -109,7 +109,7 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
     }
 
     Eigen::MatrixXf diff(measurements.size(), 4);
-    for (size_t i = 0; i < measurements.size(); i++) {
+    for (Eigen::Index i = 0; i < measurements.size(); i++) {
         diff.row(i) = measurements[i] - projected_mean;
     }
 

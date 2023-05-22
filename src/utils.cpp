@@ -11,9 +11,9 @@ double lapjv(CostMatrix &cost,
              bool return_cost) {
     std::vector<std::vector<float>> cost_c;
 
-    for (size_t i = 0; i < cost.rows(); i++) {
+    for (Eigen::Index i = 0; i < cost.rows(); i++) {
         std::vector<float> row;
-        for (size_t j = 0; j < cost.cols(); j++) {
+        for (Eigen::Index j = 0; j < cost.cols(); j++) {
             row.push_back(cost(i, j));
         }
         cost_c.push_back(row);
@@ -21,8 +21,8 @@ double lapjv(CostMatrix &cost,
 
     std::vector<std::vector<float>> cost_c_extended;
 
-    int n_rows = cost.rows();
-    int n_cols = cost.cols();
+    int n_rows = static_cast<int>(cost.rows());
+    int n_cols = static_cast<int>(cost.cols());
     rowsol.resize(n_rows);
     colsol.resize(n_cols);
 
@@ -117,7 +117,6 @@ double lapjv(CostMatrix &cost,
         if (return_cost) {
             for (int i = 0; i < rowsol.size(); i++) {
                 if (rowsol[i] != -1) {
-                    //cout << i << "\t" << rowsol[i] << "\t" << cost_ptr[i][rowsol[i]] << endl;
                     opt += cost_ptr[i][rowsol[i]];
                 }
             }
