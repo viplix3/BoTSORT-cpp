@@ -4,7 +4,9 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <opencv2/core/types.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 #include <string>
 
 #include "BoTSORT.h"
@@ -109,8 +111,9 @@ std::vector<std::vector<Detection>> read_mot_gt_from_file(const std::string &gt_
  */
 void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector<std::shared_ptr<Track>> &tracks) {
     static std::map<int, cv::Scalar> track_colors;
+    cv::Scalar detection_color = cv::Scalar(0, 0, 0);
     for (const auto &det: detections) {
-        cv::rectangle(frame, det.bbox_tlwh, cv::Scalar(0, 0, 0), 1);
+        cv::rectangle(frame, det.bbox_tlwh, detection_color, 1);
     }
 
     for (const std::shared_ptr<Track> &track: tracks) {
@@ -130,6 +133,16 @@ void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector
                                static_cast<int>(bbox_tlwh[3])),
                       color,
                       2);
+        cv::putText(frame,
+                    std::to_string(track->track_id),
+                    cv::Point(static_cast<int>(bbox_tlwh[0]), static_cast<int>(bbox_tlwh[1])),
+                    cv::FONT_HERSHEY_SIMPLEX,
+                    0.75,
+                    color,
+                    2);
+
+        cv::rectangle(frame, cv::Rect(10, 10, 20, 20), detection_color, -1);
+        cv::putText(frame, "Detection", cv::Point(40, 25), cv::FONT_HERSHEY_SIMPLEX, 0.75, detection_color, 2);
     }
 }
 
