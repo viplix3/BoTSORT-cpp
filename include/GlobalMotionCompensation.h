@@ -56,7 +56,9 @@ public:
 
 class ECC_GMC : public GMC_Algorithm {
 private:
+    std::string _algo_name = "ECC";
     float _downscale;
+    int _max_iterations, _termination_eps;
 
     bool _first_frame_initialized = false;
     cv::Mat _prev_frame;
@@ -64,13 +66,17 @@ private:
     cv::TermCriteria _termination_criteria;
 
 
+private:
+    void _load_params_from_config(const std::string &config_dir);
+
 public:
-    explicit ECC_GMC(float downscale, int max_iterations = 100, int termination_eps = static_cast<int>(1e-6));
+    explicit ECC_GMC(const std::string &config_dir);
     HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
 };
 
 class SparseOptFlow_GMC : public GMC_Algorithm {
 private:
+    std::string _algo_name = "sparseOptFlow";
     float _downscale;
 
     bool _first_frame_initialized = false;
@@ -78,14 +84,17 @@ private:
     std::vector<cv::Point2f> _prev_keypoints;
 
     // Parameters
-    int _maxCorners = 1000, _blockSize = 3, _ransac_max_iters = 500;
-    double _qualityLevel = 0.01, _k = 0.04, _minDistance = 1.0;
-    bool _useHarrisDetector = false;
-    float _inlier_ratio = 0.5, _ransac_conf = 0.99;
+    int _maxCorners, _blockSize, _ransac_max_iters;
+    double _qualityLevel, _k, _minDistance;
+    bool _useHarrisDetector;
+    float _inlier_ratio, _ransac_conf;
 
+
+private:
+    void _load_params_from_config(const std::string &config_dir);
 
 public:
-    explicit SparseOptFlow_GMC(float downscale);
+    explicit SparseOptFlow_GMC(const std::string &config_dir);
     HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
 };
 
@@ -93,6 +102,9 @@ class OptFlowModified_GMC : public GMC_Algorithm {
 private:
     float _downscale;
 
+
+private:
+    void _load_params_from_config(const std::string &config_dir);
 
 public:
     explicit OptFlowModified_GMC(float downscale);
@@ -111,6 +123,9 @@ private:
     cv::Ptr<cv::videostab::MotionEstimatorRansacL2> _motion_estimator;
     cv::Ptr<cv::videostab::KeypointBasedMotionEstimator> _keypoint_motion_estimator;
 
+
+private:
+    void _load_params_from_config(const std::string &config_dir);
 
 public:
     explicit OpenCV_VideoStab_GMC(float downscale = 2.0, int num_features = 4000, bool detections_masking = true);
