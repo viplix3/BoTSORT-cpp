@@ -16,8 +16,8 @@
 
 
 #define TEST_GMC 0
-#define GT_AS_PREDS 1
-#define YOLOv8_PREDS 0
+#define GT_AS_PREDS 0
+#define YOLOv8_PREDS 1
 
 /**
  * @brief Read detections from MOTChallenge format file
