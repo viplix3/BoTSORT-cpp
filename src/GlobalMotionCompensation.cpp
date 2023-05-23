@@ -466,7 +466,20 @@ HomographyMatrix OpenCV_VideoStab_GMC::apply(const cv::Mat &frame_raw, const std
 
 
 // Optical Flow Modified
-OptFlowModified_GMC::OptFlowModified_GMC(float downscale) : _downscale(downscale) {}
+OptFlowModified_GMC::OptFlowModified_GMC(const std::string &config_dir) {
+    _load_params_from_config(config_dir);
+}
+
+void OptFlowModified_GMC::_load_params_from_config(const std::string &config_dir) {
+    INIReader gmc_config(config_dir + "/gmc.ini");
+    if (gmc_config.ParseError() < 0) {
+        std::cout << "Can't load " << config_dir << "/gmc.ini" << std::endl;
+        exit(1);
+    }
+
+    _downscale = gmc_config.GetFloat(_algo_name, "downscale", 2.0F);
+}
+
 HomographyMatrix OptFlowModified_GMC::apply(const cv::Mat &frame, const std::vector<Detection> &detections) {
     HomographyMatrix H;
     H.setIdentity();

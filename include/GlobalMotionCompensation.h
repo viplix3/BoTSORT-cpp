@@ -100,6 +100,7 @@ public:
 
 class OptFlowModified_GMC : public GMC_Algorithm {
 private:
+    std::string _algo_name = "OptFlowModified";
     float _downscale;
 
 
@@ -107,7 +108,7 @@ private:
     void _load_params_from_config(const std::string &config_dir);
 
 public:
-    explicit OptFlowModified_GMC(float downscale);
+    explicit OptFlowModified_GMC(const std::string &config_dir);
     HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
 };
 
