@@ -39,9 +39,9 @@ public:
      * 
      * @param model_weights (Optional) Path to the model weights file. If not provided, Re-ID is disabled (default: std::nullopt)
      * @param fp16_inference If true, use FP16 inference (default: false)
-     * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.6)
+     * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.3)
      * @param track_low_thresh Lowest detection confidence threshold to consider a detection for tracking (default: 0.1)
-     * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.7)
+     * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.4)
      * @param track_buffer Used to decide for how many frames a track should be kept alive after it lost the object. (time_alive = (frame_rate / 30) * track_buffer)
      * @param match_thresh IoU + Re-ID matching threshold for first stage matching (default: 0.7)
      * @param proximity_thresh Minimum IoU threshold for using visual features for matching (default: 0.5)
@@ -53,14 +53,14 @@ public:
     explicit BoTSORT(
             std::optional<const char *> model_weights = std::nullopt,
             bool fp16_inference = false,
-            float track_high_thresh = 0.6,
+            float track_high_thresh = 0.3,
             float track_low_thresh = 0.1,
-            float new_track_thresh = 0.7,
+            float new_track_thresh = 0.4,
             uint8_t track_buffer = 30,
             float match_thresh = 0.7,
             float proximity_thresh = 0.5,
             float appearance_thresh = 0.25,
-            const char *gmc_method = "sparseOptFlow",
+            const char *gmc_method = "OpenCV_VideoStab",
             uint8_t frame_rate = 30,
             float lambda = 0.985);
     ~BoTSORT() = default;
