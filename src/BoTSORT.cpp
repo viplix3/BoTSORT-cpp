@@ -1,4 +1,5 @@
 #include "BoTSORT.h"
+#include "DataType.h"
 #include "INIReader.h"
 #include "matching.h"
 #include <opencv2/imgproc.hpp>
@@ -94,21 +95,19 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     ////////////////// ASSOCIATION ALGORITHM STARTS HERE //////////////////
     ////////////////// First association, with high score detection boxes //////////////////
+    // Find IoU distance between all tracked tracks and high confidence detections
     CostMatrix iou_dists, raw_emd_dist, iou_dists_mask_1st_association, emd_dist_mask_1st_association;
 
-    // Find IoU distance between all tracked tracks and high confidence detections
-    iou_dists = iou_distance(tracks_pool,
-                             detections_high_conf,
-                             _proximity_thresh,
-                             iou_dists_mask_1st_association);
+    std::tie(iou_dists, iou_dists_mask_1st_association) = iou_distance(tracks_pool,
+                                                                       detections_high_conf,
+                                                                       _proximity_thresh);
     fuse_score(iou_dists, detections_high_conf);// Fuse the score with IoU distance
 
     if (_reid_enabled) {
         // If re-ID is enabled, find the embedding distance between all tracked tracks and high confidence detections
-        raw_emd_dist = embedding_distance(tracks_pool,
-                                          detections_high_conf,
-                                          _appearance_thresh,
-                                          emd_dist_mask_1st_association);
+        std::tie(raw_emd_dist, emd_dist_mask_1st_association) = embedding_distance(tracks_pool,
+                                                                                   detections_high_conf,
+                                                                                   _appearance_thresh);
         fuse_motion(*_kalman_filter,
                     raw_emd_dist,
                     tracks_pool,
@@ -201,18 +200,17 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     //Find IoU distance between unconfirmed tracks and high confidence detections left after the first association
     CostMatrix iou_dists_unconfirmed, raw_emd_dist_unconfirmed, iou_dists_mask_unconfirmed, emd_dist_mask_unconfirmed;
-    iou_dists_unconfirmed = iou_distance(unconfirmed_tracks,
-                                         unmatched_detections_after_1st_association,
-                                         _proximity_thresh,
-                                         iou_dists_mask_unconfirmed);
+
+    std::tie(iou_dists_unconfirmed, iou_dists_mask_unconfirmed) = iou_distance(unconfirmed_tracks,
+                                                                               unmatched_detections_after_1st_association,
+                                                                               _proximity_thresh);
     fuse_score(iou_dists_unconfirmed, unmatched_detections_after_1st_association);
 
     if (_reid_enabled) {
         // Find embedding distance between unconfirmed tracks and high confidence detections left after the first association
-        raw_emd_dist_unconfirmed = embedding_distance(unconfirmed_tracks,
-                                                      unmatched_detections_after_1st_association,
-                                                      _appearance_thresh,
-                                                      emd_dist_mask_unconfirmed);
+        std::tie(raw_emd_dist_unconfirmed, emd_dist_mask_unconfirmed) = embedding_distance(unconfirmed_tracks,
+                                                                                           unmatched_detections_after_1st_association,
+                                                                                           _appearance_thresh);
         fuse_motion(*_kalman_filter,
                     raw_emd_dist_unconfirmed,
                     unconfirmed_tracks,
