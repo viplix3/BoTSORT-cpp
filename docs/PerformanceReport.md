@@ -5,6 +5,12 @@
 - MOT-20 train dataset, sequence MOT20-01 having 429 frames was used in testing
 - Performance is evaluated considering the execution speed (ms or FPS) of the 'Release' build
 
+## Profiling System Specifications
+
+- OS: Ubuntu 20.04.6 LTS
+- CPU: Intel(R) Core(TM) i7-13700F
+- RAM: 32 GB
+
 ## Profiling Results
 
 ### Execution time of different modules
