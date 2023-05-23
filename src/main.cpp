@@ -11,7 +11,6 @@
 #include "BoTSORT.h"
 #include "DataType.h"
 #include "GlobalMotionCompensation.h"
-#include "INIReader.h"
 #include "track.h"
 
 
@@ -147,14 +146,15 @@ void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector
 
 int main(int argc, char **argv) {
 
-    if (argc < 4) {
-        std::cout << "Usage: ./bot-sort-tracker <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
+    if (argc < 5) {
+        std::cout << "Usage: ./bot-sort-tracker <config_dir> <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
         return -1;
     }
 
-    std::string images_dir = argv[1];
-    std::string detection_dir = argv[2];
-    std::string output_dir = argv[3];
+    std::string config_dir = argv[1];
+    std::string images_dir = argv[2];
+    std::string labels_dir = argv[3];
+    std::string output_dir = argv[4];
 
     // Setup output directories
     std::string output_dir_mot = output_dir + "/mot";
@@ -175,26 +175,7 @@ int main(int argc, char **argv) {
     // TODO: Load BoTSORT params from a config file
 
     // Initialize BoTSORT tracker
-    INIReader tracker_config("../config/tracker.ini");
-    if (tracker_config.ParseError() < 0) {
-        std::cout << "Can't load ../config/botsort.ini\n";
-        return 1;
-    }
-
-    std::string tracker_name = "BoTSORT";
-    BoTSORT tracker = BoTSORT(
-            tracker_config.Get(tracker_name, "model_path"),
-            tracker_config.GetBoolean(tracker_name, "fp16_inference", false),
-            tracker_config.GetFloat(tracker_name, "track_high_thresh", 0.6F),
-            tracker_config.GetFloat(tracker_name, "track_low_thresh", 0.1F),
-            tracker_config.GetFloat(tracker_name, "new_track_thresh", 0.7F),
-            tracker_config.GetInteger(tracker_name, "track_buffer", 30),
-            tracker_config.GetFloat(tracker_name, "match_thresh", 0.7F),
-            tracker_config.GetFloat(tracker_name, "proximity_thresh", 0.5F),
-            tracker_config.GetFloat(tracker_name, "appearance_thresh", 0.25F),
-            tracker_config.Get(tracker_name, "gmc_method", "sparseOptFlow"),
-            tracker_config.GetInteger(tracker_name, "frame_rate", 30),
-            tracker_config.GetFloat(tracker_name, "lambda", 0.985F));
+    BoTSORT tracker = BoTSORT(config_dir);
 
 
 // // Initialize GlobalMotionCompensation
@@ -273,7 +254,7 @@ int main(int argc, char **argv) {
 
 
 #if (GT_AS_PREDS == 1)
-    std::vector<std::vector<Detection>> gt_per_frame = read_mot_gt_from_file(detection_dir);
+    std::vector<std::vector<Detection>> gt_per_frame = read_mot_gt_from_file(labels_dir);
 
     for (const auto &filepath: image_filepaths) {
         std::string filename = filepath.substr(filepath.find_last_of('/') + 1);

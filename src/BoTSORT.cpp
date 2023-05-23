@@ -1,29 +1,12 @@
 #include "BoTSORT.h"
+#include "INIReader.h"
 #include "matching.h"
+#include <opencv2/imgproc.hpp>
+#include <optional>
 #include <unordered_set>
 
-BoTSORT::BoTSORT(
-        std::optional<std::string> model_weights,
-        bool fp16_inference,
-        float track_high_thresh,
-        float track_low_thresh,
-        float new_track_thresh,
-        uint8_t track_buffer,
-        float match_thresh,
-        float proximity_thresh,
-        float appearance_thresh,
-        std::string gmc_method,
-        uint8_t frame_rate,
-        float lambda)
-    : _track_high_thresh(track_high_thresh),
-      _track_low_thresh(track_low_thresh),
-      _new_track_thresh(new_track_thresh),
-      _track_buffer(track_buffer),
-      _match_thresh(match_thresh),
-      _proximity_thresh(proximity_thresh),
-      _appearance_thresh(appearance_thresh),
-      _frame_rate(frame_rate),
-      _lambda(lambda) {
+BoTSORT::BoTSORT(std::string config_dir) {
+    _load_params_from_config(config_dir);
 
     // Tracker module
     _frame_id = 0;
@@ -33,8 +16,8 @@ BoTSORT::BoTSORT(
 
 
     // Re-ID module, load visual feature extractor here
-    if (model_weights.has_value()) {
-        _reid_model = std::make_unique<ReIDModel>(model_weights.value(), fp16_inference);
+    if (_reid_model_weights_path) {
+        _reid_model = std::make_unique<ReIDModel>(_reid_model_weights_path.value(), _fp16_inference);
         _reid_enabled = true;
     } else {
         std::cout << "Re-ID module disabled" << std::endl;
@@ -43,8 +26,9 @@ BoTSORT::BoTSORT(
 
 
     // Global motion compensation module
-    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[gmc_method]);
+    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[_gmc_method_name]);
 }
+
 
 std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
     ////////////////// CREATE TRACK OBJECT FOR ALL THE DETECTIONS //////////////////
@@ -404,4 +388,33 @@ void BoTSORT::_remove_duplicate_tracks(
             result_tracks_b.push_back(tracks_list_b[i]);
         }
     }
+}
+
+
+void BoTSORT::_load_params_from_config(std::string config_dir) {
+    const std::string tracker_name = "BoTSORT";
+
+    INIReader tracker_config(config_dir + "/tracker.ini");
+    if (tracker_config.ParseError() < 0) {
+        std::cout << "Can't load ../config/botsort.ini\n";
+        exit(1);
+    }
+
+    _reid_model_weights_path = tracker_config.Get(tracker_name, "model_path");
+    _fp16_inference = tracker_config.GetBoolean(tracker_name, "fp16_inference", false);
+
+    _track_high_thresh = tracker_config.GetFloat(tracker_name, "track_high_thresh", 0.6F);
+    _track_low_thresh = tracker_config.GetFloat(tracker_name, "track_low_thresh", 0.1F);
+    _new_track_thresh = tracker_config.GetFloat(tracker_name, "new_track_thresh", 0.7F);
+
+    _track_buffer = tracker_config.GetInteger(tracker_name, "track_buffer", 30);
+
+    _match_thresh = tracker_config.GetFloat(tracker_name, "match_thresh", 0.7F);
+    _proximity_thresh = tracker_config.GetFloat(tracker_name, "proximity_thresh", 0.5F);
+    _appearance_thresh = tracker_config.GetFloat(tracker_name, "appearance_thresh", 0.25F);
+
+    _gmc_method_name = tracker_config.Get(tracker_name, "gmc_method", "sparseOptFlow");
+
+    _frame_rate = tracker_config.GetInteger(tracker_name, "frame_rate", 30);
+    _lambda = tracker_config.GetFloat(tracker_name, "lambda", 0.985F);
 }

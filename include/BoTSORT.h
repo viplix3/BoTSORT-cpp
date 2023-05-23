@@ -20,7 +20,9 @@ public:
     std::vector<std::shared_ptr<Track>> track(const std::vector<Detection> &detections, const cv::Mat &frame);
 
 private:
-    bool _reid_enabled;
+    std::optional<std::string> _reid_model_weights_path;
+    std::string _gmc_method_name;
+    bool _reid_enabled, _fp16_inference;
     uint8_t _track_buffer, _frame_rate, _buffer_size, _max_time_lost;
     float _track_high_thresh, _track_low_thresh, _new_track_thresh, _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
     unsigned int _frame_id;
@@ -35,34 +37,11 @@ private:
 
 public:
     /**
-     * @brief Construct a new BoTSORT MultiObjectTracking algorithm object
+     * @brief Construct a new BoTSORT object
      * 
-     * @param model_weights (Optional) Path to the model weights file. If not provided, Re-ID is disabled (default: std::nullopt)
-     * @param fp16_inference If true, use FP16 inference (default: false)
-     * @param track_high_thresh Detection confidence threshold for classifying a detection as a high-confidence detection (default: 0.6)
-     * @param track_low_thresh Lowest detection confidence threshold to consider a detection for tracking (default: 0.1)
-     * @param new_track_thresh Detection confidence threshold for creating a new track (default: 0.7)
-     * @param track_buffer Used to decide for how many frames a track should be kept alive after it lost the object. (time_alive = (frame_rate / 30) * track_buffer)
-     * @param match_thresh IoU + Re-ID matching threshold for first stage matching (default: 0.7)
-     * @param proximity_thresh Minimum IoU threshold for using visual features for matching (default: 0.5)
-     * @param appearance_thresh Appearance matching threshold (default: 0.25)
-     * @param gmc_method Global motion compensation method (default: "OpenCV_VideoStab")
-     * @param frame_rate Frame rate of the video (default: 30)
-     * @param lambda Used for fusing motion distance and appearance distance (default: 0.985)
+     * @param config_path Path to the config directory
      */
-    explicit BoTSORT(
-            std::optional<std::string> model_weights = std::nullopt,
-            bool fp16_inference = false,
-            float track_high_thresh = 0.6,
-            float track_low_thresh = 0.1,
-            float new_track_thresh = 0.7,
-            uint8_t track_buffer = 30,
-            float match_thresh = 0.7,
-            float proximity_thresh = 0.5,
-            float appearance_thresh = 0.25,
-            std::string gmc_method = "sparseOptFlow",
-            uint8_t frame_rate = 30,
-            float lambda = 0.985);
+    explicit BoTSORT(std::string config_path);
     ~BoTSORT() = default;
 
 private:
@@ -108,4 +87,11 @@ private:
             std::vector<std::shared_ptr<Track>> &result_tracks_b,
             std::vector<std::shared_ptr<Track>> &tracks_list_a,
             std::vector<std::shared_ptr<Track>> &tracks_list_b);
+
+    /**
+     * @brief Load tracker parameters from the given config file
+     * 
+     * @param config_path Path to the config directory
+     */
+    void _load_params_from_config(std::string config_path);
 };
