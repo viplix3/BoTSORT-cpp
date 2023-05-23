@@ -1,4 +1,5 @@
 #include "GlobalMotionCompensation.h"
+#include "INIReader.h"
 #include <opencv2/videostab/global_motion.hpp>
 #include <opencv2/videostab/motion_core.hpp>
 
@@ -11,22 +12,22 @@ std::map<std::string, GMC_Method> GlobalMotionCompensation::GMC_method_map = {
 };
 
 
-GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, float downscale) {
+GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, const std::string &config_dir) {
     if (method == GMC_Method::ORB) {
         std::cout << "Using ORB for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<ORB_GMC>(downscale);
+        _gmc_algorithm = std::make_unique<ORB_GMC>(config_dir);
     } else if (method == GMC_Method::ECC) {
         std::cout << "Using ECC for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<ECC_GMC>(downscale);
+        _gmc_algorithm = std::make_unique<ECC_GMC>(config_dir);
     } else if (method == GMC_Method::SparseOptFlow) {
         std::cout << "Using SparseOptFlow for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(downscale);
+        _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(config_dir);
     } else if (method == GMC_Method::OptFlowModified) {
         std::cout << "Using OptFlowModified for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(downscale);
+        _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(config_dir);
     } else if (method == GMC_Method::OpenCV_VideoStab) {
         std::cout << "Using OpenCV_VideoStab for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<OpenCV_VideoStab_GMC>(downscale);
+        _gmc_algorithm = std::make_unique<OpenCV_VideoStab_GMC>(config_dir);
     } else {
         throw std::runtime_error("Unknown global motion compensation method: " + std::to_string(method));
     }
@@ -38,10 +39,25 @@ HomographyMatrix GlobalMotionCompensation::apply(const cv::Mat &frame, const std
 
 
 // ORB
-ORB_GMC::ORB_GMC(float downscale) : _downscale(downscale) {
+ORB_GMC::ORB_GMC(const std::string &config_dir) {
+    _load_params_from_config(config_dir);
+
     _detector = cv::FastFeatureDetector::create();
     _extractor = cv::ORB::create();
     _matcher = cv::BFMatcher::create(cv::NORM_HAMMING);// Brute Force Matcher
+}
+
+void ORB_GMC::_load_params_from_config(const std::string &config_dir) {
+    INIReader gmc_config(config_dir + "/gmc.ini");
+    if (gmc_config.ParseError() < 0) {
+        std::cout << "Can't load " << config_dir << "/gmc.ini" << std::endl;
+        exit(1);
+    }
+
+    _downscale = gmc_config.GetFloat(_algo_name, "downscale", 2.0);
+    _inlier_ratio = gmc_config.GetFloat(_algo_name, "inlier_ratio", 0.5);
+    _ransac_conf = gmc_config.GetFloat(_algo_name, "ransac_conf", 0.99);
+    _ransac_max_iters = gmc_config.GetInteger(_algo_name, "ransac_max_iters", 500);
 }
 
 HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) {

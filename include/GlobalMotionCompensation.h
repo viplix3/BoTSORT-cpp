@@ -32,6 +32,7 @@ public:
 
 class ORB_GMC : public GMC_Algorithm {
 private:
+    std::string _algo_name = "ORB";
     float _downscale;
     cv::Ptr<cv::FeatureDetector> _detector;
     cv::Ptr<cv::DescriptorExtractor> _extractor;
@@ -41,12 +42,15 @@ private:
     cv::Mat _prev_frame;
     std::vector<cv::KeyPoint> _prev_keypoints;
     cv::Mat _prev_descriptors;
-    float _inlier_ratio = 0.5, _ransac_conf = 0.99;
-    int _ransac_max_iters = 500;
+    float _inlier_ratio, _ransac_conf;
+    int _ransac_max_iters;
+
+
+private:
+    void _load_params_from_config(const std::string &config_dir);
 
 public:
-    explicit ORB_GMC(float downscale);
-
+    explicit ORB_GMC(const std::string &config_dir);
     HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
 };
 
@@ -123,8 +127,21 @@ private:
 
 
 public:
-    explicit GlobalMotionCompensation(GMC_Method method, float downscale = 2.0);
+    /**
+     * @brief Construct a new Global Motion Compensation object
+     * 
+     * @param method GMC_Method enum member for GMC algorithm to use
+     * @param config_dir Directory containing config files for GMC algorithm
+     */
+    explicit GlobalMotionCompensation(GMC_Method method, const std::string &config_dir);
     ~GlobalMotionCompensation() = default;
 
+    /**
+     * @brief Apply GMC algorithm to find homography matrix given frame and detections
+     * 
+     * @param frame_raw Input frame
+     * @param detections Detections in the frame
+     * @return HomographyMatrix Predicted homography matrix
+     */
     HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections);
 };
