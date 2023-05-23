@@ -1,29 +1,13 @@
 #include "BoTSORT.h"
+#include "DataType.h"
+#include "INIReader.h"
 #include "matching.h"
+#include <opencv2/imgproc.hpp>
+#include <optional>
 #include <unordered_set>
 
-BoTSORT::BoTSORT(
-        std::optional<const char *> model_weights,
-        bool fp16_inference,
-        float track_high_thresh,
-        float track_low_thresh,
-        float new_track_thresh,
-        uint8_t track_buffer,
-        float match_thresh,
-        float proximity_thresh,
-        float appearance_thresh,
-        const char *gmc_method,
-        uint8_t frame_rate,
-        float lambda)
-    : _track_high_thresh(track_high_thresh),
-      _track_low_thresh(track_low_thresh),
-      _new_track_thresh(new_track_thresh),
-      _track_buffer(track_buffer),
-      _match_thresh(match_thresh),
-      _proximity_thresh(proximity_thresh),
-      _appearance_thresh(appearance_thresh),
-      _frame_rate(frame_rate),
-      _lambda(lambda) {
+BoTSORT::BoTSORT(const std::string &config_dir) {
+    _load_params_from_config(config_dir);
 
     // Tracker module
     _frame_id = 0;
@@ -33,8 +17,8 @@ BoTSORT::BoTSORT(
 
 
     // Re-ID module, load visual feature extractor here
-    if (model_weights.has_value()) {
-        _reid_model = std::make_unique<ReIDModel>(model_weights.value(), fp16_inference);
+    if (_reid_model_weights_path) {
+        _reid_model = std::make_unique<ReIDModel>(_reid_model_weights_path.value(), _fp16_inference);
         _reid_enabled = true;
     } else {
         std::cout << "Re-ID module disabled" << std::endl;
@@ -43,8 +27,9 @@ BoTSORT::BoTSORT(
 
 
     // Global motion compensation module
-    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[std::string(gmc_method)]);
+    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[_gmc_method_name], config_dir);
 }
+
 
 std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
     ////////////////// CREATE TRACK OBJECT FOR ALL THE DETECTIONS //////////////////
@@ -110,21 +95,19 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     ////////////////// ASSOCIATION ALGORITHM STARTS HERE //////////////////
     ////////////////// First association, with high score detection boxes //////////////////
+    // Find IoU distance between all tracked tracks and high confidence detections
     CostMatrix iou_dists, raw_emd_dist, iou_dists_mask_1st_association, emd_dist_mask_1st_association;
 
-    // Find IoU distance between all tracked tracks and high confidence detections
-    iou_dists = iou_distance(tracks_pool,
-                             detections_high_conf,
-                             _proximity_thresh,
-                             iou_dists_mask_1st_association);
+    std::tie(iou_dists, iou_dists_mask_1st_association) = iou_distance(tracks_pool,
+                                                                       detections_high_conf,
+                                                                       _proximity_thresh);
     fuse_score(iou_dists, detections_high_conf);// Fuse the score with IoU distance
 
     if (_reid_enabled) {
         // If re-ID is enabled, find the embedding distance between all tracked tracks and high confidence detections
-        raw_emd_dist = embedding_distance(tracks_pool,
-                                          detections_high_conf,
-                                          _appearance_thresh,
-                                          emd_dist_mask_1st_association);
+        std::tie(raw_emd_dist, emd_dist_mask_1st_association) = embedding_distance(tracks_pool,
+                                                                                   detections_high_conf,
+                                                                                   _appearance_thresh);
         fuse_motion(*_kalman_filter,
                     raw_emd_dist,
                     tracks_pool,
@@ -139,8 +122,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
                                                                emd_dist_mask_1st_association);
 
     // Perform linear assignment on the final distance matrix, LAPJV algorithm is used here
-    AssociationData first_associations;
-    linear_assignment(distances_first_association, _match_thresh, first_associations);
+    AssociationData first_associations = linear_assignment(distances_first_association, _match_thresh);
 
     // Update the tracks with the associated detections
     for (const std::pair<int, int> &match: first_associations.matches) {
@@ -176,8 +158,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
     iou_dists_second = iou_distance(unmatched_tracks_after_1st_association, detections_low_conf);
 
     // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
-    AssociationData second_associations;
-    linear_assignment(iou_dists_second, 0.5, second_associations);
+    AssociationData second_associations = linear_assignment(iou_dists_second, 0.5);
 
     // Update the tracks with the associated detections
     for (const std::pair<int, int> &match: second_associations.matches) {
@@ -217,18 +198,17 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     //Find IoU distance between unconfirmed tracks and high confidence detections left after the first association
     CostMatrix iou_dists_unconfirmed, raw_emd_dist_unconfirmed, iou_dists_mask_unconfirmed, emd_dist_mask_unconfirmed;
-    iou_dists_unconfirmed = iou_distance(unconfirmed_tracks,
-                                         unmatched_detections_after_1st_association,
-                                         _proximity_thresh,
-                                         iou_dists_mask_unconfirmed);
+
+    std::tie(iou_dists_unconfirmed, iou_dists_mask_unconfirmed) = iou_distance(unconfirmed_tracks,
+                                                                               unmatched_detections_after_1st_association,
+                                                                               _proximity_thresh);
     fuse_score(iou_dists_unconfirmed, unmatched_detections_after_1st_association);
 
     if (_reid_enabled) {
         // Find embedding distance between unconfirmed tracks and high confidence detections left after the first association
-        raw_emd_dist_unconfirmed = embedding_distance(unconfirmed_tracks,
-                                                      unmatched_detections_after_1st_association,
-                                                      _appearance_thresh,
-                                                      emd_dist_mask_unconfirmed);
+        std::tie(raw_emd_dist_unconfirmed, emd_dist_mask_unconfirmed) = embedding_distance(unconfirmed_tracks,
+                                                                                           unmatched_detections_after_1st_association,
+                                                                                           _appearance_thresh);
         fuse_motion(*_kalman_filter,
                     raw_emd_dist_unconfirmed,
                     unconfirmed_tracks,
@@ -243,8 +223,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
                                                          emd_dist_mask_unconfirmed);
 
     // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
-    AssociationData unconfirmed_associations;
-    linear_assignment(distances_unconfirmed, 0.7, unconfirmed_associations);
+    AssociationData unconfirmed_associations = linear_assignment(distances_unconfirmed, 0.7);
 
     for (const std::pair<int, int> &match: unconfirmed_associations.matches) {
         const std::shared_ptr<Track> &track = unconfirmed_tracks[match.first];
@@ -315,7 +294,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     ////////////////// Update output tracks //////////////////
     std::vector<std::shared_ptr<Track>> output_tracks;
-    for (const std::shared_ptr<Track>& track: _tracked_tracks) {
+    for (const std::shared_ptr<Track> &track: _tracked_tracks) {
         if (track->is_activated) {
             output_tracks.push_back(track);
         }
@@ -404,4 +383,33 @@ void BoTSORT::_remove_duplicate_tracks(
             result_tracks_b.push_back(tracks_list_b[i]);
         }
     }
+}
+
+
+void BoTSORT::_load_params_from_config(const std::string &config_dir) {
+    const std::string tracker_name = "BoTSORT";
+
+    INIReader tracker_config(config_dir + "/tracker.ini");
+    if (tracker_config.ParseError() < 0) {
+        std::cout << "Can't load " << config_dir << "/tracker.ini" << std::endl;
+        exit(1);
+    }
+
+    _reid_model_weights_path = tracker_config.Get(tracker_name, "model_path");
+    _fp16_inference = tracker_config.GetBoolean(tracker_name, "fp16_inference", false);
+
+    _track_high_thresh = tracker_config.GetFloat(tracker_name, "track_high_thresh", 0.6F);
+    _track_low_thresh = tracker_config.GetFloat(tracker_name, "track_low_thresh", 0.1F);
+    _new_track_thresh = tracker_config.GetFloat(tracker_name, "new_track_thresh", 0.7F);
+
+    _track_buffer = tracker_config.GetInteger(tracker_name, "track_buffer", 30);
+
+    _match_thresh = tracker_config.GetFloat(tracker_name, "match_thresh", 0.7F);
+    _proximity_thresh = tracker_config.GetFloat(tracker_name, "proximity_thresh", 0.5F);
+    _appearance_thresh = tracker_config.GetFloat(tracker_name, "appearance_thresh", 0.25F);
+
+    _gmc_method_name = tracker_config.Get(tracker_name, "gmc_method", "sparseOptFlow");
+
+    _frame_rate = tracker_config.GetInteger(tracker_name, "frame_rate", 30);
+    _lambda = tracker_config.GetFloat(tracker_name, "lambda", 0.985F);
 }

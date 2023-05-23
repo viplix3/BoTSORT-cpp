@@ -1,4 +1,3 @@
-
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -147,14 +146,15 @@ void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections, std::vector
 
 int main(int argc, char **argv) {
 
-    if (argc < 4) {
-        std::cout << "Usage: ./bot-sort-tracker <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
+    if (argc < 5) {
+        std::cout << "Usage: ./bot-sort-tracker <config_dir> <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
         return -1;
     }
 
-    std::string images_dir = argv[1];
-    std::string detection_dir = argv[2];
-    std::string output_dir = argv[3];
+    std::string config_dir = argv[1];
+    std::string images_dir = argv[2];
+    std::string labels_dir = argv[3];
+    std::string output_dir = argv[4];
 
     // Setup output directories
     std::string output_dir_mot = output_dir + "/mot";
@@ -173,7 +173,9 @@ int main(int argc, char **argv) {
 
     // Initialize BoTSORT tracker with all the default params
     // TODO: Load BoTSORT params from a config file
-    BoTSORT tracker = BoTSORT();
+
+    // Initialize BoTSORT tracker
+    BoTSORT tracker = BoTSORT(config_dir);
 
 
 // // Initialize GlobalMotionCompensation
@@ -252,7 +254,7 @@ int main(int argc, char **argv) {
 
 
 #if (GT_AS_PREDS == 1)
-    std::vector<std::vector<Detection>> gt_per_frame = read_mot_gt_from_file(detection_dir);
+    std::vector<std::vector<Detection>> gt_per_frame = read_mot_gt_from_file(labels_dir);
 
     for (const auto &filepath: image_filepaths) {
         std::string filename = filepath.substr(filepath.find_last_of('/') + 1);

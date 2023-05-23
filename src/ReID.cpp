@@ -1,6 +1,6 @@
 #include "ReID.h"
 
-ReIDModel::ReIDModel(const char *model_weights, bool fp16_inference) {
+ReIDModel::ReIDModel(std::string model_weights, bool fp16_inference) {
 }
 
 FeatureVector ReIDModel::extract_features(cv::Mat &image_patch) {

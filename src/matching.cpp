@@ -2,15 +2,14 @@
 #include "DataType.h"
 #include "utils.h"
 
-CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
-                        const std::vector<std::shared_ptr<Track>> &detections,
-                        float max_iou_distance,
-                        CostMatrix &iou_dists_mask) {
+std::tuple<CostMatrix, CostMatrix> iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                                                const std::vector<std::shared_ptr<Track>> &detections,
+                                                float max_iou_distance) {
     size_t num_tracks = tracks.size();
     size_t num_detections = detections.size();
 
     CostMatrix cost_matrix = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
-    iou_dists_mask = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
+    CostMatrix iou_dists_mask = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
 
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
@@ -24,7 +23,7 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
         }
     }
 
-    return cost_matrix;
+    return {cost_matrix, iou_dists_mask};
 }
 
 CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
@@ -44,15 +43,14 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
     return cost_matrix;
 }
 
-CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
-                              const std::vector<std::shared_ptr<Track>> &detections,
-                              float max_embedding_distance,
-                              CostMatrix &embedding_dists_mask) {
+std::tuple<CostMatrix, CostMatrix> embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                                                      const std::vector<std::shared_ptr<Track>> &detections,
+                                                      float max_embedding_distance) {
     size_t num_tracks = tracks.size();
     size_t num_detections = detections.size();
 
     CostMatrix cost_matrix = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
-    embedding_dists_mask = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
+    CostMatrix embedding_dists_mask = Eigen::MatrixXf::Zero(static_cast<Eigen::Index>(num_tracks), static_cast<Eigen::Index>(num_detections));
 
     if (num_tracks > 0 && num_detections > 0) {
         for (int i = 0; i < num_tracks; i++) {
@@ -66,7 +64,7 @@ CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
         }
     }
 
-    return cost_matrix;
+    return {cost_matrix, embedding_dists_mask};
 }
 
 void fuse_score(CostMatrix &cost_matrix, const std::vector<std::shared_ptr<Track>> &detections) {
@@ -167,8 +165,10 @@ CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
     return cost_matrix;
 }
 
-void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &associations) {
+AssociationData linear_assignment(CostMatrix &cost_matrix, float thresh) {
     // If cost matrix is empty, all the tracks and detections are unmatched
+    AssociationData associations;
+
     if (cost_matrix.size() == 0) {
         for (int i = 0; i < cost_matrix.rows(); i++) {
             associations.unmatched_track_indices.emplace_back(i);
@@ -178,7 +178,7 @@ void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &a
             associations.unmatched_det_indices.emplace_back(i);
         }
 
-        return;
+        return associations;
     }
 
     std::vector<int> rowsol, colsol;
@@ -197,4 +197,6 @@ void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &a
             associations.unmatched_det_indices.emplace_back(i);
         }
     }
+
+    return associations;
 }

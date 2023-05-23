@@ -2,6 +2,7 @@
 
 #include "DataType.h"
 #include "track.h"
+#include <tuple>
 
 /**
  * @brief Calculate the IoU distance between tracks and detections and create a mask for the cost matrix
@@ -10,13 +11,11 @@
  * @param tracks Tracks used to create the cost matrix
  * @param detections Tracks created from detections used to create the cost matrix
  * @param max_iou_distance Threshold for IoU distance
- * @param iou_dists_mask Mask for the cost matrix (would be modified in-place)
- * @return CostMatrix IoU distance cost matrix
+ * @return std::tuple<CostMatrix, CostMatrix> Tuple of IoU distance cost matrix and IoU distance mask
  */
-CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
-                        const std::vector<std::shared_ptr<Track>> &detections,
-                        float max_iou_distance,
-                        CostMatrix &iou_dists_mask);
+std::tuple<CostMatrix, CostMatrix> iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                                                const std::vector<std::shared_ptr<Track>> &detections,
+                                                float max_iou_distance);
 
 /**
  * @brief Calculate the IoU distance between tracks and detections
@@ -31,17 +30,16 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
 
 /**
  * @brief Calculate the embedding distance between tracks and detections and create a mask for the cost matrix
+ *  when the embedding distance is greater than the threshold
  * 
  * @param tracks Tracks used to create the cost matrix
  * @param detections Tracks created from detections used to create the cost matrix
  * @param max_embedding_distance Threshold for embedding distance
- * @param embedding_dists_mask Mask for the cost matrix (would be modified in-place)
- * @return CostMatrix Embedding distance cost matrix
+ * @return std::tuple<CostMatrix, CostMatrix> Tuple of embedding distance cost matrix and embedding distance mask
  */
-CostMatrix embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
-                              const std::vector<std::shared_ptr<Track>> &detections,
-                              float max_embedding_distance,
-                              CostMatrix &embedding_dists_mask);
+std::tuple<CostMatrix, CostMatrix> embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
+                                                      const std::vector<std::shared_ptr<Track>> &detections,
+                                                      float max_embedding_distance);
 
 /**
  * @brief Fuses the detection score into the cost matrix in-place
@@ -87,8 +85,8 @@ CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
 /**
  * @brief Performs linear assignment using the LAPJV algorithm
  * 
- * @param cost_matrix Cost matrix
+ * @param cost_matrix Cost matrix for solving the linear assignment problem
  * @param thresh Threshold for cost matrix
- * @param associations Output associations between tracks and detections
+ * @return AssociationData Association data
  */
-void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &associations);
+AssociationData linear_assignment(CostMatrix &cost_matrix, float thresh);
