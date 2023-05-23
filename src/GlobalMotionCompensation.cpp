@@ -391,21 +391,26 @@ HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame_raw, const std::v
 
 
 // OpenCV VideoStab
-OpenCV_VideoStab_GMC::OpenCV_VideoStab_GMC(float downscale, int num_features, bool detections_masking)
-    : _detections_masking(detections_masking) {
-    if (0 < downscale && downscale < 8) {
-        _downscale = downscale;
-    }
-
-    if (0 < num_features) {
-        _num_features = num_features;
-    }
-
+OpenCV_VideoStab_GMC::OpenCV_VideoStab_GMC(const std::string &config_dir) {
     _motion_estimator = cv::makePtr<cv::videostab::MotionEstimatorRansacL2>(cv::videostab::MM_SIMILARITY);
 
     _keypoint_motion_estimator = cv::makePtr<cv::videostab::KeypointBasedMotionEstimator>(_motion_estimator);
     _keypoint_motion_estimator->setDetector(cv::GFTTDetector::create(_num_features));
 }
+
+void OpenCV_VideoStab_GMC::_load_params_from_config(const std::string &config_dir) {
+    INIReader gmc_config(config_dir + "/gmc.ini");
+    if (gmc_config.ParseError() < 0) {
+        std::cout << "Can't load " << config_dir << "/gmc.ini" << std::endl;
+        exit(1);
+    }
+
+    _downscale = gmc_config.GetFloat(_algo_name, "downscale", 2.0F);
+    _num_features = gmc_config.GetInteger(_algo_name, "num_features", 4000);
+    _detections_masking = gmc_config.GetBoolean(_algo_name, "detections_masking", true);
+}
+
+
 HomographyMatrix OpenCV_VideoStab_GMC::apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) {
     // Initialization
     int height = frame_raw.rows;

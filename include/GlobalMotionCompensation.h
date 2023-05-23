@@ -113,6 +113,7 @@ public:
 
 class OpenCV_VideoStab_GMC : public GMC_Algorithm {
 private:
+    std::string _algo_name = "OpenCV_VideoStab";
     float _downscale;
     int _num_features;
     bool _detections_masking;
@@ -128,7 +129,7 @@ private:
     void _load_params_from_config(const std::string &config_dir);
 
 public:
-    explicit OpenCV_VideoStab_GMC(float downscale = 2.0, int num_features = 4000, bool detections_masking = true);
+    explicit OpenCV_VideoStab_GMC(const std::string &config_dir);
     HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
 };
 
