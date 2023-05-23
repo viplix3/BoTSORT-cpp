@@ -5,7 +5,7 @@
 #include <optional>
 #include <unordered_set>
 
-BoTSORT::BoTSORT(std::string config_dir) {
+BoTSORT::BoTSORT(const std::string &config_dir) {
     _load_params_from_config(config_dir);
 
     // Tracker module
@@ -26,7 +26,7 @@ BoTSORT::BoTSORT(std::string config_dir) {
 
 
     // Global motion compensation module
-    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[_gmc_method_name]);
+    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[_gmc_method_name], config_dir);
 }
 
 
@@ -391,12 +391,12 @@ void BoTSORT::_remove_duplicate_tracks(
 }
 
 
-void BoTSORT::_load_params_from_config(std::string config_dir) {
+void BoTSORT::_load_params_from_config(const std::string &config_dir) {
     const std::string tracker_name = "BoTSORT";
 
     INIReader tracker_config(config_dir + "/tracker.ini");
     if (tracker_config.ParseError() < 0) {
-        std::cout << "Can't load ../config/botsort.ini\n";
+        std::cout << "Can't load " << config_dir << "/tracker.ini" << std::endl;
         exit(1);
     }
 

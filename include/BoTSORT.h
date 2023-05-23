@@ -41,7 +41,7 @@ public:
      * 
      * @param config_path Path to the config directory
      */
-    explicit BoTSORT(std::string config_path);
+    explicit BoTSORT(const std::string &config_path);
     ~BoTSORT() = default;
 
 private:
@@ -93,5 +93,5 @@ private:
      * 
      * @param config_path Path to the config directory
      */
-    void _load_params_from_config(std::string config_path);
+    void _load_params_from_config(const std::string &config_path);
 };
