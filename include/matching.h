@@ -85,8 +85,8 @@ CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
 /**
  * @brief Performs linear assignment using the LAPJV algorithm
  * 
- * @param cost_matrix Cost matrix
+ * @param cost_matrix Cost matrix for solving the linear assignment problem
  * @param thresh Threshold for cost matrix
- * @param associations Output associations between tracks and detections
+ * @return AssociationData Association data
  */
-void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &associations);
+AssociationData linear_assignment(CostMatrix &cost_matrix, float thresh);

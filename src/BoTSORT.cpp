@@ -122,8 +122,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
                                                                emd_dist_mask_1st_association);
 
     // Perform linear assignment on the final distance matrix, LAPJV algorithm is used here
-    AssociationData first_associations;
-    linear_assignment(distances_first_association, _match_thresh, first_associations);
+    AssociationData first_associations = linear_assignment(distances_first_association, _match_thresh);
 
     // Update the tracks with the associated detections
     for (const std::pair<int, int> &match: first_associations.matches) {
@@ -159,8 +158,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
     iou_dists_second = iou_distance(unmatched_tracks_after_1st_association, detections_low_conf);
 
     // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
-    AssociationData second_associations;
-    linear_assignment(iou_dists_second, 0.5, second_associations);
+    AssociationData second_associations = linear_assignment(iou_dists_second, 0.5);
 
     // Update the tracks with the associated detections
     for (const std::pair<int, int> &match: second_associations.matches) {
@@ -225,8 +223,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
                                                          emd_dist_mask_unconfirmed);
 
     // Perform linear assignment on the distance matrix, LAPJV algorithm is used here
-    AssociationData unconfirmed_associations;
-    linear_assignment(distances_unconfirmed, 0.7, unconfirmed_associations);
+    AssociationData unconfirmed_associations = linear_assignment(distances_unconfirmed, 0.7);
 
     for (const std::pair<int, int> &match: unconfirmed_associations.matches) {
         const std::shared_ptr<Track> &track = unconfirmed_tracks[match.first];

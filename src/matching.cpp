@@ -165,8 +165,10 @@ CostMatrix fuse_iou_with_emb(CostMatrix &iou_dist,
     return cost_matrix;
 }
 
-void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &associations) {
+AssociationData linear_assignment(CostMatrix &cost_matrix, float thresh) {
     // If cost matrix is empty, all the tracks and detections are unmatched
+    AssociationData associations;
+
     if (cost_matrix.size() == 0) {
         for (int i = 0; i < cost_matrix.rows(); i++) {
             associations.unmatched_track_indices.emplace_back(i);
@@ -176,7 +178,7 @@ void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &a
             associations.unmatched_det_indices.emplace_back(i);
         }
 
-        return;
+        return associations;
     }
 
     std::vector<int> rowsol, colsol;
@@ -195,4 +197,6 @@ void linear_assignment(CostMatrix &cost_matrix, float thresh, AssociationData &a
             associations.unmatched_det_indices.emplace_back(i);
         }
     }
+
+    return associations;
 }
