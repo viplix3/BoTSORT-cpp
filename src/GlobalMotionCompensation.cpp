@@ -392,6 +392,8 @@ HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame_raw, const std::v
 
 // OpenCV VideoStab
 OpenCV_VideoStab_GMC::OpenCV_VideoStab_GMC(const std::string &config_dir) {
+    _load_params_from_config(config_dir);
+
     _motion_estimator = cv::makePtr<cv::videostab::MotionEstimatorRansacL2>(cv::videostab::MM_SIMILARITY);
 
     _keypoint_motion_estimator = cv::makePtr<cv::videostab::KeypointBasedMotionEstimator>(_motion_estimator);
