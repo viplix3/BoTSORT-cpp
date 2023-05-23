@@ -3,7 +3,7 @@
 #include <unordered_set>
 
 BoTSORT::BoTSORT(
-        std::optional<const char *> model_weights,
+        std::optional<std::string> model_weights,
         bool fp16_inference,
         float track_high_thresh,
         float track_low_thresh,
@@ -12,7 +12,7 @@ BoTSORT::BoTSORT(
         float match_thresh,
         float proximity_thresh,
         float appearance_thresh,
-        const char *gmc_method,
+        std::string gmc_method,
         uint8_t frame_rate,
         float lambda)
     : _track_high_thresh(track_high_thresh),
@@ -43,7 +43,7 @@ BoTSORT::BoTSORT(
 
 
     // Global motion compensation module
-    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[std::string(gmc_method)]);
+    _gmc_algo = std::make_unique<GlobalMotionCompensation>(GlobalMotionCompensation::GMC_method_map[gmc_method]);
 }
 
 std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame) {
@@ -315,7 +315,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::track(const std::vector<Detection> 
 
     ////////////////// Update output tracks //////////////////
     std::vector<std::shared_ptr<Track>> output_tracks;
-    for (const std::shared_ptr<Track>& track: _tracked_tracks) {
+    for (const std::shared_ptr<Track> &track: _tracked_tracks) {
         if (track->is_activated) {
             output_tracks.push_back(track);
         }

@@ -13,14 +13,19 @@ std::map<std::string, GMC_Method> GlobalMotionCompensation::GMC_method_map = {
 
 GlobalMotionCompensation::GlobalMotionCompensation(GMC_Method method, float downscale) {
     if (method == GMC_Method::ORB) {
+        std::cout << "Using ORB for GMC" << std::endl;
         _gmc_algorithm = std::make_unique<ORB_GMC>(downscale);
     } else if (method == GMC_Method::ECC) {
+        std::cout << "Using ECC for GMC" << std::endl;
         _gmc_algorithm = std::make_unique<ECC_GMC>(downscale);
     } else if (method == GMC_Method::SparseOptFlow) {
+        std::cout << "Using SparseOptFlow for GMC" << std::endl;
         _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(downscale);
     } else if (method == GMC_Method::OptFlowModified) {
+        std::cout << "Using OptFlowModified for GMC" << std::endl;
         _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(downscale);
     } else if (method == GMC_Method::OpenCV_VideoStab) {
+        std::cout << "Using OpenCV_VideoStab for GMC" << std::endl;
         _gmc_algorithm = std::make_unique<OpenCV_VideoStab_GMC>(downscale);
     } else {
         throw std::runtime_error("Unknown global motion compensation method: " + std::to_string(method));

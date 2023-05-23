@@ -51,7 +51,7 @@ public:
      * @param lambda Used for fusing motion distance and appearance distance (default: 0.985)
      */
     explicit BoTSORT(
-            std::optional<const char *> model_weights = std::nullopt,
+            std::optional<std::string> model_weights = std::nullopt,
             bool fp16_inference = false,
             float track_high_thresh = 0.6,
             float track_low_thresh = 0.1,
@@ -60,7 +60,7 @@ public:
             float match_thresh = 0.7,
             float proximity_thresh = 0.5,
             float appearance_thresh = 0.25,
-            const char *gmc_method = "sparseOptFlow",
+            std::string gmc_method = "sparseOptFlow",
             uint8_t frame_rate = 30,
             float lambda = 0.985);
     ~BoTSORT() = default;

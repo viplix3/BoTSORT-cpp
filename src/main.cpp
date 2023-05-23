@@ -1,4 +1,3 @@
-
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -12,6 +11,7 @@
 #include "BoTSORT.h"
 #include "DataType.h"
 #include "GlobalMotionCompensation.h"
+#include "INIReader.h"
 #include "track.h"
 
 
@@ -173,7 +173,28 @@ int main(int argc, char **argv) {
 
     // Initialize BoTSORT tracker with all the default params
     // TODO: Load BoTSORT params from a config file
-    BoTSORT tracker = BoTSORT();
+
+    // Initialize BoTSORT tracker
+    INIReader tracker_config("../config/tracker.ini");
+    if (tracker_config.ParseError() < 0) {
+        std::cout << "Can't load ../config/botsort.ini\n";
+        return 1;
+    }
+
+    std::string tracker_name = "BoTSORT";
+    BoTSORT tracker = BoTSORT(
+            tracker_config.Get(tracker_name, "model_path"),
+            tracker_config.GetBoolean(tracker_name, "fp16_inference", false),
+            tracker_config.GetFloat(tracker_name, "track_high_thresh", 0.6F),
+            tracker_config.GetFloat(tracker_name, "track_low_thresh", 0.1F),
+            tracker_config.GetFloat(tracker_name, "new_track_thresh", 0.7F),
+            tracker_config.GetInteger(tracker_name, "track_buffer", 30),
+            tracker_config.GetFloat(tracker_name, "match_thresh", 0.7F),
+            tracker_config.GetFloat(tracker_name, "proximity_thresh", 0.5F),
+            tracker_config.GetFloat(tracker_name, "appearance_thresh", 0.25F),
+            tracker_config.Get(tracker_name, "gmc_method", "sparseOptFlow"),
+            tracker_config.GetInteger(tracker_name, "frame_rate", 30),
+            tracker_config.GetFloat(tracker_name, "lambda", 0.985F));
 
 
 // // Initialize GlobalMotionCompensation
