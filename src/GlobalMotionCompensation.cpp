@@ -278,7 +278,7 @@ HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame_raw, const std::v
     std::vector<cv::Point2f> keypoints;
     cv::goodFeaturesToTrack(frame, keypoints, _maxCorners, _qualityLevel, _minDistance, cv::noArray(), _blockSize, _useHarrisDetector, _k);
 
-    if (!_first_frame_initialized) {
+    if (!_first_frame_initialized || _prev_keypoints.size() == 0) {
         /**
          *  If this is the first frame, there is nothing to match
          *  Save the keypoints and descriptors, return identity matrix 
@@ -294,7 +294,12 @@ HomographyMatrix SparseOptFlow_GMC::apply(const cv::Mat &frame_raw, const std::v
     std::vector<cv::Point2f> matched_keypoints;
     std::vector<uchar> status;
     std::vector<float> err;
-    cv::calcOpticalFlowPyrLK(_prev_frame, frame, _prev_keypoints, matched_keypoints, status, err);
+    try {
+        cv::calcOpticalFlowPyrLK(_prev_frame, frame, _prev_keypoints, matched_keypoints, status, err);
+    } catch (const cv::Exception &e) {
+        std::cout << "Warning: Could not find correspondences for GMC" << std::endl;
+        return H;
+    }
 
 
     // Keep good matches
