@@ -218,7 +218,7 @@ int main(int argc, char **argv) {
     for (const auto &filepath: image_filepaths) {
         std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
         filename = filename.substr(0, filename.find_last_of('.'));
-        std::string detection_file = detection_dir + "/" + filename + ".txt";
+        std::string detection_file = labels_dir + "/" + filename + ".txt";
         std::string output_file_img = output_dir_img + "/" + filename + ".jpg";
 
         // Read image and detections
