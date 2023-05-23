@@ -32,7 +32,7 @@ public:
 
 class ORB_GMC : public GMC_Algorithm {
 private:
-    std::string _algo_name = "ORB";
+    std::string _algo_name = "orb";
     float _downscale;
     cv::Ptr<cv::FeatureDetector> _detector;
     cv::Ptr<cv::DescriptorExtractor> _extractor;
@@ -56,7 +56,7 @@ public:
 
 class ECC_GMC : public GMC_Algorithm {
 private:
-    std::string _algo_name = "ECC";
+    std::string _algo_name = "ecc";
     float _downscale;
     int _max_iterations, _termination_eps;
 
