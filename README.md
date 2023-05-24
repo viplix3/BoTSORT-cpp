@@ -8,6 +8,8 @@
 
 This repository contains an unofficial C++ implementation of BoT-SORT multi-pedestrian tracking algorithm.
 
+This implementation has been tested **on NVIDIA Jetson NX and it achieves real-time performance** on 1080p videos.
+
 [YOLOv8-tracking](https://github.com/mikel-brostrom/yolov8_tracking), [Official BoT-SORT](https://github.com/NirAharon/BoT-SORT) and [Official ByteTrack](https://github.com/ifzhang/ByteTrack) GitHub repositories were used as references.
 
 ## TODO
@@ -20,7 +22,7 @@ This repository contains an unofficial C++ implementation of BoT-SORT multi-pede
 
 These results demonstrate the BoT-SORT tracker, implemented in this repository, utilizing MOT provided detections.
 
-[![MOT20-01](assets/MOT20-01.gif)](MOT20-01)
+[![MOT20-01](assets/MOT20-01.gif)](assets/MOT20-01.gif)
 
 [More Result Videos](assets/)
 
