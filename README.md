@@ -57,7 +57,7 @@ These results demonstrate the BoT-SORT tracker, implemented in this repository, 
 To run the tracker on a video sequence, use the following command:
 
 ```bash
-./bot-sort-tracker <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>
+./bot-sort-tracker <configs_dir> <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>
 ```
 
 ## Performance Analysis
