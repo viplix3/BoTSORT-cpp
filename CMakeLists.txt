@@ -1,25 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
 
-# CMP0076: The target_sources() command converts relative paths to absolute.
-cmake_policy(SET CMP0076 NEW)
+# Set project name
+project(botsort_tracker_example VERSION 0.1.0 LANGUAGES CXX)
 
-# CMP0079: target_link_libraries() allows use with targets in other directories.
-cmake_policy(SET CMP0079 NEW)
-
-# CMP0116: Ninja generators transform DEPFILE s from add_custom_command().
-cmake_policy(SET CMP0116 NEW)
-
-# Double colon in target name means ALIAS or IMPORTED target.
-cmake_policy(SET CMP0028 NEW)
-
-# Support new IN_LIST if() operator
-cmake_policy(SET CMP0057 NEW)
-
-PROJECT(bot-sort-tracker VERSION 1.0 LANGUAGES CXX)
-
-# Set C++ Standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Build options
+option(BUILD_EXAMPLES "Build examples" ON)
 
 # Set Build Type if not set
 if(NOT CMAKE_BUILD_TYPE)
@@ -28,29 +13,26 @@ if(NOT CMAKE_BUILD_TYPE)
         "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# Include directories
-include_directories(${PROJECT_SOURCE_DIR}/include)
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Collect all source files
-file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
+# Set output directories
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Create executable
-add_executable(${PROJECT_NAME} ${SOURCES})
+# Set install directories
+set(CMAKE_INSTALL_BINDIR bin)
+set(CMAKE_INSTALL_LIBDIR lib)
+set(CMAKE_INSTALL_INCLUDEDIR include)
 
-# Find and link OpenCV
+# Check OpenCV and Eigen3
 find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
-
-# Find and link Eigen3
 find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
 
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+# add botsort
+add_subdirectory(botsort)
+
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()
