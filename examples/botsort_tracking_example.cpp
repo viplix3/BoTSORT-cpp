@@ -168,7 +168,7 @@ bool check_source(const std::string &source) {
 int main(int argc, char **argv) {
 
     if (argc < 5) {
-        std::cout << "Usage: ./bot-sort-tracker <config_dir> <source> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
+        std::cout << "Usage: ./botsort_tracking_example <config_dir> <source> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
         return -1;
     }
 

@@ -13,14 +13,14 @@ if(NOT CMAKE_BUILD_TYPE)
         "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# Include directories
-include_directories(${PROJECT_SOURCE_DIR}/include)
-
 # Collect all source files
 file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
 # Create library
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
+
+# Set include directories
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 # Find and link OpenCV
 find_package(OpenCV REQUIRED)
