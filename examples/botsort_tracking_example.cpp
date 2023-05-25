@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -7,6 +8,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
+#include <sstream>
 #include <string>
 
 #include "BoTSORT.h"
@@ -184,14 +186,6 @@ int main(int argc, char **argv) {
     std::filesystem::create_directories(output_dir_img);
 
 
-    // Read filenames in labels dir
-    std::vector<std::string> label_filepaths;
-    for (const auto &entry: std::filesystem::directory_iterator(labels_dir)) {
-        label_filepaths.push_back(entry.path());
-    }
-    std::sort(label_filepaths.begin(), label_filepaths.end());
-
-
 // // Initialize GlobalMotionCompensation
 #if (TEST_GMC == 1)
     /*
@@ -223,35 +217,47 @@ int main(int argc, char **argv) {
 #endif
 
 
+    cv::Mat frame;
     cv::VideoCapture cap;
     int frame_counter = 0;
     double tracker_time_sum = 0, tracker_time_total = 0;
     std::string output_file_txt = output_dir_mot + "/all.txt";
-    BoTSORT tracker = BoTSORT(config_dir);// Initialize tracker
-
+    std::vector<std::string> image_filepaths;
     bool is_video = check_source(source);
+
+    // Initialize BoTSORT tracker
+    BoTSORT tracker = BoTSORT(config_dir);
+
     if (is_video) {
         cap = cv::VideoCapture(source);
+        cap.set(cv::CAP_PROP_POS_FRAMES, 0);
+    } else {
+        // Read filenames in labels dir
+        for (const auto &entry: std::filesystem::directory_iterator(source)) {
+            image_filepaths.push_back(entry.path());
+        }
+        std::sort(image_filepaths.begin(), image_filepaths.end());
     }
 
 
 #if (YOLOv8_PREDS == 1)
     // Read detections and execute MultiObjectTracker
-    for (const auto &filepath: image_filepaths) {
-        std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
-        filename = filename.substr(0, filename.find_last_of('.'));
-        std::string detection_file = labels_dir + "/" + filename + ".txt";
-        std::string output_file_img = output_dir_img + "/" + filename + ".jpg";
+    while (cap.read(frame) || frame_counter < image_filepaths.size()) {
+        std::string filename;
 
-        // Get Image
-        cv::Mat frame;
         if (is_video) {
-            cap >> frame;
+            std::ostringstream ss;
+            ss << std::setw(6) << std::setfill('0') << frame_counter;
+            filename = ss.str();
         } else {
-            frame = cv::imread(filepath);
+            frame = cv::imread(image_filepaths[frame_counter]);
+            filename = image_filepaths[frame_counter].substr(image_filepaths[frame_counter].find_last_of('/') + 1);
+            filename = filename.substr(0, filename.find_last_of('.'));
         }
 
+        std::string detection_file = labels_dir + "/" + filename + ".txt";
         std::vector<Detection> detections = read_detections_from_file(detection_file, frame.cols, frame.rows);
+        std::string output_file_img = output_dir_img + "/" + filename + ".jpg";
 
         // Execute tracker
         auto start = std::chrono::high_resolution_clock::now();
@@ -274,9 +280,6 @@ int main(int argc, char **argv) {
             tracker_time_total += tracker_time_sum;
             tracker_time_sum = 0;
         }
-
-        // if (frame_counter == 10)
-        //     break;
     }
 #endif
 
@@ -284,19 +287,20 @@ int main(int argc, char **argv) {
 #if (GT_AS_PREDS == 1)
     std::vector<std::vector<Detection>> gt_per_frame = read_mot_gt_from_file(labels_dir);
 
-    for (const auto &filepath: label_filepaths) {
-        std::string filename = filepath.substr(filepath.find_last_of('/') + 1);
-        filename = filename.substr(0, filename.find_last_of('.'));
-        std::string output_file_img = output_dir_img + "/" + filename + ".jpg";
+    while (cap.read(frame) || frame_counter < image_filepaths.size()) {
+        std::string filename;
 
-        // Get image
-        // Get Image
-        cv::Mat frame;
         if (is_video) {
-            cap >> frame;
+            std::ostringstream ss;
+            ss << std::setw(6) << std::setfill('0') << frame_counter;
+            filename = ss.str();
         } else {
-            frame = cv::imread(filepath);
+            frame = cv::imread(image_filepaths[frame_counter]);
+            filename = image_filepaths[frame_counter].substr(image_filepaths[frame_counter].find_last_of('/') + 1);
+            filename = filename.substr(0, filename.find_last_of('.'));
         }
+
+        std::string output_file_img = output_dir_img + "/" + filename + ".jpg";
 
         // Execute tracker
         auto start = std::chrono::high_resolution_clock::now();
@@ -324,6 +328,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Average tracker FPS: " << frame_counter / tracker_time_total << std::endl;
     std::cout << "Average processing time per frame (ms): " << (tracker_time_total / frame_counter) * 1000 << std::endl;
+    cap.release();
 
     return 0;
 }
