@@ -54,10 +54,14 @@ These results demonstrate the BoT-SORT tracker, implemented in this repository, 
 
 ## Usage
 
-To run the tracker on a video sequence, use the following command:
+Example code for using the BoT-SORT tracker is provided in [botsort_tracking_example.cpp](examples/botsort_tracking_example.cpp)
+The project by default builds the example code.
+
+To test the example code, run the following command:
 
 ```bash
-./bot-sort-tracker <configs_dir> <images_dir> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>
+cd <project-root-dir>/build
+./bin/botsort_tracking_example ../config ../examples/data/MOT20-01.mp4 ../examples/data/det/det.txt ../output/
 ```
 
 ## Performance Analysis
