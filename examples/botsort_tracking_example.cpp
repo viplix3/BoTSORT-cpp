@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <opencv2/core/types.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -169,15 +170,29 @@ bool check_source(const std::string &source) {
 
 int main(int argc, char **argv) {
 
-    if (argc < 5) {
-        std::cout << "Usage: ./botsort_tracking_example <config_dir> <source> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
+    if (argc < 4) {
+        std::cout << "Usage eg. 1: ./botsort_tracking_example <source> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
+        std::cout << "Usage eg. 2: ./botsort_tracking_example <config_dir> <source> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output> <gt_file>" << std::endl;
+        return -1;
+    } else if (argc > 5) {
+        std::cout << "Usage eg. 1: ./botsort_tracking_example <source> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output>" << std::endl;
+        std::cout << "Usage eg. 2: ./botsort_tracking_example <config_dir> <source> <dir_containing_per_frame_detections> <dir_to_save_mot_format_output> <gt_file>" << std::endl;
         return -1;
     }
 
-    std::string config_dir = argv[1];
-    std::string source = argv[2];
-    std::string labels_dir = argv[3];
-    std::string output_dir = argv[4];
+    std::string config_dir, source, labels_dir, output_dir, gt_filepath;
+
+    if (argc == 4) {
+        source = argv[1];
+        labels_dir = argv[2];
+        output_dir = argv[3];
+    } else {
+        config_dir = argv[1];
+        source = argv[2];
+        labels_dir = argv[3];
+        output_dir = argv[4];
+    }
+
 
     // Setup output directories
     std::string output_dir_mot = output_dir + "/mot";
@@ -226,7 +241,12 @@ int main(int argc, char **argv) {
     bool is_video = check_source(source);
 
     // Initialize BoTSORT tracker
-    BoTSORT tracker = BoTSORT(config_dir);
+    std::unique_ptr<BoTSORT> tracker;
+    if (argc == 4) {
+        tracker = std::make_unique<BoTSORT>();
+    } else {
+        tracker = std::make_unique<BoTSORT>(config_dir);
+    }
 
     if (is_video) {
         cap = cv::VideoCapture(source);
@@ -261,7 +281,7 @@ int main(int argc, char **argv) {
 
         // Execute tracker
         auto start = std::chrono::high_resolution_clock::now();
-        std::vector<std::shared_ptr<Track>> tracks = tracker.track(detections, frame);
+        std::vector<std::shared_ptr<Track>> tracks = tracker->track(detections, frame);
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         tracker_time_sum += elapsed.count();
@@ -304,7 +324,7 @@ int main(int argc, char **argv) {
 
         // Execute tracker
         auto start = std::chrono::high_resolution_clock::now();
-        std::vector<std::shared_ptr<Track>> tracks = tracker.track(gt_per_frame[frame_counter], frame);
+        std::vector<std::shared_ptr<Track>> tracks = tracker->track(gt_per_frame[frame_counter], frame);
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         tracker_time_sum += elapsed.count();

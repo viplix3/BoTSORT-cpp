@@ -39,9 +39,9 @@ public:
     /**
      * @brief Construct a new BoTSORT object
      * 
-     * @param config_path Path to the config directory
+     * @param config_path Path to the config directory. If not provided, default path is used (../../config)
      */
-    explicit BoTSORT(const std::string &config_path);
+    explicit BoTSORT(const std::string &config_path = "../../config");
     ~BoTSORT() = default;
 
 private:
