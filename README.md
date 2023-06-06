@@ -24,7 +24,7 @@ These results demonstrate the BoT-SORT tracker, implemented in this repository, 
 
 [![MOT20-01](assets/MOT20-01.gif)](assets/MOT20-01.gif)
 
-[More Result Videos](assets/)
+[More Result Videos](https://www.youtube.com/watch?v=elQrRxFKxno&list=PL4tNOKTSVsFArSjEoLXLNywmmIbQTvBs1)
 
 ## Installation Guide
 
