@@ -275,7 +275,11 @@ HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw, const std::vector<Dete
 
     try {
         cv::Mat H_cvMat;
+#if CV_MAJOR_VERSION == 3
+        cv::findTransformECC(_prev_frame, frame, H_cvMat, cv::MOTION_EUCLIDEAN, _termination_criteria);
+#elif CV_MAJOR_VERSION == 4
         cv::findTransformECC(_prev_frame, frame, H_cvMat, cv::MOTION_EUCLIDEAN, _termination_criteria, cv::noArray(), 1);
+#endif
         cv2eigen(H_cvMat, H);
         _prev_frame = frame.clone();
     } catch (const cv::Exception &e) {
