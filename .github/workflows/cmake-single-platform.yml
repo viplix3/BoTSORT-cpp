@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: nvidia/cuda:12.1-devel-ubuntu22.04
+      image: nvidia/cuda:12.1.0-devel-ubuntu22.04
 
     steps:
     - uses: actions/checkout@v3
