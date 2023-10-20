@@ -6,6 +6,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  CUDA_VERSION: 12.1.0
 
 jobs:
   build:
@@ -31,17 +32,18 @@ jobs:
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
-        sudo apt-get install -y software-properties-common
-        sudo apt-get install -y wget
+        sudo apt-get install -y software-properties-common wget
+        wget https://developer.download.nvidia.com/compute/cuda/${{ env.CUDA_VERSION }}/local_installers/cuda_${{ env.CUDA_VERSION }}_linux.run
+        sudo sh cuda_${{ env.CUDA_VERSION }}_linux.run --silent --toolkit --override
         wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
         sudo apt-key add 7fa2af80.pub
         sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/ /"
         sudo apt-get update
-        sudo apt-get install -y libopencv-dev libeigen3-dev nvidia-cuda-toolkit libnvinfer7 libnvinfer-plugin7 libnvinfer-dev libnvinfer-plugin-dev
+        sudo apt-get install -y libopencv-dev libeigen3-dev libnvinfer7 libnvinfer-plugin7 libnvinfer-dev libnvinfer-plugin-dev
 
     # Configure CMake
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
 
     # Build
     - name: Build
@@ -51,10 +53,3 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
-
-    # Optional: Archive the built artifacts
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: build-artifacts
-        path: ${{github.workspace}}/build/*
