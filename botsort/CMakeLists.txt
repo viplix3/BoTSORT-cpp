@@ -32,6 +32,20 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
 
+# Find and link CUDA
+find_package(CUDA QUIET)
+
+if(NOT ${CUDA_FOUND})
+    message(WARNING "CUDA not found, ReID won't be built")
+else()
+    message(STATUS "CUDA version ${CUDA_VERSION_STRING} found")
+    include_directories(${CUDA_INCLUDE_DIRS})
+    target_sources(${PROJECT_NAME} PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/TensorRT_InferenceEngine.cpp
+        ${PROJECT_SOURCE_DIR}/src/ReID.cpp)
+    target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES})
+endif()
+
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
