@@ -1,5 +1,3 @@
-# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
 name: CMake on a single platform
 
 on:
@@ -17,21 +15,24 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # Install OpenCV
-    - name: Install OpenCV
-      run: sudo apt-get update && sudo apt-get install -y libopencv-dev
+    - name: Cache dependencies
+      id: cache-deps
+      uses: actions/cache@v2
+      with:
+        path: |
+          /usr/local/lib/libopencv*
+          /usr/include/opencv4
+          /usr/include/eigen3
+          /usr/local/cuda
+        key: ${{ runner.os }}-deps-${{ hashFiles('**/CMakeLists.txt') }}
 
-    # Install Eigen3
-    - name: Install Eigen3
-      run: sudo apt-get install -y libeigen3-dev
-
-    # Install CUDA (Assuming you want the default version for Ubuntu)
-    - name: Install CUDA
+    - name: Install dependencies
+      if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
+        sudo apt-get install -y libopencv-dev
+        sudo apt-get install -y libeigen3-dev
         sudo apt-get install -y nvidia-cuda-toolkit
-        echo "/usr/local/cuda/lib64" >> $GITHUB_PATH
-        echo "/usr/local/cuda/include" >> $GITHUB_PATH
 
     # Configure CMake
     - name: Configure CMake
