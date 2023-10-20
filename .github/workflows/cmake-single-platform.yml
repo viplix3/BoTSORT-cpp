@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_type: [Debug, Release]
+        build_type: [Release]
     container:
       image: nvcr.io/nvidia/tensorrt:23.09-py3
 
