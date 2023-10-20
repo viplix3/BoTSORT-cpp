@@ -103,7 +103,8 @@ struct TRTOptimizerParams
                "\n";
         str += "calibCacheEvaluateOnly: " +
                std::to_string(calibCacheEvaluateOnly) + "\n";
-        str += "calibCacheVerbose: " +
+        str += "calibCacheVerbose: " + std::to_string(calibCacheVerbose) + "\n";
+        return str;
     }
 };
 
