@@ -32,6 +32,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y software-properties-common
+        sudo apt-get install -y wget
+        wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
+        sudo apt-key add 7fa2af80.pub
         sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/ /"
         sudo apt-get update
         sudo apt-get install -y libopencv-dev libeigen3-dev nvidia-cuda-toolkit libnvinfer7 libnvinfer-plugin7 libnvinfer-dev libnvinfer-plugin-dev
