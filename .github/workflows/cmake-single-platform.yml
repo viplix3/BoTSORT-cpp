@@ -6,50 +6,27 @@ on:
 
 env:
   BUILD_TYPE: Release
-  CUDA_VERSION: 12.1.0
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: nvidia/cuda:12.2.0-devel-ubuntu22.04
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Cache dependencies
-      id: cache-deps
-      uses: actions/cache@v2
-      with:
-        path: |
-          /usr/local/lib/libopencv*
-          /usr/include/opencv4
-          /usr/include/eigen3
-          /usr/local/cuda
-          /usr/lib/x86_64-linux-gnu/libnvinfer* # Add TensorRT lib paths for caching
-          /usr/include/x86_64-linux-gnu/NvInfer.h # Add TensorRT include path for caching
-        key: ${{ runner.os }}-deps-${{ hashFiles('**/CMakeLists.txt') }}
-
     - name: Install dependencies
-      if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
-        sudo apt-get update
-        sudo apt-get install -y software-properties-common wget
-        wget https://developer.download.nvidia.com/compute/cuda/${{ env.CUDA_VERSION }}/local_installers/cuda_${{ env.CUDA_VERSION }}_linux.run
-        sudo sh cuda_${{ env.CUDA_VERSION }}_linux.run --silent --toolkit --override
-        wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
-        sudo apt-key add 7fa2af80.pub
-        sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/ /"
-        sudo apt-get update
-        sudo apt-get install -y libopencv-dev libeigen3-dev libnvinfer7 libnvinfer-plugin7 libnvinfer-dev libnvinfer-plugin-dev
+        apt-get update
+        apt-get install -y libopencv-dev libeigen3-dev
 
-    # Configure CMake
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    # Build
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    # Test
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
