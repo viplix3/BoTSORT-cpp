@@ -28,7 +28,7 @@ jobs:
     - name: Install dependencies
       run: |
         apt-get install -y --no-install-recommends libopencv-dev
-        apt install -y --no-install-recommends libnvonnxparsers-dev=8.6.1.6-1+cuda12.1 libnvinfer-headers-plugin-dev=8.6.1.6-1+cuda12.1 libnvinfer-headers-dev=8.6.1.6-1+cuda12.1 libnvparsers-dev=8.6.1.6-1+cuda12.1 libnvinfer-dispatch-dev=8.6.1.6-1+cuda12.1  libnvinfer-vc-plugin-dev=8.6.1.6-1+cuda12.1  libnvinfer-plugin-dev=8.6.1.6-1+cuda12.1  libnvinfer-lean-dev=8.6.1.6-1+cuda12.1  libnvinfer-dev=8.6.1.6-1+cuda12.1  libnvinfer-bin=8.6.1.6-1+cuda12.1  libnvinfer8=8.6.1.6-1+cuda12.1  libnvinfer-plugin8=8.6.1.6-1+cuda12.1  libnvinfer-vc-plugin8=8.6.1.6-1+cuda12.1  libnvinfer-lean8=8.6.1.6-1+cuda12.1 libnvinfer-dispatch8=8.6.1.6-1+cuda12.1  libnvparsers8=8.6.1.6-1+cuda12.1   libnvonnxparsers8=8.6.1.6-1+cuda12.1   tensorrt=8.6.1.6-1+cuda12.1
+        apt install -y --no-install-recommends tensorrt-libs tensorrt-dev libnvinfer-lean-dev libnvinfer-dispatch-dev
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
