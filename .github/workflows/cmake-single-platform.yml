@@ -34,6 +34,11 @@ jobs:
         sudo apt-get install -y libeigen3-dev
         sudo apt-get install -y nvidia-cuda-toolkit
 
+    - name: Install TensorRT dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libnvinfer7 libnvinfer-plugin7 libnvinfer-dev libnvinfer-plugin-dev
+
     # Configure CMake
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
