@@ -1,5 +1,3 @@
-# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
 name: CMake on a single platform
 
 on:
@@ -7,41 +5,37 @@ on:
   pull_request:
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: nvidia/cuda:12.1.1-devel-ubuntu20.04
 
     steps:
     - uses: actions/checkout@v3
 
-    # Install OpenCV
-    - name: Install OpenCV
-      run: sudo apt-get update && sudo apt-get install -y libopencv-dev
-
-    # Install Eigen3
-    - name: Install Eigen3
-      run: sudo apt-get install -y libeigen3-dev
-
-    # Install CUDA (Assuming you want the default version for Ubuntu)
-    - name: Install CUDA
+    - name: Pre-configure tzdata
       run: |
-        sudo apt-get update
-        sudo apt-get install -y nvidia-cuda-toolkit
-        echo "/usr/local/cuda/lib64" >> $GITHUB_PATH
-        echo "/usr/local/cuda/include" >> $GITHUB_PATH
+        export DEBIAN_FRONTEND=noninteractive
+        export TZ=America/Los_Angeles
+        ln -fs /usr/share/zoneinfo/$TZ /etc/localtime
+        apt-get update
+        apt-get install -y tzdata
+        dpkg-reconfigure --frontend noninteractive tzdata
 
-    # Configure CMake
+    - name: Install dependencies
+      run: |
+        apt-get install -y --no-install-recommends libopencv-dev
+        apt install -y --no-install-recommends libnvonnxparsers-dev=8.6.1.6-1+cuda12.1 libnvinfer-headers-plugin-dev=8.6.1.6-1+cuda12.1 libnvinfer-headers-dev=8.6.1.6-1+cuda12.1 libnvparsers-dev=8.6.1.6-1+cuda12.1 libnvinfer-dispatch-dev=8.6.1.6-1+cuda12.1  libnvinfer-vc-plugin-dev=8.6.1.6-1+cuda12.1  libnvinfer-plugin-dev=8.6.1.6-1+cuda12.1  libnvinfer-lean-dev=8.6.1.6-1+cuda12.1  libnvinfer-dev=8.6.1.6-1+cuda12.1  libnvinfer-bin=8.6.1.6-1+cuda12.1  libnvinfer8=8.6.1.6-1+cuda12.1  libnvinfer-plugin8=8.6.1.6-1+cuda12.1  libnvinfer-vc-plugin8=8.6.1.6-1+cuda12.1  libnvinfer-lean8=8.6.1.6-1+cuda12.1 libnvinfer-dispatch8=8.6.1.6-1+cuda12.1  libnvparsers8=8.6.1.6-1+cuda12.1   libnvonnxparsers8=8.6.1.6-1+cuda12.1   tensorrt=8.6.1.6-1+cuda12.1
+
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    # Build
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    # Test
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
