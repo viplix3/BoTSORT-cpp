@@ -4,6 +4,8 @@
 #include <numeric>
 #include <string>
 
+#include "DataType.h"
+
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/features2d.hpp>
@@ -12,7 +14,6 @@
 #include <opencv2/videostab.hpp>
 #include <opencv2/videostab/global_motion.hpp>
 
-#include "DataType.h"
 
 
 enum GMC_Method
