@@ -11,16 +11,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: nvidia/cuda:12.2.0-devel-ubuntu22.04
+      image: nvidia/cuda:12.1-devel-ubuntu22.04
 
     steps:
     - uses: actions/checkout@v3
 
+    - name: Pre-configure tzdata
+      run: |
+        export DEBIAN_FRONTEND=noninteractive
+        export TZ=America/Los_Angeles
+        ln -fs /usr/share/zoneinfo/$TZ /etc/localtime
+        apt-get update
+        apt-get install -y tzdata
+        dpkg-reconfigure --frontend noninteractive tzdata
+
     - name: Install dependencies
       run: |
-        apt-get update
         apt-get install -y --no-install-recommends libopencv-dev
-        apt-get install -y --no-install-recommends libeigen3-dev
+        apt install -y --no-install-recommends libnvonnxparsers-dev=8.6.1.6-1+cuda12.1 libnvinfer-headers-plugin-dev=8.6.1.6-1+cuda12.1 libnvinfer-headers-dev=8.6.1.6-1+cuda12.1 libnvparsers-dev=8.6.1.6-1+cuda12.1 libnvinfer-dispatch-dev=8.6.1.6-1+cuda12.1  libnvinfer-vc-plugin-dev=8.6.1.6-1+cuda12.1  libnvinfer-plugin-dev=8.6.1.6-1+cuda12.1  libnvinfer-lean-dev=8.6.1.6-1+cuda12.1  libnvinfer-dev=8.6.1.6-1+cuda12.1  libnvinfer-bin=8.6.1.6-1+cuda12.1  libnvinfer8=8.6.1.6-1+cuda12.1  libnvinfer-plugin8=8.6.1.6-1+cuda12.1  libnvinfer-vc-plugin8=8.6.1.6-1+cuda12.1  libnvinfer-lean8=8.6.1.6-1+cuda12.1 libnvinfer-dispatch8=8.6.1.6-1+cuda12.1  libnvparsers8=8.6.1.6-1+cuda12.1   libnvonnxparsers8=8.6.1.6-1+cuda12.1   tensorrt=8.6.1.6-1+cuda12.1
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
