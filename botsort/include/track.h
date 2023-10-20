@@ -1,13 +1,15 @@
 #pragma once
 
-#include "KalmanFilter.h"
-#include "KalmanFilterAccBased.h"
 #include <deque>
 #include <memory>
 
+#include "KalmanFilter.h"
+#include "KalmanFilterAccBased.h"
+
 using KalmanFilter = bot_kalman::KalmanFilter;
 
-enum TrackState {
+enum TrackState
+{
     New = 0,
     Tracked,
     Lost,
@@ -15,7 +17,8 @@ enum TrackState {
     Removed
 };
 
-class Track {
+class Track
+{
 public:
     bool is_activated;
     int track_id;
@@ -50,7 +53,9 @@ public:
      * @param feat (Optional) Detection feature vector
      * @param feat_history_size Size of the feature history (default: 50)
      */
-    Track(std::vector<float> tlwh, float score, uint8_t class_id, std::optional<FeatureVector> feat = std::nullopt, int feat_history_size = 50);
+    Track(std::vector<float> tlwh, float score, uint8_t class_id,
+          std::optional<FeatureVector> feat = std::nullopt,
+          int feat_history_size = 50);
 
     /**
      * @brief Get the next track ID
@@ -112,7 +117,8 @@ public:
      * @param frame_id Current frame-id
      * @param new_id Whether to assign a new ID to the track (default: false)
      */
-    void re_activate(KalmanFilter &kalman_filter, Track &new_track, uint32_t frame_id, bool new_id = false);
+    void re_activate(KalmanFilter &kalman_filter, Track &new_track,
+                     uint32_t frame_id, bool new_id = false);
 
     /**
      * @brief Predict the next state of the track using the Kalman filter
@@ -127,7 +133,8 @@ public:
      * @param tracks Tracks on which to perform the prediction step
      * @param kalman_filter Kalman filter object for the tracks
      */
-    void static multi_predict(std::vector<std::shared_ptr<Track>> &tracks, KalmanFilter &kalman_filter);
+    void static multi_predict(std::vector<std::shared_ptr<Track>> &tracks,
+                              KalmanFilter &kalman_filter);
 
     /**
      * @brief Apply camera motion to the track
@@ -142,7 +149,8 @@ public:
      * @param tracks Tracks on which to apply the camera motion
      * @param H Homography matrix
      */
-    void static multi_gmc(std::vector<std::shared_ptr<Track>> &tracks, const HomographyMatrix &H);
+    void static multi_gmc(std::vector<std::shared_ptr<Track>> &tracks,
+                          const HomographyMatrix &H);
 
     /**
      * @brief Update the track state using the new detection
@@ -150,7 +158,8 @@ public:
      * @param new_track New track object to be used to update the old track
      * @param frame_id Current frame-id
      */
-    void update(KalmanFilter &kalman_filter, Track &new_track, uint32_t frame_id);
+    void update(KalmanFilter &kalman_filter, Track &new_track,
+                uint32_t frame_id);
 
 private:
     /**
@@ -167,7 +176,8 @@ private:
      * @param bbox_xywh DetVec bbox object (xywh) to be populated
      * @param tlwh Detection bounding box (tlwh)
      */
-    static void _populate_DetVec_xywh(DetVec &bbox_xywh, const std::vector<float> &tlwh);
+    static void _populate_DetVec_xywh(DetVec &bbox_xywh,
+                                      const std::vector<float> &tlwh);
 
     /**
      * @brief Update the tracklet bounding box (stored as tlwh) inplace according to the tracker state

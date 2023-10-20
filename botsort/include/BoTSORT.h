@@ -1,14 +1,14 @@
 #pragma once
 
+#include <string>
+
 #include "GlobalMotionCompensation.h"
 #include "ReID.h"
 #include "track.h"
 
 
-#include <string>
-
-
-class BoTSORT {
+class BoTSORT
+{
 public:
     /**
      * @brief Track the objects in the frame
@@ -17,14 +17,16 @@ public:
      * @param frame Frame
      * @return std::vector<std::shared_ptr<Track>> 
      */
-    std::vector<std::shared_ptr<Track>> track(const std::vector<Detection> &detections, const cv::Mat &frame);
+    std::vector<std::shared_ptr<Track>>
+    track(const std::vector<Detection> &detections, const cv::Mat &frame);
 
 private:
     std::optional<std::string> _reid_model_weights_path;
     std::string _gmc_method_name;
     bool _reid_enabled, _fp16_inference;
     uint8_t _track_buffer, _frame_rate, _buffer_size, _max_time_lost;
-    float _track_high_thresh, _track_low_thresh, _new_track_thresh, _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
+    float _track_high_thresh, _track_low_thresh, _new_track_thresh,
+            _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
     unsigned int _frame_id;
 
     std::vector<std::shared_ptr<Track>> _tracked_tracks;
@@ -52,7 +54,8 @@ private:
      * @param bbox_tlwh Bounding box (top, left, width, height)
      * @return FeatureVector Extracted visual features
      */
-    FeatureVector _extract_features(const cv::Mat &frame, const cv::Rect_<float> &bbox_tlwh);
+    FeatureVector _extract_features(const cv::Mat &frame,
+                                    const cv::Rect_<float> &bbox_tlwh);
 
     /**
      * @brief Merge the given track lists
@@ -61,7 +64,9 @@ private:
      * @param tracks_list_b Track list b
      * @return std::vector<std::shared_ptr<Track>> Merged track list
      */
-    static std::vector<std::shared_ptr<Track>> _merge_track_lists(std::vector<std::shared_ptr<Track>> &tracks_list_a, std::vector<std::shared_ptr<Track>> &tracks_list_b);
+    static std::vector<std::shared_ptr<Track>>
+    _merge_track_lists(std::vector<std::shared_ptr<Track>> &tracks_list_a,
+                       std::vector<std::shared_ptr<Track>> &tracks_list_b);
 
     /**
      * @brief Remove tracks from the given track list
@@ -70,7 +75,9 @@ private:
      * @param tracks_to_remove Subset of tracks to be removed
      * @return std::vector<std::shared_ptr<Track>> Track list after removing tracks
      */
-    static std::vector<std::shared_ptr<Track>> _remove_from_list(std::vector<std::shared_ptr<Track>> &tracks_list, std::vector<std::shared_ptr<Track>> &tracks_to_remove);
+    static std::vector<std::shared_ptr<Track>>
+    _remove_from_list(std::vector<std::shared_ptr<Track>> &tracks_list,
+                      std::vector<std::shared_ptr<Track>> &tracks_to_remove);
 
     /**
      * @brief Rectify track lists
