@@ -5,7 +5,6 @@ on:
   pull_request:
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
@@ -24,20 +23,15 @@ jobs:
           /usr/include/opencv4
           /usr/include/eigen3
           /usr/local/cuda
+          /usr/lib/x86_64-linux-gnu/libnvinfer* # Add TensorRT lib paths for caching
+          /usr/include/x86_64-linux-gnu/NvInfer.h # Add TensorRT include path for caching
         key: ${{ runner.os }}-deps-${{ hashFiles('**/CMakeLists.txt') }}
 
     - name: Install dependencies
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libopencv-dev
-        sudo apt-get install -y libeigen3-dev
-        sudo apt-get install -y nvidia-cuda-toolkit
-
-    - name: Install TensorRT dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libnvinfer7 libnvinfer-plugin7 libnvinfer-dev libnvinfer-plugin-dev
+        sudo apt-get install -y libopencv-dev libeigen3-dev nvidia-cuda-toolkit libnvinfer7 libnvinfer-plugin7 libnvinfer-dev libnvinfer-plugin-dev
 
     # Configure CMake
     - name: Configure CMake
