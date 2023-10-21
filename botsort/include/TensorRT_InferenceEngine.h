@@ -109,7 +109,7 @@ struct TRTOptimizerParams
 };
 
 
-class TensortRTInferenceEngine
+class TensorRTInferenceEngine
 {
 private:
     nvinfer1::ILogger::Severity _logSeverity =
@@ -129,8 +129,8 @@ private:
     std::vector<int> output_idx;
 
 public:
-    TensortRTInferenceEngine();
-    ~TensortRTInferenceEngine();
+    TensorRTInferenceEngine();
+    ~TensorRTInferenceEngine();
 
     void setOptimizationParams(const TRTOptimizerParams &params);
 
