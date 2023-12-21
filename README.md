@@ -16,7 +16,7 @@ This implementation has been tested **on NVIDIA Jetson NX and it achieves real-t
 
 - [x] Implement BoT-SORT tracker
 - [x] Load parameters from config file
-- [ ] Implement Re-ID model for BoT-SORT tracker using TensorRT [WIP]
+- [ ] Implement Re-ID model for BoT-SORT tracker using TensorRT [WIP](https://github.com/viplix3/BoTSORT-cpp/tree/reid-model)
 
 ## Preview of Results
 
