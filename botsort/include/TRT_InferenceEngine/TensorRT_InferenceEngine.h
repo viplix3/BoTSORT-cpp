@@ -18,7 +18,7 @@
 
 namespace inference_backend
 {
-using ModelPredictions = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
+using ModelPredictions = std::vector<std::vector<float>>;
 
 static auto StreamDeleter = [](cudaStream_t *ptr) {
     if (ptr)
@@ -128,7 +128,6 @@ private:
     void _build_engine(const std::string &onnx_model_path);
     bool _deserialize_engine(const std::string &engine_path);
 
-    void print_engine_info();
-    void allocate_buffers();
+    void _allocate_buffers();
 };
 }// namespace inference_backend

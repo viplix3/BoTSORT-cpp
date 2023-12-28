@@ -70,7 +70,7 @@ bool inference_backend::TensorRTInferenceEngine::load_model(
                          .c_str());
     if (_deserialize_engine(engine_path))
     {
-        allocate_buffers();
+        _allocate_buffers();
         _logger->log(nvinfer1::ILogger::Severity::kINFO,
                      std::string("Engine loaded successfully").c_str());
         return true;
@@ -128,12 +128,7 @@ bool inference_backend::TensorRTInferenceEngine::file_exists(
 }
 
 
-void inference_backend::TensorRTInferenceEngine::print_engine_info()
-{
-}
-
-
-void inference_backend::TensorRTInferenceEngine::allocate_buffers()
+void inference_backend::TensorRTInferenceEngine::_allocate_buffers()
 {
     for (void *&buffer: _buffers)
         cudaFree(buffer);
@@ -357,4 +352,44 @@ void inference_backend::TensorRTInferenceEngine::_build_engine(
 inference_backend::ModelPredictions
 inference_backend::TensorRTInferenceEngine::forward(const cv::Mat &input_image)
 {
+    // Reference: https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#perform-inference
+
+    if (!_buffers.size())
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Buffers not allocated").c_str());
+        return ModelPredictions();
+    }
+
+    // Create a blob from the image
+    cv::Mat image_blob;
+    cv::dnn::blobFromImage(input_image, image_blob, 1.0,
+                           cv::Size(_input_dims[0].d[3], _input_dims[0].d[2]),
+                           cv::Scalar(), false, false, CV_32F);
+
+    // Ensure image blob size matches input layer size
+    assert(image_blob.total() ==
+           std::accumulate(_input_dims[0].d,
+                           _input_dims[0].d + _input_dims[0].nbDims, 1,
+                           std::multiplies<size_t>()));
+
+    // Copy image blob to CUDA input buffer
+    cudaMemcpyAsync(_buffers[_input_idx], image_blob.ptr<float>(),
+                    image_blob.total() * sizeof(float), cudaMemcpyHostToDevice);
+
+    // Run inference
+    _context->enqueueV2(_buffers.data(), _cuda_stream, nullptr);
+
+    // Copy CUDA output buffer to host
+    ModelPredictions predictions;
+    for (size_t i = 0; i < _output_idx.size(); ++i)
+    {
+        std::vector<float> output(_output_dims[i].d[0] * _output_dims[i].d[1] *
+                                  _output_dims[i].d[2] * _output_dims[i].d[3]);
+        cudaMemcpyAsync(output.data(), _buffers[_output_idx[i]],
+                        output.size() * sizeof(float), cudaMemcpyDeviceToHost);
+        predictions.emplace_back(output);
+    }
+
+    return predictions;
 }
