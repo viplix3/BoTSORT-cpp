@@ -68,7 +68,6 @@ struct TRTOptimizerParams
     TRTOptimizerParams() = default;
 
     int batch_size = 1;
-    size_t max_workspace_size = 1 << 30;
     bool fp16 = true;
     bool int8 = false;
     bool tf32 = false;
@@ -81,7 +80,23 @@ struct TRTOptimizerParams
 
     std::string toStr()
     {
-        // TODO
+        std::string str = "batch_size: " + std::to_string(batch_size) + "\n";
+        str += "fp16: " + std::to_string(fp16) + "\n";
+        str += "int8: " + std::to_string(int8) + "\n";
+        str += "tf32: " + std::to_string(tf32) + "\n";
+        str += "int8_calibrator: " + std::to_string(int8_calibrator) + "\n";
+        str += "input_layer_name: " + input_layer_name + "\n";
+        str += "input_dims: " + std::to_string(input_dims.d[0]) + " " +
+               std::to_string(input_dims.d[1]) + " " +
+               std::to_string(input_dims.d[2]) + " " +
+               std::to_string(input_dims.d[3]) + "\n";
+        str += "output_layer_names: ";
+        for (auto &name: output_layer_names)
+        {
+            str += name + " ";
+        }
+        str += "\n";
+        return str;
     }
 };
 
