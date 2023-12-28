@@ -135,12 +135,104 @@ void inference_backend::TensorRTInferenceEngine::print_engine_info()
 
 void inference_backend::TensorRTInferenceEngine::allocate_buffers()
 {
+    for (void *&buffer: _buffers)
+        cudaFree(buffer);
+    _buffers.clear();
+
+    _buffers = std::vector<void *>(_engine->getNbBindings());
+    size_t output_idx = 0;
+
+    for (size_t i = 0; i < _engine->getNbBindings(); ++i)
+    {
+        nvinfer1::Dims dims = _engine->getBindingDimensions(i);
+        nvinfer1::DataType dtype = _engine->getBindingDataType(i);
+        size_t total_size = std::accumulate(dims.d, dims.d + dims.nbDims, 1,
+                                            std::multiplies<size_t>());
+        cudaMalloc(&_buffers[i], total_size * sizeof(float));
+
+        if (_engine->getBindingName(i) == _optimization_params.input_layer_name)
+        {
+            _input_dims.emplace_back(dims);
+            _input_idx = i;
+            _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                         std::string("Found input layer with name: ")
+                                 .append(_engine->getBindingName(i))
+                                 .c_str());
+        }
+        else if (std::find(_optimization_params.output_layer_names.begin(),
+                           _optimization_params.output_layer_names.end(),
+                           _engine->getBindingName(i)) !=
+                 _optimization_params.output_layer_names.end())
+        {
+            _output_dims.emplace_back(dims);
+            _output_idx.emplace_back(i);
+            ++output_idx;
+            _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                         std::string("Found output layer with name: ")
+                                 .append(_engine->getBindingName(i))
+                                 .c_str());
+        }
+    }
+
+    if (_input_dims.empty())
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Input layer not found").c_str());
+        return;
+    }
+    if (_output_dims.empty())
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Output layer not found").c_str());
+        return;
+    }
 }
 
 
 bool inference_backend::TensorRTInferenceEngine::_deserialize_engine(
         const std::string &engine_path)
 {
+    // Reference: https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#perform_inference_c
+    std::ifstream engine_file(engine_path, std::ios::binary);
+    if (!engine_file)
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Failed to open engine file").c_str());
+        return false;
+    }
+
+    // Read engine file
+    std::vector<char> trt_model_stream;
+    size_t size{0};
+    engine_file.seekg(0, std::ios::end);
+    size = engine_file.tellg();
+    engine_file.seekg(0, std::ios::beg);
+    trt_model_stream.resize(size);
+    engine_file.read(trt_model_stream.data(), size);
+    engine_file.close();
+
+    // Deserialize engine
+    std::unique_ptr<nvinfer1::IRuntime> runtime{
+            nvinfer1::createInferRuntime(*_logger)};
+    _engine = makeUnique(runtime->deserializeCudaEngine(
+            trt_model_stream.data(), trt_model_stream.size()));
+    if (!_engine)
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Failed to deserialize engine").c_str());
+        return false;
+    }
+
+    // Create execution context
+    _context = makeUnique(_engine->createExecutionContext());
+    if (!_context)
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Failed to create execution context").c_str());
+        return false;
+    }
+
+    return true;
 }
 
 

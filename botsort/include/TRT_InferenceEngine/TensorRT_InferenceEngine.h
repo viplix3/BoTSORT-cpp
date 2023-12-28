@@ -3,7 +3,7 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <memory>
-#include <stdexcept>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -45,6 +45,12 @@ struct TRTDestroyer
 template<typename T>
 using TRTUniquePtr = std::unique_ptr<T, TRTDestroyer>;
 
+
+template<typename T>
+TRTUniquePtr<T> makeUnique(T *t)
+{
+    return TRTUniquePtr<T>{t};
+}
 
 template<typename T>
 inline TRTUniquePtr<T> infer_object(T *obj)
@@ -97,8 +103,8 @@ private:
     std::vector<nvinfer1::Dims> _output_dims;
     std::vector<std::string> _output_layer_names;
 
-    int input_idx = 0;
-    std::vector<int> output_idx;
+    int _input_idx = 0;
+    std::vector<int> _output_idx;
 
 public:
     TensorRTInferenceEngine(TRTOptimizerParams &optimization_params,
