@@ -45,6 +45,7 @@ if(NOT ${CUDA_FOUND})
 else()
     message(STATUS "CUDA version ${CUDA_VERSION_STRING} found")
     include_directories(${CUDA_INCLUDE_DIRS})
+
     target_sources(${PROJECT_NAME} PRIVATE
         ${PROJECT_SOURCE_DIR}/src/TRT_InferenceEngine/TensorRT_InferenceEngine.cpp
         ${PROJECT_SOURCE_DIR}/src/ReID.cpp)

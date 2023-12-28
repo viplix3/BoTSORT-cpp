@@ -3,9 +3,13 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 #include <NvInfer.h>
+#include <NvOnnxParser.h>
+#include <unistd.h>
 
 #include <boost/filesystem.hpp>
 #include <opencv2/opencv.hpp>

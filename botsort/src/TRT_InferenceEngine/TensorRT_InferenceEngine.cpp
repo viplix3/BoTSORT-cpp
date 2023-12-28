@@ -147,6 +147,118 @@ bool inference_backend::TensorRTInferenceEngine::_deserialize_engine(
 void inference_backend::TensorRTInferenceEngine::_build_engine(
         const std::string &onnx_model_path)
 {
+    // Reference: https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#c_topics
+    // Network builder
+    auto builder = std::unique_ptr<nvinfer1::IBuilder>(
+            nvinfer1::createInferBuilder(*_logger));
+
+    // Network definition
+    uint32_t flag =
+            1U << static_cast<uint32_t>(
+                    nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    auto network = std::unique_ptr<nvinfer1::INetworkDefinition>(
+            builder->createNetworkV2(flag));
+
+    // ONNX parser
+    auto parser = std::unique_ptr<nvonnxparser::IParser>(
+            nvonnxparser::createParser(*network, *_logger));
+
+    // Parse ONNX model
+    int verbosity = static_cast<int>(_logSeverity);
+    parser->parseFromFile(onnx_model_path.c_str(), verbosity);
+    for (int32_t i = 0; i < parser->getNbErrors(); ++i)
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     parser->getError(i)->desc());
+    }
+
+    // Optimization profile
+    // TODO: Check more about optimization profiles
+    auto config = std::unique_ptr<nvinfer1::IBuilderConfig>(
+            builder->createBuilderConfig());
+    auto profile = builder->createOptimizationProfile();
+    profile->setDimensions(network->getInput(0)->getName(),
+                           nvinfer1::OptProfileSelector::kMIN,
+                           network->getInput(0)->getDimensions());
+    profile->setDimensions(network->getInput(0)->getName(),
+                           nvinfer1::OptProfileSelector::kOPT,
+                           network->getInput(0)->getDimensions());
+    profile->setDimensions(network->getInput(0)->getName(),
+                           nvinfer1::OptProfileSelector::kMAX,
+                           network->getInput(0)->getDimensions());
+    config->addOptimizationProfile(profile);
+
+    if (_optimization_params.int8)
+
+    {
+        // TODO: Add int8 calibration
+        _logger->log(nvinfer1::ILogger::Severity::kWARNING,
+                     std::string("INT8 calibration is not supported yet. "
+                                 "Switching to FP16 or FP32 calibration")
+                             .c_str());
+    }
+    else
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                     std::string("FP16 or FP32 calibration").c_str());
+        config->setFlag(nvinfer1::BuilderFlag::kFP16);
+        if (_optimization_params.tf32)
+            config->setFlag(nvinfer1::BuilderFlag::kTF32);
+    }
+
+    // Build engine
+    _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                 std::string("Building engine").c_str());
+
+    std::unique_ptr<nvinfer1::IHostMemory> engine_plan{
+            builder->buildSerializedNetwork(*network, *config)};
+    std::unique_ptr<nvinfer1::IRuntime> runtime{
+            nvinfer1::createInferRuntime(*_logger)};
+    std::shared_ptr<nvinfer1::ICudaEngine> engine =
+            std::shared_ptr<nvinfer1::ICudaEngine>(
+                    runtime->deserializeCudaEngine(engine_plan->data(),
+                                                   engine_plan->size()),
+                    TRTDestroyer());
+    if (!engine)
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Failed to build engine").c_str());
+        return;
+    }
+
+    // Serialize engine
+    _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                 std::string("Serializing engine").c_str());
+    std::string engine_path = get_engine_path(onnx_model_path);
+    std::ofstream engine_file(engine_path, std::ios::binary);
+    if (!engine_file)
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Failed to open engine file").c_str());
+        return;
+    }
+
+    std::unique_ptr<nvinfer1::IHostMemory> serialized_engine{
+            engine->serialize()};
+    if (!serialized_engine)
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Failed to serialize engine").c_str());
+        return;
+    }
+
+    engine_file.write(reinterpret_cast<const char *>(serialized_engine->data()),
+                      serialized_engine->size());
+    if (engine_file.fail())
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     std::string("Failed to write engine file").c_str());
+        return;
+    }
+
+    _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                 std::string("Engine serialized successfully").c_str());
+    engine_file.close();
 }
 
 
