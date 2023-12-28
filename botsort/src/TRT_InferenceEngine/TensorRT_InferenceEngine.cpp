@@ -1,4 +1,4 @@
-#include "TensorRT_InferenceEngine.h"
+#include "TRT_InferenceEngine/TensorRT_InferenceEngine.h"
 
 #include <NvOnnxParser.h>
 
@@ -29,8 +29,8 @@ void inference_backend::TensorRTInferenceEngine::_set_optimization_params(
 void inference_backend::TensorRTInferenceEngine::_init_TRT_logger(
         u_int8_t logging_level)
 {
-    _logger = TRTUniquePtr<TRTLogger>(new TRTLogger(
-            static_cast<nvinfer1::ILogger::Severity>(logging_level)));
+    _logger = std::make_unique<TRTLogger>(
+            static_cast<nvinfer1::ILogger::Severity>(logging_level));
 }
 
 
@@ -118,4 +118,39 @@ std::string inference_backend::TensorRTInferenceEngine::get_engine_path(
     // Engine path = parent_dir/model_name_hostname_TRT_version_CUDA_version_batch_size_int8_fp16_fp32.engine
     engine_path.append("_" + suffix + ".engine");
     return engine_path;
+}
+
+
+bool inference_backend::TensorRTInferenceEngine::file_exists(
+        const std::string &name) const
+{
+    return boost::filesystem::exists(name);
+}
+
+
+void inference_backend::TensorRTInferenceEngine::print_engine_info()
+{
+}
+
+
+void inference_backend::TensorRTInferenceEngine::allocate_buffers()
+{
+}
+
+
+bool inference_backend::TensorRTInferenceEngine::_deserialize_engine(
+        const std::string &engine_path)
+{
+}
+
+
+void inference_backend::TensorRTInferenceEngine::_build_engine(
+        const std::string &onnx_model_path)
+{
+}
+
+
+inference_backend::ModelPredictions
+inference_backend::TensorRTInferenceEngine::forward(const cv::Mat &input_image)
+{
 }

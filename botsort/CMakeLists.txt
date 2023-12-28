@@ -32,6 +32,11 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
 
+# Find and link Boost
+find_package(Boost REQUIRED COMPONENTS filesystem)
+include_directories(${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+
 # Find and link CUDA
 find_package(CUDA QUIET)
 
@@ -41,7 +46,7 @@ else()
     message(STATUS "CUDA version ${CUDA_VERSION_STRING} found")
     include_directories(${CUDA_INCLUDE_DIRS})
     target_sources(${PROJECT_NAME} PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/TensorRT_InferenceEngine.cpp
+        ${PROJECT_SOURCE_DIR}/src/TRT_InferenceEngine/TensorRT_InferenceEngine.cpp
         ${PROJECT_SOURCE_DIR}/src/ReID.cpp)
     target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES})
 endif()

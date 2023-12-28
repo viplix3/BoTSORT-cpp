@@ -84,7 +84,7 @@ private:
     TRTOptimizerParams _optimization_params;
     TRTUniquePtr<nvinfer1::ICudaEngine> _engine{nullptr};
     TRTUniquePtr<nvinfer1::IExecutionContext> _context{nullptr};
-    TRTUniquePtr<TRTLogger> _logger{nullptr};
+    std::unique_ptr<TRTLogger> _logger{nullptr};
 
     cudaStream_t _cuda_stream;
 
