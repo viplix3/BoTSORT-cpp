@@ -44,6 +44,20 @@ jobs:
         path: /usr/include/eigen3
         key: ${{ runner.os }}-eigen-${{ hashFiles('**/CMakeLists.txt') }}
 
+    - name: Cache Boost dependencies
+      id: cache-boost
+      uses: actions/cache@v3
+      with:
+        path: /usr/include/boost
+        key: ${{ runner.os }}-boost-${{ hashFiles('**/CMakeLists.txt') }}
+
+    - name: Cache CMake build
+      id: cache-cmake
+      uses: actions/cache@v3
+      with:
+        path: ${{github.workspace}}/build
+        key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}
+
     - name: Pre-configure tzdata
       run: |
         export DEBIAN_FRONTEND=noninteractive
@@ -56,7 +70,7 @@ jobs:
     - name: Install dependencies
       if: steps.cache-opencv.outputs.cache-hit != 'true' || steps.cache-eigen.outputs.cache-hit != 'true'
       run: |
-        apt-get install -y --no-install-recommends libopencv-dev cmake libeigen3-dev
+        apt-get install -y --no-install-recommends libopencv-dev cmake libeigen3-dev libboost-all-dev
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
