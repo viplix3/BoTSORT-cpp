@@ -7,7 +7,7 @@
 class ReIDModel
 {
 public:
-    ReIDModel(std::string model_weights, bool fp16_inference);
+    ReIDModel(const std::string &config_path);
     ~ReIDModel() = default;
 
     FeatureVector extract_features(cv::Mat &image_patch);

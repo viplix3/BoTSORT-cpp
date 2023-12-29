@@ -20,30 +20,6 @@ enum TrackState
 class Track
 {
 public:
-    bool is_activated;
-    int track_id;
-    int state;
-
-    uint32_t frame_id, tracklet_len, start_frame;
-
-    std::vector<float> det_tlwh;
-    std::shared_ptr<FeatureVector> curr_feat;
-    std::unique_ptr<FeatureVector> smooth_feat;
-    KFStateSpaceVec mean;
-    KFStateSpaceMatrix covariance;
-
-private:
-    std::vector<float> _tlwh;
-    std::vector<std::pair<uint8_t, float>> _class_hist;
-    float _score;
-    uint8_t _class_id;
-    static constexpr float _alpha = 0.9;
-
-    int _feat_history_size;
-    std::deque<std::shared_ptr<FeatureVector>> _feat_history;
-
-
-public:
     /**
      * @brief Construct a new Track object
      * 
@@ -197,4 +173,28 @@ private:
      * @param score Current score for the bounding box
      */
     void _update_class_id(uint8_t class_id, float score);
+
+
+public:
+    bool is_activated;
+    int track_id;
+    int state;
+
+    uint32_t frame_id, tracklet_len, start_frame;
+
+    std::vector<float> det_tlwh;
+    std::shared_ptr<FeatureVector> curr_feat;
+    std::unique_ptr<FeatureVector> smooth_feat;
+    KFStateSpaceVec mean;
+    KFStateSpaceMatrix covariance;
+
+private:
+    std::vector<float> _tlwh;
+    std::vector<std::pair<uint8_t, float>> _class_hist;
+    float _score;
+    uint8_t _class_id;
+    static constexpr float _alpha = 0.9;
+
+    int _feat_history_size;
+    std::deque<std::shared_ptr<FeatureVector>> _feat_history;
 };

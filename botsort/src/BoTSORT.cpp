@@ -9,9 +9,11 @@
 #include "INIReader.h"
 #include "matching.h"
 
-BoTSORT::BoTSORT(const std::string &config_dir)
+BoTSORT::BoTSORT(const std::string &tracker_config_path,
+                 const std::string &reid_config_path,
+                 const std::string &gmc_config_path)
 {
-    _load_params_from_config(config_dir);
+    _load_params_from_config(tracker_config_path);
 
     // Tracker module
     _frame_id = 0;
@@ -22,12 +24,8 @@ BoTSORT::BoTSORT(const std::string &config_dir)
 
 
     // Re-ID module, load visual feature extractor here
-    if (_reid_model_weights_path)
-    {
-        _reid_model = std::make_unique<ReIDModel>(
-                _reid_model_weights_path.value(), _fp16_inference);
-        _reid_enabled = true;
-    }
+    if (_reid_enabled && reid_config_path.size() > 0)
+        _reid_model = std::make_unique<ReIDModel>(reid_config_path);
     else
     {
         std::cout << "Re-ID module disabled" << std::endl;
@@ -36,9 +34,15 @@ BoTSORT::BoTSORT(const std::string &config_dir)
 
 
     // Global motion compensation module
-    _gmc_algo = std::make_unique<GlobalMotionCompensation>(
-            GlobalMotionCompensation::GMC_method_map[_gmc_method_name],
-            config_dir);
+    if (_gmc_enabled && gmc_config_path.size() > 0)
+        _gmc_algo = std::make_unique<GlobalMotionCompensation>(
+                GlobalMotionCompensation::GMC_method_map[_gmc_method_name],
+                gmc_config_path);
+    else
+    {
+        std::cout << "GMC disabled" << std::endl;
+        _gmc_enabled = false;
+    }
 }
 
 
@@ -93,7 +97,10 @@ BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame)
                 {
                     detections_high_conf.push_back(tracklet);
                 }
-                else { detections_low_conf.push_back(tracklet); }
+                else
+                {
+                    detections_low_conf.push_back(tracklet);
+                }
             }
         }
     }
@@ -102,8 +109,14 @@ BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame)
     std::vector<std::shared_ptr<Track>> unconfirmed_tracks, tracked_tracks;
     for (const std::shared_ptr<Track> &track: _tracked_tracks)
     {
-        if (!track->is_activated) { unconfirmed_tracks.push_back(track); }
-        else { tracked_tracks.push_back(track); }
+        if (!track->is_activated)
+        {
+            unconfirmed_tracks.push_back(track);
+        }
+        else
+        {
+            tracked_tracks.push_back(track);
+        }
     }
     ////////////////// CREATE TRACK OBJECT FOR ALL THE DETECTIONS //////////////////
 
@@ -117,9 +130,12 @@ BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame)
     Track::multi_predict(tracks_pool, *_kalman_filter);
 
     // Estimate camera motion and apply camera motion compensation
-    HomographyMatrix H = _gmc_algo->apply(frame, detections);
-    Track::multi_gmc(tracks_pool, H);
-    Track::multi_gmc(unconfirmed_tracks, H);
+    if (_gmc_enabled)
+    {
+        HomographyMatrix H = _gmc_algo->apply(frame, detections);
+        Track::multi_gmc(tracks_pool, H);
+        Track::multi_gmc(unconfirmed_tracks, H);
+    }
     ////////////////// Apply KF predict and GMC before running association algorithm //////////////////
 
 
@@ -367,12 +383,16 @@ BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame)
     std::vector<std::shared_ptr<Track>> output_tracks;
     for (const std::shared_ptr<Track> &track: _tracked_tracks)
     {
-        if (track->is_activated) { output_tracks.push_back(track); }
+        if (track->is_activated)
+        {
+            output_tracks.push_back(track);
+        }
     }
     ////////////////// Update output tracks //////////////////
 
     return output_tracks;
 }
+
 
 FeatureVector BoTSORT::_extract_features(const cv::Mat &frame,
                                          const cv::Rect_<float> &bbox_tlwh)
@@ -381,6 +401,7 @@ FeatureVector BoTSORT::_extract_features(const cv::Mat &frame,
     cv::Mat patch_resized;
     return _reid_model->extract_features(patch_resized);
 }
+
 
 std::vector<std::shared_ptr<Track>>
 BoTSORT::_merge_track_lists(std::vector<std::shared_ptr<Track>> &tracks_list_a,
@@ -430,6 +451,7 @@ std::vector<std::shared_ptr<Track>> BoTSORT::_remove_from_list(
 
     return new_tracks_list;
 }
+
 
 void BoTSORT::_remove_duplicate_tracks(
         std::vector<std::shared_ptr<Track>> &result_tracks_a,
@@ -485,21 +507,20 @@ void BoTSORT::_remove_duplicate_tracks(
 }
 
 
-void BoTSORT::_load_params_from_config(const std::string &config_dir)
+void BoTSORT::_load_params_from_config(const std::string &config_path)
 {
     const std::string tracker_name = "BoTSORT";
 
-    INIReader tracker_config(config_dir + "/tracker.ini");
+    INIReader tracker_config(config_path);
     if (tracker_config.ParseError() < 0)
     {
-        std::cout << "Can't load " << config_dir << "/tracker.ini" << std::endl;
+        std::cout << "Can't load " << config_path << std::endl;
         exit(1);
     }
 
-    _reid_model_weights_path = tracker_config.Get(tracker_name, "model_path");
-    _fp16_inference =
-            tracker_config.GetBoolean(tracker_name, "fp16_inference", false);
-
+    _reid_enabled =
+            tracker_config.GetBoolean(tracker_name, "enable_reid", false);
+    _gmc_enabled = tracker_config.GetBoolean(tracker_name, "enable_gmc", false);
     _track_high_thresh =
             tracker_config.GetFloat(tracker_name, "track_high_thresh", 0.6F);
     _track_low_thresh =

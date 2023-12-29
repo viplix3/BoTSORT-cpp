@@ -68,7 +68,8 @@ read_detections_from_file(const std::string &detection_file, int frame_width,
                                   std::istream_iterator<float>());
 
         Detection det;
-        if (values[0] != 0) continue;
+        if (values[0] != 0)
+            continue;
         det.class_id = static_cast<int>(values[0]);
         det.bbox_tlwh =
                 cv::Rect_(values[1] - values[3] / 2, values[2] - values[4] / 2,
@@ -152,7 +153,10 @@ void plot_tracks(cv::Mat &frame, std::vector<Detection> &detections,
         {
             track_colors[track->track_id] = color;
         }
-        else { color = track_colors[track->track_id]; }
+        else
+        {
+            color = track_colors[track->track_id];
+        }
 
         cv::rectangle(frame,
                       cv::Rect(static_cast<int>(bbox_tlwh[0]),
@@ -268,7 +272,10 @@ int main(int argc, char **argv)
         cv::imshow("frame", frame);
         cv::imshow("warped", warped_frame);
 
-        if (cv::waitKey(1) == 27) { break; }
+        if (cv::waitKey(1) == 27)
+        {
+            break;
+        }
     }
     return 0;
 #endif
@@ -284,8 +291,16 @@ int main(int argc, char **argv)
 
     // Initialize BoTSORT tracker
     std::unique_ptr<BoTSORT> tracker;
-    if (argc == 4) { tracker = std::make_unique<BoTSORT>(); }
-    else { tracker = std::make_unique<BoTSORT>(config_dir); }
+    if (argc == 4)
+    {
+        std::cout << "Using default config path: ../config/tracker.ini"
+                  << std::endl;
+        tracker = std::make_unique<BoTSORT>("../config/tracker.ini");
+    }
+    else
+    {
+        tracker = std::make_unique<BoTSORT>(config_dir);
+    }
 
     if (is_video)
     {

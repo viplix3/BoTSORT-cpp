@@ -7,20 +7,6 @@ namespace bot_kalman
 class KalmanFilter
 {
 public:
-    static constexpr double chi2inv95[10] = {0,      3.8415, 5.9915, 7.8147,
-                                             9.4877, 11.070, 12.592, 14.067,
-                                             15.507, 16.919};
-
-private:
-    float _std_weight_position, _std_weight_velocity;
-
-    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM>
-            _state_transition_matrix;
-    Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM>
-            _measurement_matrix;
-
-
-public:
     /**
      * @brief Construct a new Kalman Filter object.
      * 
@@ -89,5 +75,19 @@ private:
      * @param dt Time interval between consecutive measurements (dt = 1/FPS).
      */
     void _init_kf_matrices(double dt);
+
+
+public:
+    static constexpr double chi2inv95[10] = {0,      3.8415, 5.9915, 7.8147,
+                                             9.4877, 11.070, 12.592, 14.067,
+                                             15.507, 16.919};
+
+private:
+    float _std_weight_position, _std_weight_velocity;
+
+    Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM>
+            _state_transition_matrix;
+    Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_STATE_SPACE_DIM>
+            _measurement_matrix;
 };
 }// namespace bot_kalman

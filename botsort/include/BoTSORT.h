@@ -10,6 +10,12 @@
 class BoTSORT
 {
 public:
+    explicit BoTSORT(const std::string &tracker_config_path,
+                     const std::string &reid_config_path = "",
+                     const std::string &gmc_config_path = "");
+    ~BoTSORT() = default;
+
+
     /**
      * @brief Track the objects in the frame
      * 
@@ -20,31 +26,6 @@ public:
     std::vector<std::shared_ptr<Track>>
     track(const std::vector<Detection> &detections, const cv::Mat &frame);
 
-private:
-    std::optional<std::string> _reid_model_weights_path;
-    std::string _gmc_method_name;
-    bool _reid_enabled, _fp16_inference;
-    uint8_t _track_buffer, _frame_rate, _buffer_size, _max_time_lost;
-    float _track_high_thresh, _track_low_thresh, _new_track_thresh,
-            _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
-    unsigned int _frame_id;
-
-    std::vector<std::shared_ptr<Track>> _tracked_tracks;
-    std::vector<std::shared_ptr<Track>> _lost_tracks;
-
-    std::unique_ptr<KalmanFilter> _kalman_filter;
-    std::unique_ptr<GlobalMotionCompensation> _gmc_algo;
-    std::unique_ptr<ReIDModel> _reid_model;
-
-
-public:
-    /**
-     * @brief Construct a new BoTSORT object
-     * 
-     * @param config_path Path to the config directory. If not provided, default path is used (../../config)
-     */
-    explicit BoTSORT(const std::string &config_path = "../../config");
-    ~BoTSORT() = default;
 
 private:
     /**
@@ -68,6 +49,7 @@ private:
     _merge_track_lists(std::vector<std::shared_ptr<Track>> &tracks_list_a,
                        std::vector<std::shared_ptr<Track>> &tracks_list_b);
 
+
     /**
      * @brief Remove tracks from the given track list
      * 
@@ -78,6 +60,7 @@ private:
     static std::vector<std::shared_ptr<Track>>
     _remove_from_list(std::vector<std::shared_ptr<Track>> &tracks_list,
                       std::vector<std::shared_ptr<Track>> &tracks_to_remove);
+
 
     /**
      * @brief Rectify track lists
@@ -95,10 +78,27 @@ private:
             std::vector<std::shared_ptr<Track>> &tracks_list_a,
             std::vector<std::shared_ptr<Track>> &tracks_list_b);
 
+
     /**
      * @brief Load tracker parameters from the given config file
      * 
      * @param config_path Path to the config directory
      */
     void _load_params_from_config(const std::string &config_path);
+
+
+private:
+    std::string _gmc_method_name;
+    bool _reid_enabled, _gmc_enabled;
+    uint8_t _track_buffer, _frame_rate, _buffer_size, _max_time_lost;
+    float _track_high_thresh, _track_low_thresh, _new_track_thresh,
+            _match_thresh, _proximity_thresh, _appearance_thresh, _lambda;
+    unsigned int _frame_id;
+
+    std::vector<std::shared_ptr<Track>> _tracked_tracks;
+    std::vector<std::shared_ptr<Track>> _lost_tracks;
+
+    std::unique_ptr<KalmanFilter> _kalman_filter;
+    std::unique_ptr<GlobalMotionCompensation> _gmc_algo;
+    std::unique_ptr<ReIDModel> _reid_model;
 };

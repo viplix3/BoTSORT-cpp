@@ -15,32 +15,32 @@ std::map<std::string, GMC_Method> GlobalMotionCompensation::GMC_method_map = {
 
 
 GlobalMotionCompensation::GlobalMotionCompensation(
-        GMC_Method method, const std::string &config_dir)
+        GMC_Method method, const std::string &config_path)
 {
     if (method == GMC_Method::ORB)
     {
         std::cout << "Using ORB for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<ORB_GMC>(config_dir);
+        _gmc_algorithm = std::make_unique<ORB_GMC>(config_path);
     }
     else if (method == GMC_Method::ECC)
     {
         std::cout << "Using ECC for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<ECC_GMC>(config_dir);
+        _gmc_algorithm = std::make_unique<ECC_GMC>(config_path);
     }
     else if (method == GMC_Method::SparseOptFlow)
     {
         std::cout << "Using SparseOptFlow for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(config_dir);
+        _gmc_algorithm = std::make_unique<SparseOptFlow_GMC>(config_path);
     }
     else if (method == GMC_Method::OptFlowModified)
     {
         std::cout << "Using OptFlowModified for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(config_dir);
+        _gmc_algorithm = std::make_unique<OptFlowModified_GMC>(config_path);
     }
     else if (method == GMC_Method::OpenCV_VideoStab)
     {
         std::cout << "Using OpenCV_VideoStab for GMC" << std::endl;
-        _gmc_algorithm = std::make_unique<OpenCV_VideoStab_GMC>(config_dir);
+        _gmc_algorithm = std::make_unique<OpenCV_VideoStab_GMC>(config_path);
     }
     else
     {
@@ -48,6 +48,7 @@ GlobalMotionCompensation::GlobalMotionCompensation(
                                  std::to_string(method));
     }
 }
+
 
 HomographyMatrix
 GlobalMotionCompensation::apply(const cv::Mat &frame,
@@ -58,21 +59,22 @@ GlobalMotionCompensation::apply(const cv::Mat &frame,
 
 
 // ORB
-ORB_GMC::ORB_GMC(const std::string &config_dir)
+ORB_GMC::ORB_GMC(const std::string &config_path)
 {
-    _load_params_from_config(config_dir);
+    _load_params_from_config(config_path);
 
     _detector = cv::FastFeatureDetector::create();
     _extractor = cv::ORB::create();
     _matcher = cv::BFMatcher::create(cv::NORM_HAMMING);// Brute Force Matcher
 }
 
-void ORB_GMC::_load_params_from_config(const std::string &config_dir)
+
+void ORB_GMC::_load_params_from_config(const std::string &config_path)
 {
-    INIReader gmc_config(config_dir + "/gmc.ini");
+    INIReader gmc_config(config_path);
     if (gmc_config.ParseError() < 0)
     {
-        std::cout << "Can't load " << config_dir << "/gmc.ini" << std::endl;
+        std::cout << "Can't load " << config_path << std::endl;
         exit(1);
     }
 
@@ -82,6 +84,7 @@ void ORB_GMC::_load_params_from_config(const std::string &config_dir)
     _ransac_max_iters =
             gmc_config.GetInteger(_algo_name, "ransac_max_iters", 500);
 }
+
 
 HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw,
                                 const std::vector<Detection> &detections)
@@ -276,21 +279,22 @@ HomographyMatrix ORB_GMC::apply(const cv::Mat &frame_raw,
 
 
 // ECC
-ECC_GMC::ECC_GMC(const std::string &config_dir)
+ECC_GMC::ECC_GMC(const std::string &config_path)
 {
-    _load_params_from_config(config_dir);
+    _load_params_from_config(config_path);
 
     _termination_criteria =
             cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::COUNT,
                              _max_iterations, _termination_eps);
 }
 
-void ECC_GMC::_load_params_from_config(const std::string &config_dir)
+
+void ECC_GMC::_load_params_from_config(const std::string &config_path)
 {
-    INIReader gmc_config(config_dir + "/gmc.ini");
+    INIReader gmc_config(config_path);
     if (gmc_config.ParseError() < 0)
     {
-        std::cout << "Can't load " << config_dir << "/gmc.ini" << std::endl;
+        std::cout << "Can't load " << config_path << std::endl;
         exit(1);
     }
 
@@ -298,6 +302,7 @@ void ECC_GMC::_load_params_from_config(const std::string &config_dir)
     _max_iterations = gmc_config.GetInteger(_algo_name, "max_iterations", 100);
     _termination_eps = gmc_config.GetFloat(_algo_name, "termination_eps", 1e-6);
 }
+
 
 HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw,
                                 const std::vector<Detection> &detections)
@@ -356,17 +361,18 @@ HomographyMatrix ECC_GMC::apply(const cv::Mat &frame_raw,
 
 
 // Optical Flow
-SparseOptFlow_GMC::SparseOptFlow_GMC(const std::string &config_dir)
+SparseOptFlow_GMC::SparseOptFlow_GMC(const std::string &config_path)
 {
-    _load_params_from_config(config_dir);
+    _load_params_from_config(config_path);
 }
 
-void SparseOptFlow_GMC::_load_params_from_config(const std::string &config_dir)
+
+void SparseOptFlow_GMC::_load_params_from_config(const std::string &config_path)
 {
-    INIReader gmc_config(config_dir + "/gmc.ini");
+    INIReader gmc_config(config_path);
     if (gmc_config.ParseError() < 0)
     {
-        std::cout << "Can't load " << config_dir << "/gmc.ini" << std::endl;
+        std::cout << "Can't load " << config_path << std::endl;
         exit(1);
     }
 
@@ -387,6 +393,7 @@ void SparseOptFlow_GMC::_load_params_from_config(const std::string &config_dir)
     _inlier_ratio = gmc_config.GetFloat(_algo_name, "inlier_ratio", 0.5);
     _ransac_conf = gmc_config.GetFloat(_algo_name, "ransac_conf", 0.99);
 }
+
 
 HomographyMatrix
 SparseOptFlow_GMC::apply(const cv::Mat &frame_raw,
@@ -491,9 +498,9 @@ SparseOptFlow_GMC::apply(const cv::Mat &frame_raw,
 
 
 // OpenCV VideoStab
-OpenCV_VideoStab_GMC::OpenCV_VideoStab_GMC(const std::string &config_dir)
+OpenCV_VideoStab_GMC::OpenCV_VideoStab_GMC(const std::string &config_path)
 {
-    _load_params_from_config(config_dir);
+    _load_params_from_config(config_path);
 
     _motion_estimator = cv::makePtr<cv::videostab::MotionEstimatorRansacL2>(
             cv::videostab::MM_SIMILARITY);
@@ -505,13 +512,14 @@ OpenCV_VideoStab_GMC::OpenCV_VideoStab_GMC(const std::string &config_dir)
             cv::GFTTDetector::create(_num_features));
 }
 
+
 void OpenCV_VideoStab_GMC::_load_params_from_config(
-        const std::string &config_dir)
+        const std::string &config_path)
 {
-    INIReader gmc_config(config_dir + "/gmc.ini");
+    INIReader gmc_config(config_path);
     if (gmc_config.ParseError() < 0)
     {
-        std::cout << "Can't load " << config_dir << "/gmc.ini" << std::endl;
+        std::cout << "Can't load " << config_path << std::endl;
         exit(1);
     }
 
@@ -534,7 +542,10 @@ OpenCV_VideoStab_GMC::apply(const cv::Mat &frame_raw,
     H.setIdentity();
     cv::Mat frame = frame_raw.clone();
 
-    if (frame_raw.empty()) { return H; }
+    if (frame_raw.empty())
+    {
+        return H;
+    }
 
     // Downscale
     if (_downscale > 1.0F)
@@ -585,23 +596,25 @@ OpenCV_VideoStab_GMC::apply(const cv::Mat &frame_raw,
 
 
 // Optical Flow Modified
-OptFlowModified_GMC::OptFlowModified_GMC(const std::string &config_dir)
+OptFlowModified_GMC::OptFlowModified_GMC(const std::string &config_path)
 {
-    _load_params_from_config(config_dir);
+    _load_params_from_config(config_path);
 }
 
+
 void OptFlowModified_GMC::_load_params_from_config(
-        const std::string &config_dir)
+        const std::string &config_path)
 {
-    INIReader gmc_config(config_dir + "/gmc.ini");
+    INIReader gmc_config(config_path);
     if (gmc_config.ParseError() < 0)
     {
-        std::cout << "Can't load " << config_dir << "/gmc.ini" << std::endl;
+        std::cout << "Can't load " << config_path << std::endl;
         exit(1);
     }
 
     _downscale = gmc_config.GetFloat(_algo_name, "downscale", 2.0F);
 }
+
 
 HomographyMatrix
 OptFlowModified_GMC::apply(const cv::Mat &frame,
