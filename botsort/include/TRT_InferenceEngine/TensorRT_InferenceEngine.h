@@ -36,7 +36,11 @@ struct TRTDestroyer
     {
         if (obj)
         {
+#if NV_TENSORRT_MAJOR == 8 && NV_TENSORRT_MINOR <= 5
             obj->destroy();
+#else
+            delete obj;
+#endif
         }
     }
 };

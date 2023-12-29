@@ -134,38 +134,85 @@ void inference_backend::TensorRTInferenceEngine::_allocate_buffers()
         cudaFree(buffer);
     _buffers.clear();
 
+#if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
     _buffers = std::vector<void *>(_engine->getNbBindings());
+#else
+    _buffers = std::vector<void *>(_engine->getNbIOTensors());
+#endif
     size_t output_idx = 0;
 
+#if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
     for (size_t i = 0; i < _engine->getNbBindings(); ++i)
+#else
+    for (size_t i = 0; i < _engine->getNbIOTensors(); ++i)
+#endif
     {
+#if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
         nvinfer1::Dims dims = _engine->getBindingDimensions(i);
+#else
+        const char *name = _engine->getIOTensorName(i);
+        nvinfer1::Dims dims = _engine->getTensorShape(name);
+#endif
+
+#if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
         nvinfer1::DataType dtype = _engine->getBindingDataType(i);
+#else
+        nvinfer1::DataType dtype = _engine->getTensorDataType(name);
+#endif
+
         size_t total_size = std::accumulate(dims.d, dims.d + dims.nbDims, 1,
                                             std::multiplies<size_t>());
         cudaMalloc(&_buffers[i], total_size * sizeof(float));
 
+#if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
         if (_engine->getBindingName(i) == _optimization_params.input_layer_name)
+#else
+        if (std::string(name) == _optimization_params.input_layer_name)
+#endif
         {
             _input_dims.emplace_back(dims);
             _input_idx = i;
+
+#if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
             _logger->log(nvinfer1::ILogger::Severity::kINFO,
                          std::string("Found input layer with name: ")
                                  .append(_engine->getBindingName(i))
                                  .c_str());
+#else
+            _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                         std::string("Found input layer with name: ")
+                                 .append(name)
+                                 .c_str());
+#endif
         }
+
+#if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
         else if (std::find(_optimization_params.output_layer_names.begin(),
                            _optimization_params.output_layer_names.end(),
                            _engine->getBindingName(i)) !=
                  _optimization_params.output_layer_names.end())
+#else
+        else if (std::find(_optimization_params.output_layer_names.begin(),
+                           _optimization_params.output_layer_names.end(),
+                           name) !=
+                 _optimization_params.output_layer_names.end())
+#endif
         {
             _output_dims.emplace_back(dims);
             _output_idx.emplace_back(i);
             ++output_idx;
+
+#if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
             _logger->log(nvinfer1::ILogger::Severity::kINFO,
                          std::string("Found output layer with name: ")
                                  .append(_engine->getBindingName(i))
                                  .c_str());
+#else
+            _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                         std::string("Found output layer with name: ")
+                                 .append(name)
+                                 .c_str());
+#endif
         }
     }
 
