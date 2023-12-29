@@ -49,7 +49,7 @@ else()
     target_sources(${PROJECT_NAME} PRIVATE
         ${PROJECT_SOURCE_DIR}/src/TRT_InferenceEngine/TensorRT_InferenceEngine.cpp
         ${PROJECT_SOURCE_DIR}/src/ReID.cpp)
-    target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES} nvonnxparser nvinfer)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
