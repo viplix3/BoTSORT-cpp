@@ -29,41 +29,24 @@ static auto StreamDeleter = [](cudaStream_t *ptr) {
 };
 
 
-struct TRTDestroyer
+struct TRTDeleter
 {
     template<typename T>
     void operator()(T *obj) const
     {
-        if (obj)
-        {
-#if NV_TENSORRT_MAJOR == 8 && NV_TENSORRT_MINOR <= 5
-            obj->destroy();
-#else
-            delete obj;
-#endif
-        }
+        delete obj;
     }
 };
 
 
 template<typename T>
-using TRTUniquePtr = std::unique_ptr<T, TRTDestroyer>;
+using TRTUniquePtr = std::unique_ptr<T, TRTDeleter>;
 
 
 template<typename T>
 TRTUniquePtr<T> makeUnique(T *t)
 {
     return TRTUniquePtr<T>{t};
-}
-
-template<typename T>
-inline TRTUniquePtr<T> infer_object(T *obj)
-{
-    if (!obj)
-    {
-        throw std::runtime_error("Failed to create object");
-    }
-    return TRTUniquePtr<T>(obj);
 }
 
 

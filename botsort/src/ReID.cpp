@@ -4,6 +4,7 @@
 
 ReIDModel::ReIDModel(const std::string &config_path)
 {
+    std::cout << "Initializing ReID model" << std::endl;
     _load_params_from_config(config_path);
     _trt_inference_engine =
             std::make_unique<inference_backend::TensorRTInferenceEngine>(
@@ -52,19 +53,26 @@ void ReIDModel::_load_params_from_config(const std::string &config_path)
     _distance_metric =
             reid_config.Get(section_name, "distance_metric", "euclidean");
     _trt_logging_level =
-            reid_config.GetInteger(section_name, "logging_level", 0);
+            reid_config.GetInteger(section_name, "trt_log_level", 1);
 
     _model_optimization_params.batch_size =
             reid_config.GetInteger(section_name, "batch_size", 1);
     _model_optimization_params.fp16 =
-            reid_config.GetBoolean(section_name, "fp16", true);
+            reid_config.GetBoolean(section_name, "enable_FP16", true);
     _model_optimization_params.tf32 =
-            reid_config.GetBoolean(section_name, "tf32", true);
+            reid_config.GetBoolean(section_name, "enable_TF32", true);
 
     _model_optimization_params.input_layer_name =
             reid_config.Get(section_name, "input_layer_name", "");
+
+    std::cout << "Trying to get input dims" << std::endl;
     std::vector<int> input_dims =
-            reid_config.GetList<int>(section_name, "input_dims");
+            reid_config.GetList<int>(section_name, "input_layer_dimensions");
+
+    std::cout << "Read input dims" << std::endl;
+    std::cout << "Input dims: " << input_dims[0] << " " << input_dims[1] << " "
+              << input_dims[2] << " " << input_dims[3] << std::endl;
+
     _model_optimization_params.input_dims = nvinfer1::Dims4{
             input_dims[0], input_dims[1], input_dims[2], input_dims[3]};
     _model_optimization_params.swapRB =

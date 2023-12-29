@@ -70,6 +70,10 @@ bool inference_backend::TensorRTInferenceEngine::load_model(
                          .c_str());
     if (_deserialize_engine(engine_path))
     {
+        _logger->log(nvinfer1::ILogger::Severity::kINFO,
+                     std::string("Engine deserialized successfully. Allocating "
+                                 "buffers..")
+                             .c_str());
         _allocate_buffers();
         _logger->log(nvinfer1::ILogger::Severity::kINFO,
                      std::string("Engine loaded successfully").c_str());
@@ -352,7 +356,7 @@ void inference_backend::TensorRTInferenceEngine::_build_engine(
             std::shared_ptr<nvinfer1::ICudaEngine>(
                     runtime->deserializeCudaEngine(engine_plan->data(),
                                                    engine_plan->size()),
-                    TRTDestroyer());
+                    TRTDeleter());
     if (!engine)
     {
         _logger->log(nvinfer1::ILogger::Severity::kERROR,

@@ -10,8 +10,8 @@
 #include "matching.h"
 
 BoTSORT::BoTSORT(const std::string &tracker_config_path,
-                 const std::string &reid_config_path,
-                 const std::string &gmc_config_path)
+                 const std::string &gmc_config_path,
+                 const std::string &reid_config_path)
 {
     _load_params_from_config(tracker_config_path);
 

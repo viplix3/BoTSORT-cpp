@@ -529,13 +529,19 @@ inline int INIReader::ValueHandler(void *user, const char *section,
 }
 
 
-// Templated method to get a list of various types
 template<typename T>
 std::vector<T> INIReader::GetList(const std::string &section,
                                   const std::string &name) const
 {
     std::string list_str = Get(section, name, "");
     std::vector<T> list_items;
+
+    // Remove square brackets if present
+    list_str.erase(std::remove(list_str.begin(), list_str.end(), '['),
+                   list_str.end());
+    list_str.erase(std::remove(list_str.begin(), list_str.end(), ']'),
+                   list_str.end());
+
     std::stringstream ss(list_str);
     std::string item;
 
@@ -546,13 +552,17 @@ std::vector<T> INIReader::GetList(const std::string &section,
 
         // Convert the item to the specified type and add to the list
         if constexpr (std::is_same<T, std::string>::value)
+        {
             list_items.push_back(item);
+        }
         else
         {
             std::stringstream convert(item);
             T value;
             if (convert >> value)
+            {
                 list_items.push_back(value);
+            }
         }
     }
     return list_items;

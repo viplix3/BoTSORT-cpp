@@ -15,27 +15,29 @@ public:
     void log(Severity severity, const char *msg) noexcept override
     {
         // suppress messages with severity enum value greater than the reportable
-        if (severity > reportableSeverity) return;
+        if (severity > reportableSeverity)
+            return;
 
         switch (severity)
         {
             case Severity::kINTERNAL_ERROR:
-                std::cerr << "INTERNAL_ERROR: ";
+                std::cout << "INTERNAL_ERROR: ";
                 break;
             case Severity::kERROR:
-                std::cerr << "ERROR: ";
+                std::cout << "ERROR: ";
                 break;
             case Severity::kWARNING:
-                std::cerr << "WARNING: ";
+                std::cout << "WARNING: ";
                 break;
             case Severity::kINFO:
-                std::cerr << "INFO: ";
+                std::cout << "INFO: ";
                 break;
             default:
-                std::cerr << "UNKNOWN: ";
+                std::cout << "UNKNOWN: ";
                 break;
         }
-        std::cerr << msg << std::endl;
+        std::cout << msg << std::endl;
+        std::cout << std::flush;
     }
 
     Severity reportableSeverity;
