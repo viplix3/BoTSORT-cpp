@@ -72,6 +72,7 @@ struct TRTOptimizerParams
     bool int8 = false;
     bool tf32 = false;
     bool int8_calibrator = false;
+    bool swapRB = false;
 
     std::string input_layer_name;
     nvinfer1::Dims4 input_dims;

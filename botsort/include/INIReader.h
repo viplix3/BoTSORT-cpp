@@ -125,14 +125,16 @@ https://github.com/benhoyt/inih
 inline static char *rstrip(char *s)
 {
     char *p = s + strlen(s);
-    while (p > s && isspace((unsigned char) (*--p))) *p = '\0';
+    while (p > s && isspace((unsigned char) (*--p)))
+        *p = '\0';
     return s;
 }
 
 /* Return pointer to first non-whitespace char in given string. */
 inline static char *lskip(const char *s)
 {
-    while (*s && isspace((unsigned char) (*s))) s++;
+    while (*s && isspace((unsigned char) (*s)))
+        s++;
     return (char *) s;
 }
 
@@ -150,7 +152,10 @@ inline static char *find_chars_or_comment(const char *s, const char *chars)
         s++;
     }
 #else
-    while (*s && (!chars || !strchr(chars, *s))) { s++; }
+    while (*s && (!chars || !strchr(chars, *s)))
+    {
+        s++;
+    }
 #endif
     return (char *) s;
 }
@@ -185,7 +190,10 @@ inline int ini_parse_stream(ini_reader reader, void *stream,
 
 #if !INI_USE_STACK
     line = (char *) malloc(INI_MAX_LINE);
-    if (!line) { return -2; }
+    if (!line)
+    {
+        return -2;
+    }
 #endif
 
     /* Scan through stream line by line */
@@ -215,7 +223,8 @@ inline int ini_parse_stream(ini_reader reader, void *stream,
 
 #if INI_ALLOW_INLINE_COMMENTS
             end = find_chars_or_comment(start, NULL);
-            if (*end) *end = '\0';
+            if (*end)
+                *end = '\0';
             rstrip(start);
 #endif
 
@@ -252,7 +261,8 @@ inline int ini_parse_stream(ini_reader reader, void *stream,
                 value = lskip(end + 1);
 #if INI_ALLOW_INLINE_COMMENTS
                 end = find_chars_or_comment(value, NULL);
-                if (*end) *end = '\0';
+                if (*end)
+                    *end = '\0';
 #endif
                 rstrip(value);
 
@@ -269,7 +279,8 @@ inline int ini_parse_stream(ini_reader reader, void *stream,
         }
 
 #if INI_STOP_ON_FIRST_ERROR
-        if (error) break;
+        if (error)
+            break;
 #endif
     }
 
@@ -293,7 +304,8 @@ inline int ini_parse(const char *filename, ini_handler handler, void *user)
     int error;
 
     file = fopen(filename, "r");
-    if (!file) return -1;
+    if (!file)
+        return -1;
     error = ini_parse_file(file, handler, user);
     fclose(file);
     return error;
@@ -328,6 +340,23 @@ public:
     // Return the result of ini_parse(), i.e., 0 on success, line number of
     // first error on parse error, or -1 on file open error.
     int ParseError() const;
+
+    static inline std::string trim(const std::string &s)
+    {
+        auto start = s.begin();
+        while (start != s.end() && std::isspace(*start))
+        {
+            start++;
+        }
+
+        auto end = s.end();
+        do
+        {
+            end--;
+        } while (std::distance(start, end) > 0 && std::isspace(*end));
+
+        return std::string(start, end + 1);
+    }
 
     // Return the list of sections found in ini file
     const std::set<std::string> &Sections() const;
@@ -365,6 +394,11 @@ public:
     bool GetBoolean(const std::string &section, const std::string &name,
                     bool default_value) const;
 
+    template<typename T>
+    std::vector<T> GetList(const std::string &section,
+                           const std::string &name) const;
+
+
 protected:
     int _error;
     std::map<std::string, std::string> _values;
@@ -395,7 +429,10 @@ inline INIReader::INIReader(FILE *file)
     _error = ini_parse_file(file, ValueHandler, this);
 }
 
-inline int INIReader::ParseError() const { return _error; }
+inline int INIReader::ParseError() const
+{
+    return _error;
+}
 
 inline const std::set<std::string> &INIReader::Sections() const
 {
@@ -484,10 +521,41 @@ inline int INIReader::ValueHandler(void *user, const char *section,
 {
     INIReader *reader = (INIReader *) user;
     std::string key = MakeKey(section, name);
-    if (reader->_values[key].size() > 0) reader->_values[key] += "\n";
+    if (reader->_values[key].size() > 0)
+        reader->_values[key] += "\n";
     reader->_values[key] += value;
     reader->_sections.insert(section);
     return 1;
+}
+
+
+// Templated method to get a list of various types
+template<typename T>
+std::vector<T> INIReader::GetList(const std::string &section,
+                                  const std::string &name) const
+{
+    std::string list_str = Get(section, name, "");
+    std::vector<T> list_items;
+    std::stringstream ss(list_str);
+    std::string item;
+
+    while (std::getline(ss, item, ','))
+    {
+        // Trim spaces from the item
+        item = trim(item);
+
+        // Convert the item to the specified type and add to the list
+        if constexpr (std::is_same<T, std::string>::value)
+            list_items.push_back(item);
+        else
+        {
+            std::stringstream convert(item);
+            T value;
+            if (convert >> value)
+                list_items.push_back(value);
+        }
+    }
+    return list_items;
 }
 
 #endif// __INIREADER__
