@@ -1,0 +1,4 @@
+libopencv-dev
+cmake
+libeigen3-dev
+libboost-all-dev
