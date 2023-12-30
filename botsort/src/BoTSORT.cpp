@@ -88,19 +88,13 @@ BoTSORT::track(const std::vector<Detection> &detections, const cv::Mat &frame)
                             embedding);
                 }
                 else
-                {
                     tracklet = std::make_shared<Track>(
                             tlwh, detection.confidence, detection.class_id);
-                }
 
                 if (detection.confidence >= _track_high_thresh)
-                {
                     detections_high_conf.push_back(tracklet);
-                }
                 else
-                {
                     detections_low_conf.push_back(tracklet);
-                }
             }
         }
     }
