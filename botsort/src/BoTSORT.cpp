@@ -398,8 +398,7 @@ FeatureVector BoTSORT::_extract_features(const cv::Mat &frame,
                                          const cv::Rect_<float> &bbox_tlwh)
 {
     cv::Mat patch = frame(bbox_tlwh);
-    cv::Mat patch_resized;
-    return _reid_model->extract_features(patch_resized);
+    return _reid_model->extract_features(patch);
 }
 
 

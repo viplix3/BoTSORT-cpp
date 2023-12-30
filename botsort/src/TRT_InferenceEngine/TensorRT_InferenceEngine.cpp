@@ -435,8 +435,8 @@ inference_backend::TensorRTInferenceEngine::forward(const cv::Mat &input_image)
     ModelPredictions predictions;
     for (size_t i = 0; i < _output_idx.size(); ++i)
     {
-        std::vector<float> output(_output_dims[i].d[0] * _output_dims[i].d[1] *
-                                  _output_dims[i].d[2] * _output_dims[i].d[3]);
+        // TODO: Calculate output size using all dims
+        std::vector<float> output(_output_dims[i].d[0] * _output_dims[i].d[1]);
         cudaMemcpyAsync(output.data(), _buffers[_output_idx[i]],
                         output.size() * sizeof(float), cudaMemcpyDeviceToHost);
         predictions.emplace_back(output);

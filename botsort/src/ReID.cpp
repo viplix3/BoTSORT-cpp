@@ -36,6 +36,9 @@ FeatureVector ReIDModel::extract_features(cv::Mat &image_patch)
 
 void ReIDModel::pre_process(cv::Mat &image)
 {
+    cv::resize(image, image, _input_size);
+    if (_model_optimization_params.swapRB)
+        cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
 }
 
 
@@ -68,6 +71,7 @@ void ReIDModel::_load_params_from_config(const std::string &config_path)
     std::cout << "Trying to get input dims" << std::endl;
     std::vector<int> input_dims =
             reid_config.GetList<int>(section_name, "input_layer_dimensions");
+    _input_size = cv::Size(input_dims[3], input_dims[2]);
 
     std::cout << "Read input dims" << std::endl;
     std::cout << "Input dims: " << input_dims[0] << " " << input_dims[1] << " "
