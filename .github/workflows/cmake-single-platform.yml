@@ -17,47 +17,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-
-    - name: Cache opencv dependencies
-      id: cache-opencv
-      uses: actions/cache@v3
-      with:
-        path: |
-          /usr/local/lib/libopencv*
-          /usr/include/opencv4
-        key: ${{ runner.os }}-opencv-${{ hashFiles('**/CMakeLists.txt') }}
-
-    - name: Cache eigen dependencies
-      id: cache-eigen
-      uses: actions/cache@v3
-      with:
-        path: /usr/include/eigen3
-        key: ${{ runner.os }}-eigen-${{ hashFiles('**/CMakeLists.txt') }}
-
-    - name: Cache Boost dependencies
-      id: cache-boost
-      uses: actions/cache@v3
-      with:
-        path: /usr/include/boost
-        key: ${{ runner.os }}-boost-${{ hashFiles('**/CMakeLists.txt') }}
-
-    - name: Cache CMake build
-      id: cache-cmake
-      uses: actions/cache@v3
-      with:
-        path: ${{github.workspace}}/build
-        key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}
-
     - name: Pre-configure tzdata
       run: |
         export DEBIAN_FRONTEND=noninteractive
@@ -71,6 +30,17 @@ jobs:
       if: steps.cache-opencv.outputs.cache-hit != 'true' || steps.cache-eigen.outputs.cache-hit != 'true'
       run: |
         apt-get install -y --no-install-recommends libopencv-dev cmake libeigen3-dev libboost-all-dev
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
