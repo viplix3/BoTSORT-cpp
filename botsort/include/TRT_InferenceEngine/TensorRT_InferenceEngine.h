@@ -122,6 +122,8 @@ private:
     // Const methods
     std::string get_engine_path(const std::string &onnx_model_path) const;
     bool file_exists(const std::string &name) const;
+    size_t get_size_by_dims(const nvinfer1::Dims &dims,
+                            int element_size = 1) const;
 
 
     // Non-const methods

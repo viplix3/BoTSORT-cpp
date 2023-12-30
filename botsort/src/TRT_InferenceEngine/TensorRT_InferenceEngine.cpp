@@ -132,6 +132,16 @@ bool inference_backend::TensorRTInferenceEngine::file_exists(
 }
 
 
+size_t inference_backend::TensorRTInferenceEngine::get_size_by_dims(
+        const nvinfer1::Dims &dims, int element_size) const
+{
+    size_t size = 1;
+    for (size_t i = 0; i < dims.nbDims; ++i)
+        size *= (dims.d[i] ? dims.d[i] : 1);
+    return size * element_size;
+}
+
+
 void inference_backend::TensorRTInferenceEngine::_allocate_buffers()
 {
     for (void *&buffer: _buffers)
@@ -164,9 +174,8 @@ void inference_backend::TensorRTInferenceEngine::_allocate_buffers()
         nvinfer1::DataType dtype = _engine->getTensorDataType(name);
 #endif
 
-        size_t total_size = std::accumulate(dims.d, dims.d + dims.nbDims, 1,
-                                            std::multiplies<size_t>());
-        cudaMalloc(&_buffers[i], total_size * sizeof(float));
+        size_t total_size = get_size_by_dims(dims, sizeof(float));
+        cudaMalloc(&_buffers[i], total_size);
 
 #if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5
         if (_engine->getBindingName(i) == _optimization_params.input_layer_name)
@@ -419,14 +428,12 @@ inference_backend::TensorRTInferenceEngine::forward(const cv::Mat &input_image)
                            cv::Scalar(), false, false, CV_32F);
 
     // Ensure image blob size matches input layer size
-    assert(image_blob.total() ==
-           std::accumulate(_input_dims[0].d,
-                           _input_dims[0].d + _input_dims[0].nbDims, 1,
-                           std::multiplies<size_t>()));
+    assert(image_blob.total() == get_size_by_dims(_input_dims[0]));
 
     // Copy image blob to CUDA input buffer
     cudaMemcpyAsync(_buffers[_input_idx], image_blob.ptr<float>(),
-                    image_blob.total() * sizeof(float), cudaMemcpyHostToDevice);
+                    get_size_by_dims(_input_dims[0], sizeof(float)),
+                    cudaMemcpyHostToDevice);
 
     // Run inference
     _context->enqueueV2(_buffers.data(), _cuda_stream, nullptr);
@@ -436,7 +443,7 @@ inference_backend::TensorRTInferenceEngine::forward(const cv::Mat &input_image)
     for (size_t i = 0; i < _output_idx.size(); ++i)
     {
         // TODO: Calculate output size using all dims
-        std::vector<float> output(_output_dims[i].d[0] * _output_dims[i].d[1]);
+        std::vector<float> output(get_size_by_dims(_output_dims[i]));
         cudaMemcpyAsync(output.data(), _buffers[_output_idx[i]],
                         output.size() * sizeof(float), cudaMemcpyDeviceToHost);
         predictions.emplace_back(output);
