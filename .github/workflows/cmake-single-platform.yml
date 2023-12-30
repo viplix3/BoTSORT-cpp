@@ -1,4 +1,4 @@
-name: CMake on a single platform
+name: Build
 
 on:
   push:
@@ -26,10 +26,19 @@ jobs:
         apt-get install -y tzdata
         dpkg-reconfigure --frontend noninteractive tzdata
 
+    - name: Cache apt dependencies
+      uses: actions/cache@v3
+      with:
+        path: /var/cache/apt/archives
+        key: ${{ runner.os }}-apt-${{ hashFiles('apt_dependencies.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-
+
     - name: Install dependencies
       if: steps.cache-opencv.outputs.cache-hit != 'true' || steps.cache-eigen.outputs.cache-hit != 'true'
       run: |
-        apt-get install -y --no-install-recommends libopencv-dev cmake libeigen3-dev libboost-all-dev
+        apt-get update
+        xargs -a apt_dependencies.txt apt-get install -y --no-install-recommends
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
@@ -41,6 +50,14 @@ jobs:
         key: ${{ runner.os }}-buildx-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-buildx-
+
+    - name: Build with Docker Buildx
+      run: |
+        docker buildx build --push \
+        --cache-from=type=local,src=/tmp/.buildx-cache \
+        --cache-to=type=local,dest=/tmp/.buildx-cache \
+        --file Dockerfile \
+        --tag my-image:latest .
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
