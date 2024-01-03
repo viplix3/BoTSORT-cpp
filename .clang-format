@@ -8,33 +8,34 @@ AlignOperands: true
 AllowAllArgumentsOnNextLine: false
 AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: Always
+AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: All
-AllowShortIfStatementsOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
 AllowShortLambdasOnASingleLine: All
-AllowShortLoopsOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: Yes
 BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterCaseLabel: false
-  AfterClass: false
-  AfterControlStatement: Never
-  AfterEnum: false
-  AfterFunction: false
-  AfterNamespace: false
-  AfterUnion: false
-  BeforeCatch: false
-  BeforeElse: false
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: true
+  BeforeElse: true
   IndentBraces: false
-  SplitEmptyFunction: false
+  SplitEmptyFunction: true
   SplitEmptyRecord: true
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
-ColumnLimit: 0
+ColumnLimit: 80
 CompactNamespaces: false
 ContinuationIndentWidth: 8
 IndentCaseLabels: true
@@ -65,3 +66,27 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 TabWidth: 4
 UseTab: Never
+IncludeBlocks: Regroup
+IncludeCategories:
+  # C System libs
+  - Regex: "<(stdio).h>"
+    Priority: 1
+  # C++ System libs
+  - Regex: '<([A-Za-z0-9\/-_])+>'
+    Priority: 2
+    # Third-party C libs
+  - Regex: '<([A-Za-z0-9\Q/-_\E])+.h>'
+    Priority: 5
+    SortPriority: 3
+    # Third-party C++ libs
+  - Regex: '<([A-Za-z0-9\Q/-_\E])+.hpp>'
+    Priority: 6
+    SortPriority: 4
+    # Pkg's C libs
+  - Regex: '.*\.h"'
+    Priority: 7
+    SortPriority: 7
+    # Pkg's C++ libs
+  - Regex: '.*\.hpp"'
+    Priority: 8
+    SortPriority: 8

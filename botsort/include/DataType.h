@@ -1,17 +1,17 @@
 #pragma once
 
 #include <cstdint>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 #include <optional>
 #include <utility>
 #include <vector>
 
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
 #include <opencv2/core.hpp>
 
 
 constexpr uint8_t DET_ELEMENTS = 4;
-constexpr uint8_t FEATURE_DIM = 128;
+constexpr uint32_t FEATURE_DIM = 512;
 constexpr uint8_t KALMAN_STATE_SPACE_DIM = 8;
 constexpr uint8_t KALMAN_MEASUREMENT_SPACE_DIM = 4;
 
@@ -27,7 +27,8 @@ using DetVec = Eigen::Matrix<float, 1, DET_ELEMENTS>;
  * int class_id: Class ID of the detection
  * float confidence: Confidence score of the detection
  */
-struct Detection {
+struct Detection
+{
     cv::Rect_<float> bbox_tlwh;
     int class_id;
     float confidence;
@@ -53,7 +54,8 @@ using KFStateSpaceVec = Eigen::Matrix<float, 1, KALMAN_STATE_SPACE_DIM>;
 /**
  * @brief Kalman Filter state space matrix with KALMAN_STATE_SPACE_DIM rows and columns.
  */
-using KFStateSpaceMatrix = Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM>;
+using KFStateSpaceMatrix =
+        Eigen::Matrix<float, KALMAN_STATE_SPACE_DIM, KALMAN_STATE_SPACE_DIM>;
 /**
  * @brief Kalman Filter state space data containing a mean vector and a covariance matrix.
  */
@@ -66,7 +68,8 @@ using KFMeasSpaceVec = Eigen::Matrix<float, 1, KALMAN_MEASUREMENT_SPACE_DIM>;
 /**
  * @brief Kalman Filter measurement space matrix with KALMAN_MEASUREMENT_SPACE_DIM rows and columns.
  */
-using KFMeasSpaceMatrix = Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM, KALMAN_MEASUREMENT_SPACE_DIM>;
+using KFMeasSpaceMatrix = Eigen::Matrix<float, KALMAN_MEASUREMENT_SPACE_DIM,
+                                        KALMAN_MEASUREMENT_SPACE_DIM>;
 /**
  * @brief Kalman Filter measurement space data containing a mean vector and a covariance matrix.
  */
@@ -100,8 +103,9 @@ using CostMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 /**
  * @brief Association data containing matched and unmatched tracks and detections.
  */
-struct AssociationData {
-    std::vector<MatchData> matches;          ///< Matched track and detection pairs.
+struct AssociationData
+{
+    std::vector<MatchData> matches;///< Matched track and detection pairs.
     std::vector<int> unmatched_track_indices;///< Unmatched track indices.
     std::vector<int> unmatched_det_indices;  ///< Unmatched detection indices
 };

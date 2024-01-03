@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
 
 # Set project name
 project(botsort_tracker_example VERSION 0.1.0 LANGUAGES CXX)

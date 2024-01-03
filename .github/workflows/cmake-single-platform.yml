@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  build-and-run:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -14,52 +14,40 @@ jobs:
       image: nvcr.io/nvidia/tensorrt:23.09-py3
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      - name: Pre-configure tzdata
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          export TZ=America/Los_Angeles
+          ln -fs /usr/share/zoneinfo/$TZ /etc/localtime
+          apt-get update
+          apt-get install -y tzdata
+          dpkg-reconfigure --frontend noninteractive tzdata
 
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
+      - name: Cache apt dependencies
+        uses: actions/cache@v3
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('apt_dependencies.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
 
-    - name: Cache opencv dependencies
-      id: cache-opencv
-      uses: actions/cache@v3
-      with:
-        path: |
-          /usr/local/lib/libopencv*
-          /usr/include/opencv4
-        key: ${{ runner.os }}-opencv-${{ hashFiles('**/CMakeLists.txt') }}
+      - name: Install dependencies
+        if: steps.cache-opencv.outputs.cache-hit != 'true' || steps.cache-eigen.outputs.cache-hit != 'true'
+        run: |
+          apt-get update
+          xargs -a apt_dependencies.txt apt-get install -y --no-install-recommends
 
-    - name: Cache eigen dependencies
-      id: cache-eigen
-      uses: actions/cache@v3
-      with:
-        path: /usr/include/eigen3
-        key: ${{ runner.os }}-eigen-${{ hashFiles('**/CMakeLists.txt') }}
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-    - name: Pre-configure tzdata
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        export TZ=America/Los_Angeles
-        ln -fs /usr/share/zoneinfo/$TZ /etc/localtime
-        apt-get update
-        apt-get install -y tzdata
-        dpkg-reconfigure --frontend noninteractive tzdata
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
 
-    - name: Install dependencies
-      if: steps.cache-opencv.outputs.cache-hit != 'true' || steps.cache-eigen.outputs.cache-hit != 'true'
-      run: |
-        apt-get install -y --no-install-recommends libopencv-dev cmake libeigen3-dev
-
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
+      # - name: Run the code
+      #   run: |
+      #       cd ${{github.workspace}}/build
+      #       chmod +x ./bin/botsort_tracking_example
+      #       ./bin/botsort_tracking_example ../config/tracker.ini ../config/gmc.ini ../config/reid.ini ../assets/osnet_x0_25_market1501.onnx ../examples/data/MOT20-01.mp4 ../examples/data/det/det.txt ../outputs

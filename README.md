@@ -16,7 +16,9 @@ This implementation has been tested **on NVIDIA Jetson NX and it achieves real-t
 
 - [x] Implement BoT-SORT tracker
 - [x] Load parameters from config file
-- [ ] Implement Re-ID model for BoT-SORT tracker using TensorRT [WIP](https://github.com/viplix3/BoTSORT-cpp/tree/reid-model)
+- [x] Implement Re-ID model for BoT-SORT tracker using TensorRT
+- [ ] Re-ID performance analysis
+- [ ] Re-ID model quantization
 
 ## Preview of Results
 
@@ -49,7 +51,7 @@ These results demonstrate the BoT-SORT tracker, implemented in this repository, 
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    make
+    make -j$(nproc)
     ```
 
 ## Usage
@@ -61,7 +63,7 @@ To test the example code, run the following command:
 
 ```bash
 cd <project-root-dir>/build
-./bin/botsort_tracking_example ../config ../examples/data/MOT20-01.mp4 ../examples/data/det/det.txt ../output/
+./bin/botsort_tracking_example ../config/tracker.ini ../config/gmc.ini ../config/reid.ini ../assets/osnet_x0_25_market1501.onnx ../examples/data/MOT20-01.mp4 ../examples/data/det/det.txt ../output/
 ```
 
 ## Performance Analysis

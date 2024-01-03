@@ -1,21 +1,24 @@
 #pragma once
 
-#include "DataType.h"
-
 #include <map>
 #include <numeric>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/videostab/global_motion.hpp>
 #include <string>
 
+// .clang-format off
+#include "DataType.h"
+// .clang-format on
+
 #include <opencv2/core/eigen.hpp>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/videostab.hpp>
+#include <opencv2/videostab/global_motion.hpp>
 
 
-enum GMC_Method {
+enum GMC_Method
+{
     ORB = 0,
     ECC,
     SparseOptFlow,
@@ -24,13 +27,27 @@ enum GMC_Method {
 };
 
 
-class GMC_Algorithm {
+class GMC_Algorithm
+{
 public:
     virtual ~GMC_Algorithm() = default;
-    virtual HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) = 0;
+    virtual HomographyMatrix
+    apply(const cv::Mat &frame_raw,
+          const std::vector<Detection> &detections) = 0;
 };
 
-class ORB_GMC : public GMC_Algorithm {
+class ORB_GMC : public GMC_Algorithm
+{
+public:
+    explicit ORB_GMC(const std::string &config_path);
+    HomographyMatrix apply(const cv::Mat &frame_raw,
+                           const std::vector<Detection> &detections) override;
+
+
+private:
+    void _load_params_from_config(const std::string &config_path);
+
+
 private:
     std::string _algo_name = "orb";
     float _downscale;
@@ -44,17 +61,21 @@ private:
     cv::Mat _prev_descriptors;
     float _inlier_ratio, _ransac_conf;
     int _ransac_max_iters;
+};
+
+
+class ECC_GMC : public GMC_Algorithm
+{
+public:
+    explicit ECC_GMC(const std::string &config_path);
+    HomographyMatrix apply(const cv::Mat &frame_raw,
+                           const std::vector<Detection> &detections) override;
 
 
 private:
     void _load_params_from_config(const std::string &config_dir);
 
-public:
-    explicit ORB_GMC(const std::string &config_dir);
-    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
-};
 
-class ECC_GMC : public GMC_Algorithm {
 private:
     std::string _algo_name = "ecc";
     float _downscale;
@@ -64,17 +85,21 @@ private:
     cv::Mat _prev_frame;
     cv::Size _gaussian_blur_kernel_size = cv::Size(3, 3);
     cv::TermCriteria _termination_criteria;
+};
+
+
+class SparseOptFlow_GMC : public GMC_Algorithm
+{
+public:
+    explicit SparseOptFlow_GMC(const std::string &config_path);
+    HomographyMatrix apply(const cv::Mat &frame_raw,
+                           const std::vector<Detection> &detections) override;
 
 
 private:
     void _load_params_from_config(const std::string &config_dir);
 
-public:
-    explicit ECC_GMC(const std::string &config_dir);
-    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
-};
 
-class SparseOptFlow_GMC : public GMC_Algorithm {
 private:
     std::string _algo_name = "sparseOptFlow";
     float _downscale;
@@ -88,31 +113,39 @@ private:
     double _qualityLevel, _k, _minDistance;
     bool _useHarrisDetector;
     float _inlier_ratio, _ransac_conf;
+};
+
+
+class OptFlowModified_GMC : public GMC_Algorithm
+{
+public:
+    explicit OptFlowModified_GMC(const std::string &config_path);
+    HomographyMatrix apply(const cv::Mat &frame_raw,
+                           const std::vector<Detection> &detections) override;
 
 
 private:
     void _load_params_from_config(const std::string &config_dir);
 
-public:
-    explicit SparseOptFlow_GMC(const std::string &config_dir);
-    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
-};
 
-class OptFlowModified_GMC : public GMC_Algorithm {
 private:
     std::string _algo_name = "OptFlowModified";
     float _downscale;
+};
+
+
+class OpenCV_VideoStab_GMC : public GMC_Algorithm
+{
+public:
+    explicit OpenCV_VideoStab_GMC(const std::string &config_path);
+    HomographyMatrix apply(const cv::Mat &frame_raw,
+                           const std::vector<Detection> &detections) override;
 
 
 private:
     void _load_params_from_config(const std::string &config_dir);
 
-public:
-    explicit OptFlowModified_GMC(const std::string &config_dir);
-    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
-};
 
-class OpenCV_VideoStab_GMC : public GMC_Algorithm {
 private:
     std::string _algo_name = "OpenCV_VideoStab";
     float _downscale;
@@ -123,26 +156,13 @@ private:
     cv::Mat _prev_homography;
 
     cv::Ptr<cv::videostab::MotionEstimatorRansacL2> _motion_estimator;
-    cv::Ptr<cv::videostab::KeypointBasedMotionEstimator> _keypoint_motion_estimator;
-
-
-private:
-    void _load_params_from_config(const std::string &config_dir);
-
-public:
-    explicit OpenCV_VideoStab_GMC(const std::string &config_dir);
-    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections) override;
+    cv::Ptr<cv::videostab::KeypointBasedMotionEstimator>
+            _keypoint_motion_estimator;
 };
 
 
-class GlobalMotionCompensation {
-public:
-    static std::map<std::string, GMC_Method> GMC_method_map;
-
-private:
-    std::unique_ptr<GMC_Algorithm> _gmc_algorithm;
-
-
+class GlobalMotionCompensation
+{
 public:
     /**
      * @brief Construct a new Global Motion Compensation object
@@ -150,7 +170,8 @@ public:
      * @param method GMC_Method enum member for GMC algorithm to use
      * @param config_dir Directory containing config files for GMC algorithm
      */
-    explicit GlobalMotionCompensation(GMC_Method method, const std::string &config_dir);
+    explicit GlobalMotionCompensation(GMC_Method method,
+                                      const std::string &config_path);
     ~GlobalMotionCompensation() = default;
 
     /**
@@ -160,5 +181,14 @@ public:
      * @param detections Detections in the frame
      * @return HomographyMatrix Predicted homography matrix
      */
-    HomographyMatrix apply(const cv::Mat &frame_raw, const std::vector<Detection> &detections);
+    HomographyMatrix apply(const cv::Mat &frame_raw,
+                           const std::vector<Detection> &detections);
+
+
+public:
+    static std::map<std::string, GMC_Method> GMC_method_map;
+
+
+private:
+    std::unique_ptr<GMC_Algorithm> _gmc_algorithm;
 };

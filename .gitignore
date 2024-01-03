@@ -1044,5 +1044,6 @@ dkms.conf
 *.dis
 
 # Output files
-output/*
+outputs/*
 .idea/*
+*.engine

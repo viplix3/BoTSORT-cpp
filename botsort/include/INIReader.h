@@ -24,8 +24,8 @@ extern "C" {
 #include <stdio.h>
 
 /* Typedef for prototype of handler function. */
-typedef int (*ini_handler)(void *user, const char *section,
-                           const char *name, const char *value);
+typedef int (*ini_handler)(void *user, const char *section, const char *name,
+                           const char *value);
 
 /* Typedef for prototype of fgets-style reader function. */
 typedef char *(*ini_reader)(char *str, int num, void *stream);
@@ -109,8 +109,9 @@ https://github.com/benhoyt/inih
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <ctype.h>
 #include <stdio.h>
+
+#include <ctype.h>
 #include <string.h>
 
 #if !INI_USE_STACK
@@ -121,7 +122,8 @@ https://github.com/benhoyt/inih
 #define MAX_NAME 50
 
 /* Strip whitespace chars off end of given string, in place. Return s. */
-inline static char *rstrip(char *s) {
+inline static char *rstrip(char *s)
+{
     char *p = s + strlen(s);
     while (p > s && isspace((unsigned char) (*--p)))
         *p = '\0';
@@ -129,7 +131,8 @@ inline static char *rstrip(char *s) {
 }
 
 /* Return pointer to first non-whitespace char in given string. */
-inline static char *lskip(const char *s) {
+inline static char *lskip(const char *s)
+{
     while (*s && isspace((unsigned char) (*s)))
         s++;
     return (char *) s;
@@ -138,16 +141,19 @@ inline static char *lskip(const char *s) {
 /* Return pointer to first char (of chars) or inline comment in given string,
    or pointer to null at end of string if neither found. Inline comment must
    be prefixed by a whitespace character to register as a comment. */
-inline static char *find_chars_or_comment(const char *s, const char *chars) {
+inline static char *find_chars_or_comment(const char *s, const char *chars)
+{
 #if INI_ALLOW_INLINE_COMMENTS
     int was_space = 0;
     while (*s && (!chars || !strchr(chars, *s)) &&
-           !(was_space && strchr(INI_INLINE_COMMENT_PREFIXES, *s))) {
+           !(was_space && strchr(INI_INLINE_COMMENT_PREFIXES, *s)))
+    {
         was_space = isspace((unsigned char) (*s));
         s++;
     }
 #else
-    while (*s && (!chars || !strchr(chars, *s))) {
+    while (*s && (!chars || !strchr(chars, *s)))
+    {
         s++;
     }
 #endif
@@ -155,15 +161,17 @@ inline static char *find_chars_or_comment(const char *s, const char *chars) {
 }
 
 /* Version of strncpy that ensures dest (size bytes) is null-terminated. */
-inline static char *strncpy0(char *dest, const char *src, size_t size) {
+inline static char *strncpy0(char *dest, const char *src, size_t size)
+{
     strncpy(dest, src, size);
     dest[size - 1] = '\0';
     return dest;
 }
 
 /* See documentation in header file. */
-inline int ini_parse_stream(ini_reader reader, void *stream, ini_handler handler,
-                            void *user) {
+inline int ini_parse_stream(ini_reader reader, void *stream,
+                            ini_handler handler, void *user)
+{
     /* Uses a fair bit of stack (use heap instead if you need to) */
 #if INI_USE_STACK
     char line[INI_MAX_LINE];
@@ -182,31 +190,36 @@ inline int ini_parse_stream(ini_reader reader, void *stream, ini_handler handler
 
 #if !INI_USE_STACK
     line = (char *) malloc(INI_MAX_LINE);
-    if (!line) {
+    if (!line)
+    {
         return -2;
     }
 #endif
 
     /* Scan through stream line by line */
-    while (reader(line, INI_MAX_LINE, stream) != NULL) {
+    while (reader(line, INI_MAX_LINE, stream) != NULL)
+    {
         lineno++;
 
         start = line;
 #if INI_ALLOW_BOM
         if (lineno == 1 && (unsigned char) start[0] == 0xEF &&
             (unsigned char) start[1] == 0xBB &&
-            (unsigned char) start[2] == 0xBF) {
+            (unsigned char) start[2] == 0xBF)
+        {
             start += 3;
         }
 #endif
         start = lskip(rstrip(start));
 
-        if (*start == ';' || *start == '#') {
+        if (*start == ';' || *start == '#')
+        {
             /* Per Python configparser, allow both ; and # comments at the
                start of a line */
         }
 #if INI_ALLOW_MULTILINE
-        else if (*prev_name && *start && start > line) {
+        else if (*prev_name && *start && start > line)
+        {
 
 #if INI_ALLOW_INLINE_COMMENTS
             end = find_chars_or_comment(start, NULL);
@@ -221,21 +234,28 @@ inline int ini_parse_stream(ini_reader reader, void *stream, ini_handler handler
                 error = lineno;
         }
 #endif
-        else if (*start == '[') {
+        else if (*start == '[')
+        {
             /* A "[section]" line */
             end = find_chars_or_comment(start + 1, "]");
-            if (*end == ']') {
+            if (*end == ']')
+            {
                 *end = '\0';
                 strncpy0(section, start + 1, sizeof(section));
                 *prev_name = '\0';
-            } else if (!error) {
+            }
+            else if (!error)
+            {
                 /* No ']' found on section line */
                 error = lineno;
             }
-        } else if (*start) {
+        }
+        else if (*start)
+        {
             /* Not a comment, must be a name[=:]value pair */
             end = find_chars_or_comment(start, "=:");
-            if (*end == '=' || *end == ':') {
+            if (*end == '=' || *end == ':')
+            {
                 *end = '\0';
                 name = rstrip(start);
                 value = lskip(end + 1);
@@ -250,7 +270,9 @@ inline int ini_parse_stream(ini_reader reader, void *stream, ini_handler handler
                 strncpy0(prev_name, name, sizeof(prev_name));
                 if (!handler(user, section, name, value) && !error)
                     error = lineno;
-            } else if (!error) {
+            }
+            else if (!error)
+            {
                 /* No '=' or ':' found on name[=:]value line */
                 error = lineno;
             }
@@ -270,12 +292,14 @@ inline int ini_parse_stream(ini_reader reader, void *stream, ini_handler handler
 }
 
 /* See documentation in header file. */
-inline int ini_parse_file(FILE *file, ini_handler handler, void *user) {
+inline int ini_parse_file(FILE *file, ini_handler handler, void *user)
+{
     return ini_parse_stream((ini_reader) fgets, file, handler, user);
 }
 
 /* See documentation in header file. */
-inline int ini_parse(const char *filename, ini_handler handler, void *user) {
+inline int ini_parse(const char *filename, ini_handler handler, void *user)
+{
     FILE *file;
     int error;
 
@@ -299,7 +323,8 @@ inline int ini_parse(const char *filename, ini_handler handler, void *user) {
 
 // Read an INI file into easy-to-access name/value pairs. (Note that I've gone
 // for simplicity here rather than speed, but it should be pretty decent.)
-class INIReader {
+class INIReader
+{
 public:
     // Empty Constructor
     INIReader(){};
@@ -316,6 +341,23 @@ public:
     // first error on parse error, or -1 on file open error.
     int ParseError() const;
 
+    static inline std::string trim(const std::string &s)
+    {
+        auto start = s.begin();
+        while (start != s.end() && std::isspace(*start))
+        {
+            start++;
+        }
+
+        auto end = s.end();
+        do
+        {
+            end--;
+        } while (std::distance(start, end) > 0 && std::isspace(*end));
+
+        return std::string(start, end + 1);
+    }
+
     // Return the list of sections found in ini file
     const std::set<std::string> &Sections() const;
 
@@ -325,33 +367,44 @@ public:
 
 
     // Get a string value from INI file, return nullopt if not found.
-    std::optional<std::string> Get(const std::string &section, const std::string &name) const;
+    std::optional<std::string> Get(const std::string &section,
+                                   const std::string &name) const;
 
 
     // Get an integer (long) value from INI file, returning default_value if
     // not found or not a valid integer (decimal "1234", "-1234", or hex "0x4d2").
-    long GetInteger(const std::string &section, const std::string &name, long default_value) const;
+    long GetInteger(const std::string &section, const std::string &name,
+                    long default_value) const;
 
     // Get a real (floating point double) value from INI file, returning
     // default_value if not found or not a valid floating point value
     // according to strtod().
-    double GetReal(const std::string &section, const std::string &name, double default_value) const;
+    double GetReal(const std::string &section, const std::string &name,
+                   double default_value) const;
 
     // Get a single precision floating point number value from INI file, returning
     // default_value if not found or not a valid floating point value
     // according to strtof().
-    float GetFloat(const std::string &section, const std::string &name, float default_value) const;
+    float GetFloat(const std::string &section, const std::string &name,
+                   float default_value) const;
 
     // Get a boolean value from INI file, returning default_value if not found or if
     // not a valid true/false value. Valid true values are "true", "yes", "on", "1",
     // and valid false values are "false", "no", "off", "0" (not case sensitive).
-    bool GetBoolean(const std::string &section, const std::string &name, bool default_value) const;
+    bool GetBoolean(const std::string &section, const std::string &name,
+                    bool default_value) const;
+
+    template<typename T>
+    std::vector<T> GetList(const std::string &section,
+                           const std::string &name) const;
+
 
 protected:
     int _error;
     std::map<std::string, std::string> _values;
     std::set<std::string> _sections;
-    static std::string MakeKey(const std::string &section, const std::string &name);
+    static std::string MakeKey(const std::string &section,
+                               const std::string &name);
     static int ValueHandler(void *user, const char *section, const char *name,
                             const char *value);
 };
@@ -366,35 +419,48 @@ protected:
 #include <cctype>
 #include <cstdlib>
 
-inline INIReader::INIReader(const std::string &filename) {
+inline INIReader::INIReader(const std::string &filename)
+{
     _error = ini_parse(filename.c_str(), ValueHandler, this);
 }
 
-inline INIReader::INIReader(FILE *file) {
+inline INIReader::INIReader(FILE *file)
+{
     _error = ini_parse_file(file, ValueHandler, this);
 }
 
-inline int INIReader::ParseError() const {
+inline int INIReader::ParseError() const
+{
     return _error;
 }
 
-inline const std::set<std::string> &INIReader::Sections() const {
+inline const std::set<std::string> &INIReader::Sections() const
+{
     return _sections;
 }
 
 
-inline std::string INIReader::Get(const std::string &section, const std::string &name, const std::string &default_value) const {
+inline std::string INIReader::Get(const std::string &section,
+                                  const std::string &name,
+                                  const std::string &default_value) const
+{
     std::string key = MakeKey(section, name);
     return _values.count(key) ? _values.at(key) : default_value;
 }
 
-inline std::optional<std::string> INIReader::Get(const std::string &section, const std::string &name) const {
+inline std::optional<std::string> INIReader::Get(const std::string &section,
+                                                 const std::string &name) const
+{
     std::string key = MakeKey(section, name);
-    return _values.count(key) ? std::optional<std::string>(_values.at(key)) : std::nullopt;
+    return _values.count(key) ? std::optional<std::string>(_values.at(key))
+                              : std::nullopt;
 }
 
 
-inline long INIReader::GetInteger(const std::string &section, const std::string &name, long default_value) const {
+inline long INIReader::GetInteger(const std::string &section,
+                                  const std::string &name,
+                                  long default_value) const
+{
     std::string valstr = Get(section, name, "");
     const char *value = valstr.c_str();
     char *end;
@@ -403,7 +469,10 @@ inline long INIReader::GetInteger(const std::string &section, const std::string 
     return end > value ? n : default_value;
 }
 
-inline double INIReader::GetReal(const std::string &section, const std::string &name, double default_value) const {
+inline double INIReader::GetReal(const std::string &section,
+                                 const std::string &name,
+                                 double default_value) const
+{
     std::string valstr = Get(section, name, "");
     const char *value = valstr.c_str();
     char *end;
@@ -411,7 +480,10 @@ inline double INIReader::GetReal(const std::string &section, const std::string &
     return end > value ? n : default_value;
 }
 
-inline float INIReader::GetFloat(const std::string &section, const std::string &name, float default_value) const {
+inline float INIReader::GetFloat(const std::string &section,
+                                 const std::string &name,
+                                 float default_value) const
+{
     std::string valstr = Get(section, name, "");
     const char *value = valstr.c_str();
     char *end;
@@ -419,27 +491,34 @@ inline float INIReader::GetFloat(const std::string &section, const std::string &
     return end > value ? n : default_value;
 }
 
-inline bool INIReader::GetBoolean(const std::string &section, const std::string &name, bool default_value) const {
+inline bool INIReader::GetBoolean(const std::string &section,
+                                  const std::string &name,
+                                  bool default_value) const
+{
     std::string valstr = Get(section, name, "");
     // Convert to lower case to make string comparisons case-insensitive
     std::transform(valstr.begin(), valstr.end(), valstr.begin(), ::tolower);
     if (valstr == "true" || valstr == "yes" || valstr == "on" || valstr == "1")
         return true;
-    else if (valstr == "false" || valstr == "no" || valstr == "off" || valstr == "0")
+    else if (valstr == "false" || valstr == "no" || valstr == "off" ||
+             valstr == "0")
         return false;
     else
         return default_value;
 }
 
-inline std::string INIReader::MakeKey(const std::string &section, const std::string &name) {
+inline std::string INIReader::MakeKey(const std::string &section,
+                                      const std::string &name)
+{
     std::string key = section + "=" + name;
     // Convert to lower case to make section/name lookups case-insensitive
     std::transform(key.begin(), key.end(), key.begin(), ::tolower);
     return key;
 }
 
-inline int INIReader::ValueHandler(void *user, const char *section, const char *name,
-                                   const char *value) {
+inline int INIReader::ValueHandler(void *user, const char *section,
+                                   const char *name, const char *value)
+{
     INIReader *reader = (INIReader *) user;
     std::string key = MakeKey(section, name);
     if (reader->_values[key].size() > 0)
@@ -447,6 +526,46 @@ inline int INIReader::ValueHandler(void *user, const char *section, const char *
     reader->_values[key] += value;
     reader->_sections.insert(section);
     return 1;
+}
+
+
+template<typename T>
+std::vector<T> INIReader::GetList(const std::string &section,
+                                  const std::string &name) const
+{
+    std::string list_str = Get(section, name, "");
+    std::vector<T> list_items;
+
+    // Remove square brackets if present
+    list_str.erase(std::remove(list_str.begin(), list_str.end(), '['),
+                   list_str.end());
+    list_str.erase(std::remove(list_str.begin(), list_str.end(), ']'),
+                   list_str.end());
+
+    std::stringstream ss(list_str);
+    std::string item;
+
+    while (std::getline(ss, item, ','))
+    {
+        // Trim spaces from the item
+        item = trim(item);
+
+        // Convert the item to the specified type and add to the list
+        if constexpr (std::is_same<T, std::string>::value)
+        {
+            list_items.push_back(item);
+        }
+        else
+        {
+            std::stringstream convert(item);
+            T value;
+            if (convert >> value)
+            {
+                list_items.push_back(value);
+            }
+        }
+    }
+    return list_items;
 }
 
 #endif// __INIREADER__
