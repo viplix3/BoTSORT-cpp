@@ -68,6 +68,9 @@ jobs:
       - name: List directory contents
         run: ls -l
 
+      - name: List GitHub workspace contents
+        run: ls -l ${{github.workspace}}
+
       - name: Run the code
         run: |
           sh ${{github.workspace}}/build/bin/botsort_tracking_example ${{github.workspace}}/config/tracker.ini 
