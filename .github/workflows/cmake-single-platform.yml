@@ -67,5 +67,5 @@ jobs:
 
     - name: Run the code
       run: |
-        cd ${{github.workspace}}/build && ./bin/botsort_tracking_example ../config/tracker.init ../config/gmc.init ../config/reid.init ../examples/data/MOT20-01.mp4 ../examples/data/det/det.txt ../outputs
+        cd ${{github.workspace}}/build && ./bin/botsort_tracking_example ../config/tracker.ini ../config/gmc.ini ../config/reid.ini ../examples/data/MOT20-01.mp4 ../examples/data/det/det.txt ../outputs
 
