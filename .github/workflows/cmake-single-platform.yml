@@ -40,25 +40,6 @@ jobs:
           apt-get update
           xargs -a apt_dependencies.txt apt-get install -y --no-install-recommends
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v1
-
-      # - name: Cache Docker layers
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: /tmp/.buildx-cache
-      #     key: ${{ runner.os }}-buildx-${{ github.sha }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-buildx-
-
-      # - name: Build with Docker Buildx
-      #   run: |
-      #     docker buildx build --push \
-      #     --cache-from=type=local,src=/tmp/.buildx-cache \
-      #     --cache-to=type=local,dest=/tmp/.buildx-cache \
-      #     --file Dockerfile \
-      #     --tag my-image:latest .
-
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
@@ -68,6 +49,6 @@ jobs:
       - name: Run the code
         run: |
           chmod +x ${{github.workspace}}/build/bin/botsort_tracking_example
-          sh ${{github.workspace}}/build/bin/botsort_tracking_example ${{github.workspace}}/config/tracker.ini 
+          ./${{github.workspace}}/build/bin/botsort_tracking_example ${{github.workspace}}/config/tracker.ini 
             ${{github.workspace}}/config/gmc.ini ${{github.workspace}}/config/reid.ini ${{github.workspace}}/assets/osnet_x0_25_market1501.onnx
             ${{github.workspace}}/examples/data/MOT20-01.mp4 ${{github.workspace}}/examples/data/det/det.txt ${{github.workspace}}/outputs
