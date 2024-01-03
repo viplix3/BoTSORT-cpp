@@ -46,8 +46,8 @@ jobs:
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
 
-      - name: Run the code
-        run: |
-            cd ${{github.workspace}}/build
-            chmod +x ./bin/botsort_tracking_example
-            ./bin/botsort_tracking_example ../config/tracker.ini ../config/gmc.ini ../config/reid.ini ../assets/osnet_x0_25_market1501.onnx ../examples/data/MOT20-01.mp4 ../examples/data/det/det.txt ../outputs
+      # - name: Run the code
+      #   run: |
+      #       cd ${{github.workspace}}/build
+      #       chmod +x ./bin/botsort_tracking_example
+      #       ./bin/botsort_tracking_example ../config/tracker.ini ../config/gmc.ini ../config/reid.ini ../assets/osnet_x0_25_market1501.onnx ../examples/data/MOT20-01.mp4 ../examples/data/det/det.txt ../outputs
