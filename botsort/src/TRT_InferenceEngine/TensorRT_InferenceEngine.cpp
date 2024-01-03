@@ -433,7 +433,7 @@ inference_backend::TensorRTInferenceEngine::forward(const cv::Mat &input_image)
     // Copy image blob to CUDA input buffer
     cudaMemcpyAsync(_buffers[_input_idx], image_blob.data,
                     get_size_by_dims(_input_dims[0], sizeof(float)),
-                    cudaMemcpyDeviceToHost);
+                    cudaMemcpyHostToDevice);
 
     // Run inference
     _context->executeV2(_buffers.data());
@@ -444,7 +444,7 @@ inference_backend::TensorRTInferenceEngine::forward(const cv::Mat &input_image)
     {
         std::vector<float> output(get_size_by_dims(_output_dims[i]));
         cudaMemcpyAsync(output.data(), _buffers[_output_idx[i]],
-                        output.size() * sizeof(float), cudaMemcpyHostToDevice);
+                        output.size() * sizeof(float), cudaMemcpyDeviceToHost);
         predictions.emplace_back(output);
     }
 

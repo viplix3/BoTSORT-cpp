@@ -17,6 +17,20 @@ inline float cosine_distance(const std::unique_ptr<FeatureVector> &x,
 
 
 /**
+ * @brief Calculate the euclidean distance between two feature vectors
+ * 
+ * @param x Feature vector 1
+ * @param y Feature vector 2
+ * @return float Euclidean distance
+ */
+inline float euclidean_distance(const std::unique_ptr<FeatureVector> &x,
+                                const std::shared_ptr<FeatureVector> &y)
+{
+    return (x->transpose() - y->transpose()).norm();
+}
+
+
+/**
  * @brief Calculate the intersection over union (IoU) between two bounding boxes
  * 
  * @param tlwh_a Bounding box 1 in the format (top left x, top left y, width, height)

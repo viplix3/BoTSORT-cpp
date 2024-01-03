@@ -136,6 +136,7 @@ KFDataStateSpace KalmanFilter::update(const KFStateSpaceVec &mean,
     return std::make_pair(mean_updated, covariance_updated);
 }
 
+
 Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
         const KFStateSpaceVec &mean, const KFStateSpaceMatrix &covariance,
         const std::vector<DetVec> &measurements, bool only_position) const
@@ -150,19 +151,20 @@ Eigen::Matrix<float, 1, Eigen::Dynamic> KalmanFilter::gating_distance(
         projected_covariance.bottomRightCorner<2, 2>().setZero();
     }
 
-    Eigen::MatrixXf diff(measurements.size(), 4);
+    Eigen::LLT<Eigen::MatrixXf> lltOfProjectedCovariance(projected_covariance);
+    Eigen::Matrix<float, 1, Eigen::Dynamic> mahalanobis_distances(
+            measurements.size());
+    mahalanobis_distances.setZero();
+
     for (Eigen::Index i = 0; i < measurements.size(); i++)
     {
-        diff.row(i) = measurements[i] - projected_mean;
+        Eigen::VectorXf diff = measurements[i] - projected_mean;
+        // Solve for y in Ly = diff using forward substitution, more efficient than computing the inverse
+        Eigen::VectorXf y = lltOfProjectedCovariance.matrixL().solve(diff);
+        // Mahalanobis distance is the norm of y
+        mahalanobis_distances(i) = y.squaredNorm();
     }
 
-    Eigen::MatrixXf cholesky_factor = projected_covariance.llt().matrixL();
-    Eigen::MatrixXf mahalanobis_distance =
-            cholesky_factor.triangularView<Eigen::Lower>()
-                    .solve(diff)
-                    .transpose();
-
-    return mahalanobis_distance.array().square().matrix().rowwise().sum();
+    return mahalanobis_distances;
 }
-
 }// namespace acc_kalman

@@ -14,6 +14,11 @@ public:
     void pre_process(cv::Mat &image);
     FeatureVector extract_features(cv::Mat &image);
 
+    const std::string &get_distance_metric() const
+    {
+        return _distance_metric;
+    }
+
 private:
     void _load_params_from_config(const std::string &config_path);
 

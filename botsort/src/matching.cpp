@@ -65,8 +65,18 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
 std::tuple<CostMatrix, CostMatrix>
 embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
                    const std::vector<std::shared_ptr<Track>> &detections,
-                   float max_embedding_distance)
+                   float max_embedding_distance,
+                   const std::string &distance_metric)
 {
+    if (!(distance_metric == "euclidean" || distance_metric == "cosine"))
+    {
+        std::cout << "Invalid distance metric " << distance_metric
+                  << " passed.";
+        std::cout << "Only 'euclidean' and 'cosine' are supported."
+                  << std::endl;
+        exit(1);
+    }
+
     size_t num_tracks = tracks.size();
     size_t num_detections = detections.size();
 
@@ -83,9 +93,14 @@ embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
         {
             for (int j = 0; j < num_detections; j++)
             {
-                cost_matrix(i, j) = std::max(
-                        0.0f, cosine_distance(tracks[i]->smooth_feat,
-                                              detections[j]->curr_feat));
+                if (distance_metric == "euclidean")
+                    cost_matrix(i, j) = std::max(
+                            0.0f, euclidean_distance(tracks[i]->smooth_feat,
+                                                     detections[j]->curr_feat));
+                else
+                    cost_matrix(i, j) = std::max(
+                            0.0f, cosine_distance(tracks[i]->smooth_feat,
+                                                  detections[j]->curr_feat));
 
                 if (cost_matrix(i, j) > max_embedding_distance)
                 {
@@ -101,7 +116,10 @@ embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
 void fuse_score(CostMatrix &cost_matrix,
                 const std::vector<std::shared_ptr<Track>> &detections)
 {
-    if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0) { return; }
+    if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0)
+    {
+        return;
+    }
 
     for (Eigen::Index i = 0; i < cost_matrix.rows(); i++)
     {
@@ -118,7 +136,10 @@ void fuse_motion(const KalmanFilter &KF, CostMatrix &cost_matrix,
                  const std::vector<std::shared_ptr<Track>> &detections,
                  float lambda, bool only_position)
 {
-    if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0) { return; }
+    if (cost_matrix.rows() == 0 || cost_matrix.cols() == 0)
+    {
+        return;
+    }
 
     uint8_t gating_dim = only_position ? 2 : 4;
     const double gating_threshold = KalmanFilter::chi2inv95[gating_dim];
@@ -237,8 +258,14 @@ AssociationData linear_assignment(CostMatrix &cost_matrix, float thresh)
 
     for (int i = 0; i < rowsol.size(); i++)
     {
-        if (rowsol[i] >= 0) { associations.matches.emplace_back(i, rowsol[i]); }
-        else { associations.unmatched_track_indices.emplace_back(i); }
+        if (rowsol[i] >= 0)
+        {
+            associations.matches.emplace_back(i, rowsol[i]);
+        }
+        else
+        {
+            associations.unmatched_track_indices.emplace_back(i);
+        }
     }
 
     for (int i = 0; i < colsol.size(); i++)

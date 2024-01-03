@@ -11,7 +11,7 @@
 
 
 constexpr uint8_t DET_ELEMENTS = 4;
-constexpr uint8_t FEATURE_DIM = 128;
+constexpr uint32_t FEATURE_DIM = 512;
 constexpr uint8_t KALMAN_STATE_SPACE_DIM = 8;
 constexpr uint8_t KALMAN_MEASUREMENT_SPACE_DIM = 4;
 

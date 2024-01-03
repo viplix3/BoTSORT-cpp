@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <tuple>
 
 #include "DataType.h"
@@ -37,12 +38,14 @@ CostMatrix iou_distance(const std::vector<std::shared_ptr<Track>> &tracks,
  * @param tracks Tracks used to create the cost matrix
  * @param detections Tracks created from detections used to create the cost matrix
  * @param max_embedding_distance Threshold for embedding distance
+ * @param distance_metric Distance metric to use for calculating the embedding distance
  * @return std::tuple<CostMatrix, CostMatrix> Tuple of embedding distance cost matrix and embedding distance mask
  */
 std::tuple<CostMatrix, CostMatrix>
 embedding_distance(const std::vector<std::shared_ptr<Track>> &tracks,
                    const std::vector<std::shared_ptr<Track>> &detections,
-                   float max_embedding_distance);
+                   float max_embedding_distance,
+                   const std::string &distance_metric);
 
 /**
  * @brief Fuses the detection score into the cost matrix in-place
