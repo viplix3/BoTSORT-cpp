@@ -16,7 +16,9 @@ This implementation has been tested **on NVIDIA Jetson NX and it achieves real-t
 
 - [x] Implement BoT-SORT tracker
 - [x] Load parameters from config file
-- [ ] Implement Re-ID model for BoT-SORT tracker using TensorRT
+- [x] Implement Re-ID model for BoT-SORT tracker using TensorRT
+- [ ] Re-ID performance analysis
+- [ ] Re-ID model quantization
 
 ## Preview of Results
 
