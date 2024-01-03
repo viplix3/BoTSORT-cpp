@@ -50,6 +50,4 @@ jobs:
         run: |
             cd ${{github.workspace}}/build
             chmod +x ./bin/botsort_tracking_example
-            ./bin/botsort_tracking_example ${{github.workspace}}/config/tracker.ini 
-                ${{github.workspace}}/config/gmc.ini ${{github.workspace}}/config/reid.ini ${{github.workspace}}/assets/osnet_x0_25_market1501.onnx
-                ${{github.workspace}}/examples/data/MOT20-01.mp4 ${{github.workspace}}/examples/data/det/det.txt ${{github.workspace}}/outputs
+            ./bin/botsort_tracking_example ${{github.workspace}}/config/tracker.ini ${{github.workspace}}/config/gmc.ini ${{github.workspace}}/config/reid.ini ${{github.workspace}}/assets/osnet_x0_25_market1501.onnx ${{github.workspace}}/examples/data/MOT20-01.mp4 ${{github.workspace}}/examples/data/det/det.txt ${{github.workspace}}/outputs
