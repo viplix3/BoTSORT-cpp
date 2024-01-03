@@ -39,7 +39,7 @@
   - Applied per box, hence higher time for sequence with higher bounding boxes is expected
 - **Kalman Filter**: State prediction algorithm used in the BoT-SORT tracking algorithm
 
-### **Execution time of different modules (Host Machine, Release Build, Best of 3)**
+### **Execution time of different modules (Host Machine, Release Build, Average of 3)**
 
 | Sequence | Average Objects/Frame | Re-ID | Camera Motion Estimation | Motion Compensation | Kalman Filter | Algorithm Execution Time (ms) | Algorithm Execution FPS | Removed Module | Estimated time for the removed module |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -50,7 +50,7 @@
 | MOT20-05 | 226 | ❌ | ❌ | ✅ | ✅ | 2.0498 | 487.9570 | Camera Motion Estimation | 6.6817 - 2.0498 = 4.6319 |
 | MOT20-05 | 226 | ❌ | ❌ | ❌ | ✅ | 2.0054 | 498.6453 | Motion Compensation | 2.0498 - 2.0054 = 0.0414 |
 
-### **Execution time of different modules (Jetson-NX, Release Build, Best of 3)**
+### **Execution time of different modules (Jetson-NX, Release Build, Average of 3)**
 
 | Sequence | Avg Objects/image | Re-ID | Camera Motion Estimation | Motion Compensation | Kalman Filter | Algorithm Execution Time (ms) | Algorithm Execution FPS | Removed Module | Estimated time for the removed module |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
