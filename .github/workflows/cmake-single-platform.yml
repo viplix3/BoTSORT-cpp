@@ -65,6 +65,11 @@ jobs:
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
 
+      - name: List directory contents
+        run: ls -l
+
       - name: Run the code
         run: |
-          .${{github.workspace}}/build/bin/botsort_tracking_example ${{github.workspace}}/config/tracker.ini ${{github.workspace}}/config/gmc.ini ${{github.workspace}}/config/reid.ini ${{github.workspace}}/examples/data/MOT20-01.mp4 ${{github.workspace}}/examples/data/det/det.txt ${{github.workspace}}/outputs
+          .${{github.workspace}}/build/bin/botsort_tracking_example ${{github.workspace}}/config/tracker.ini 
+            ${{github.workspace}}/config/gmc.ini ${{github.workspace}}/config/reid.ini ${{github.workspace}}/assets/osnet_x0_25_market1501.onnx
+            ${{github.workspace}}/examples/data/MOT20-01.mp4 ${{github.workspace}}/examples/data/det/det.txt ${{github.workspace}}/outputs
