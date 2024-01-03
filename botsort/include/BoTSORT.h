@@ -12,7 +12,8 @@ class BoTSORT
 public:
     explicit BoTSORT(const std::string &tracker_config_path,
                      const std::string &gmc_config_path = "",
-                     const std::string &reid_config_path = "");
+                     const std::string &reid_config_path = "",
+                     const std::string &reid_onnx_model_path = "");
     ~BoTSORT() = default;
 
 

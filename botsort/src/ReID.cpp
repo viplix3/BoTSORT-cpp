@@ -2,10 +2,13 @@
 
 #include "INIReader.h"
 
-ReIDModel::ReIDModel(const std::string &config_path)
+ReIDModel::ReIDModel(const std::string &config_path,
+                     const std::string &onnx_model_path)
 {
     std::cout << "Initializing ReID model" << std::endl;
     _load_params_from_config(config_path);
+
+    _onnx_model_path = onnx_model_path;
     _trt_inference_engine =
             std::make_unique<inference_backend::TensorRTInferenceEngine>(
                     _model_optimization_params, _trt_logging_level);
@@ -52,7 +55,6 @@ void ReIDModel::_load_params_from_config(const std::string &config_path)
         exit(1);
     }
 
-    _onnx_model_path = reid_config.Get(section_name, "onnx_model_path", "");
     _distance_metric =
             reid_config.Get(section_name, "distance_metric", "euclidean");
     _trt_logging_level =

@@ -12,7 +12,8 @@
 
 BoTSORT::BoTSORT(const std::string &tracker_config_path,
                  const std::string &gmc_config_path,
-                 const std::string &reid_config_path)
+                 const std::string &reid_config_path,
+                 const std::string &reid_onnx_model_path)
 {
     _load_params_from_config(tracker_config_path);
 
@@ -25,8 +26,10 @@ BoTSORT::BoTSORT(const std::string &tracker_config_path,
 
 
     // Re-ID module, load visual feature extractor here
-    if (_reid_enabled && reid_config_path.size() > 0)
-        _reid_model = std::make_unique<ReIDModel>(reid_config_path);
+    if (_reid_enabled && reid_config_path.size() > 0 &&
+        reid_onnx_model_path.size() > 0)
+        _reid_model = std::make_unique<ReIDModel>(reid_config_path,
+                                                  reid_onnx_model_path);
     else
     {
         std::cout << "Re-ID module disabled" << std::endl;

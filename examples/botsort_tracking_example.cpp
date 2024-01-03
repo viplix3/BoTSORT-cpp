@@ -207,12 +207,13 @@ int main(int argc, char **argv)
         std::cout << "Usage eg. 2: ./botsort_tracking_example "
                      "<tracker_config_path> "
                      "<gmc_config_path> <reid_config_path> "
+                     "<reid_onnx_model_path> "
                      "<source> <dir_containing_per_frame_detections> "
                      "<dir_to_save_mot_format_output> <gt_file>"
                   << std::endl;
         return -1;
     }
-    else if (4 < argc && argc < 7)
+    else if (4 < argc && argc < 8)
     {
         std::cout << "Usage eg. 1: ./botsort_tracking_example <source> "
                      "<dir_containing_per_frame_detections> "
@@ -221,6 +222,7 @@ int main(int argc, char **argv)
         std::cout << "Usage eg. 2: ./botsort_tracking_example "
                      "<tracker_config_path> "
                      "<gmc_config_path> <reid_config_path> "
+                     "<reid_onnx_model_path> "
                      "<source> <dir_containing_per_frame_detections> "
                      "<dir_to_save_mot_format_output> <gt_file>"
                   << std::endl;
@@ -228,8 +230,8 @@ int main(int argc, char **argv)
     }
 
 
-    std::string tracker_config_path, gmc_config_path, reid_config_path, source,
-            labels_dir, output_dir, gt_filepath;
+    std::string tracker_config_path, gmc_config_path, reid_config_path,
+            reid_onnx_model_path, source, labels_dir, output_dir, gt_filepath;
 
     if (argc == 4)
     {
@@ -242,9 +244,10 @@ int main(int argc, char **argv)
         tracker_config_path = argv[1];
         gmc_config_path = argv[2];
         reid_config_path = argv[3];
-        source = argv[4];
-        labels_dir = argv[5];
-        output_dir = argv[6];
+        reid_onnx_model_path = argv[4];
+        source = argv[5];
+        labels_dir = argv[6];
+        output_dir = argv[7];
     }
 
 
@@ -309,7 +312,8 @@ int main(int argc, char **argv)
     else
     {
         tracker = std::make_unique<BoTSORT>(tracker_config_path,
-                                            gmc_config_path, reid_config_path);
+                                            gmc_config_path, reid_config_path,
+                                            reid_onnx_model_path);
     }
 
     if (is_video)

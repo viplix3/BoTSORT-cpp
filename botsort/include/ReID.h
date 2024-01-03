@@ -8,7 +8,8 @@
 class ReIDModel
 {
 public:
-    ReIDModel(const std::string &config_path);
+    ReIDModel(const std::string &config_path,
+              const std::string &onnx_model_path);
     ~ReIDModel() = default;
 
     void pre_process(cv::Mat &image);
