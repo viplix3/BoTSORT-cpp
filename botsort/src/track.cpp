@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "profiler.h"
+
 Track::Track(std::vector<float> tlwh, float score, uint8_t class_id,
              std::optional<FeatureVector> feat, int feat_history_size)
     : det_tlwh(std::move(tlwh)), _score(score), _class_id(class_id),
@@ -37,7 +39,10 @@ void Track::activate(KalmanFilter &kalman_filter, uint32_t frame_id)
     mean = state_space.first;
     covariance = state_space.second;
 
-    if (frame_id == 1) { is_activated = true; }
+    if (frame_id == 1)
+    {
+        is_activated = true;
+    }
     this->frame_id = frame_id;
     start_frame = frame_id;
     state = TrackState::Tracked;
@@ -56,9 +61,15 @@ void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track,
     mean = state_space.first;
     covariance = state_space.second;
 
-    if (new_track.curr_feat) { _update_features(new_track.curr_feat); }
+    if (new_track.curr_feat)
+    {
+        _update_features(new_track.curr_feat);
+    }
 
-    if (new_id) { track_id = next_id(); }
+    if (new_id)
+    {
+        track_id = next_id();
+    }
 
     tracklet_len = 0;
     state = TrackState::Tracked;
@@ -73,7 +84,8 @@ void Track::re_activate(KalmanFilter &kalman_filter, Track &new_track,
 void Track::predict(KalmanFilter &kalman_filter)
 {
     // If the track is not tracked, set the velocity for w and h to 0
-    if (state != TrackState::Tracked) mean(6) = 0, mean(7) = 0;
+    if (state != TrackState::Tracked)
+        mean(6) = 0, mean(7) = 0;
 
     kalman_filter.predict(mean, covariance);
     _update_tracklet_tlwh_inplace();
@@ -120,7 +132,10 @@ void Track::update(KalmanFilter &kalman_filter, Track &new_track,
     KFDataStateSpace state_space =
             kalman_filter.update(mean, covariance, new_track_bbox);
 
-    if (new_track.curr_feat) { _update_features(new_track.curr_feat); }
+    if (new_track.curr_feat)
+    {
+        _update_features(new_track.curr_feat);
+    }
 
     mean = state_space.first;
     covariance = state_space.second;
@@ -143,7 +158,10 @@ void Track::_update_features(const std::shared_ptr<FeatureVector> &feat)
         curr_feat = feat;
         smooth_feat = std::make_unique<FeatureVector>(*curr_feat);
     }
-    else { *smooth_feat = _alpha * (*smooth_feat) + (1 - _alpha) * (*feat); }
+    else
+    {
+        *smooth_feat = _alpha * (*smooth_feat) + (1 - _alpha) * (*feat);
+    }
 
     if (_feat_history.size() == _feat_history_size)
     {
@@ -160,13 +178,25 @@ int Track::next_id()
     return _count;
 }
 
-void Track::mark_lost() { state = TrackState::Lost; }
+void Track::mark_lost()
+{
+    state = TrackState::Lost;
+}
 
-void Track::mark_long_lost() { state = TrackState::LongLost; }
+void Track::mark_long_lost()
+{
+    state = TrackState::LongLost;
+}
 
-void Track::mark_removed() { state = TrackState::Removed; }
+void Track::mark_removed()
+{
+    state = TrackState::Removed;
+}
 
-uint32_t Track::end_frame() const { return frame_id; }
+uint32_t Track::end_frame() const
+{
+    return frame_id;
+}
 
 void Track::_populate_DetVec_xywh(DetVec &bbox_xywh,
                                   const std::vector<float> &tlwh)
@@ -188,9 +218,15 @@ void Track::_update_tracklet_tlwh_inplace()
     _tlwh = {mean(0) - mean(2) / 2, mean(1) - mean(3) / 2, mean(2), mean(3)};
 }
 
-std::vector<float> Track::get_tlwh() const { return _tlwh; }
+std::vector<float> Track::get_tlwh() const
+{
+    return _tlwh;
+}
 
-float Track::get_score() const { return _score; }
+float Track::get_score() const
+{
+    return _score;
+}
 
 void Track::_update_class_id(uint8_t class_id, float score)
 {

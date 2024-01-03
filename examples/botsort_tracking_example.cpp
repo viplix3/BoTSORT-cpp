@@ -423,9 +423,6 @@ int main(int argc, char **argv)
 
         if (frame_counter % 100 == 0)
         {
-            std::cout << "Processed " << frame_counter << " frames\t";
-            std::cout << "Tracker FPS (last 100 frames): "
-                      << 100 / tracker_time_sum << std::endl;
             tracker_time_total += tracker_time_sum;
             tracker_time_sum = 0;
         }
