@@ -1047,3 +1047,7 @@ dkms.conf
 outputs/*
 .idea/*
 *.engine
+
+# Docker stuff
+.created_container.hash
+.devcontainer/.container_id
