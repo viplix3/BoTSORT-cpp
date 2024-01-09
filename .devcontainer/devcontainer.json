@@ -1,0 +1,18 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+{
+	"name": "BoT-SORT",
+	"build": {
+		"context": "..",
+		"dockerfile": "../Dockerfile"
+	},
+   "initializeCommand": "if test -f ${localWorkspaceFolder}/.devcontainer/.container_id; then rm ${localWorkspaceFolder}/.devcontainer/.container_id; fi; xhost +local:root;",
+   "runArgs": [
+      "--name", "botsort-dev",
+      "-v", "/tmp/.X11-unix:/tmp/.X11-unix",
+      "-e", "DISPLAY",
+      "--gpus", "all",
+      "--cidfile", "${localWorkspaceFolder}/.devcontainer/.container_id",
+      "-it"
+   ]
+}

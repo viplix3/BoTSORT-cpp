@@ -17,6 +17,7 @@ This implementation has been tested **on NVIDIA Jetson NX and it achieves real-t
 - [x] Implement BoT-SORT tracker
 - [x] Load parameters from config file
 - [x] Implement Re-ID model for BoT-SORT tracker using TensorRT
+- [x] Dockerize the project
 - [ ] Re-ID performance analysis
 - [ ] Re-ID model quantization
 
@@ -30,25 +31,31 @@ These results demonstrate the BoT-SORT tracker, implemented in this repository, 
 
 ## Installation Guide
 
-1. OpenCV Installation
+1. Install [Docker](https://docs.docker.com/engine/install/ubuntu/) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker)
 
-    Follow [this](https://gist.github.com/raulqf/f42c718a658cddc16f9df07ecc627be7) guide for OpenCV installation
-
-2. Eigen3 Installation
+2. Clone the repository
 
     ```bash
-    sudo apt install libeigen3-dev
+    git clone git@github.com:viplix3/BoTSORT-cpp.git
+    cd BoTSORT-cpp
     ```
 
-3. Install CMake > 3.20
+3. Build Docker image
 
     ```bash
-    sudo snap install cmake --classic
+    ./docker_build.sh
     ```
 
-4. Build BoT-SORT tracker
+4. Run Docker container
 
     ```bash
+    ./docker_run.sh
+    ```
+
+5. Build BoT-SORT tracker
+
+    ```bash
+    cd /home/user/work/
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
     make -j$(nproc)
