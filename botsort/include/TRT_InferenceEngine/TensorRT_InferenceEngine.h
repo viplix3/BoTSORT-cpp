@@ -6,6 +6,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
