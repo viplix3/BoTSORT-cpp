@@ -3,13 +3,13 @@
 #include <opencv2/core.hpp>
 
 #include "DataType.h"
+#include "ReIDParams.h"
 #include "TRT_InferenceEngine/TensorRT_InferenceEngine.h"
 
 class ReIDModel
 {
 public:
-    ReIDModel(const std::string &config_path,
-              const std::string &onnx_model_path);
+    ReIDModel(const ReIDParams &params, const std::string &onnx_model_path);
     ~ReIDModel() = default;
 
     void pre_process(cv::Mat &image);
@@ -21,7 +21,7 @@ public:
     }
 
 private:
-    void _load_params_from_config(const std::string &config_path);
+    void _load_params_from_config(const ReIDParams &params);
 
 
 private:

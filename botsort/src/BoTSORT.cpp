@@ -10,12 +10,51 @@
 #include "matching.h"
 #include "profiler.h"
 
-BoTSORT::BoTSORT(const std::string &tracker_config_path,
-                 const std::string &gmc_config_path,
-                 const std::string &reid_config_path,
+namespace
+{
+template<typename T>
+bool requires_load(const Config<T> &config)
+{
+    return std::holds_alternative<std::string>(config) &&
+           !std::get<std::string>(config).empty();
+}
+
+template<typename T>
+bool not_empty(const Config<T> &config)
+{
+    bool has_config = !std::holds_alternative<std::monostate>(config);
+    bool is_non_empty = !(std::holds_alternative<std::string>(config) &&
+                          std::get<std::string>(config).empty());
+
+    return has_config && is_non_empty;
+}
+
+template<typename T>
+T fetch_config(const Config<T> &config,
+               std::function<T(const std::string &)> loader)
+{
+    if (std::holds_alternative<T>(config))
+    {
+        return std::get<T>(config);
+    }
+
+    if (requires_load(config))
+    {
+        return loader(std::get<std::string>(config));
+    }
+
+    throw std::runtime_error("Config is empty");
+}
+}// namespace
+
+BoTSORT::BoTSORT(const Config<TrackerParams> &tracker_config,
+                 const Config<GMC_Params> &gmc_config,
+                 const Config<ReIDParams> &reid_config,
                  const std::string &reid_onnx_model_path)
 {
-    _load_params_from_config(tracker_config_path);
+    auto tracker_params = fetch_config<TrackerParams>(
+            tracker_config, TrackerParams::load_config);
+    _load_params_from_config(tracker_params);
 
     // Tracker module
     _frame_id = 0;
@@ -26,22 +65,31 @@ BoTSORT::BoTSORT(const std::string &tracker_config_path,
 
 
     // Re-ID module, load visual feature extractor here
-    if (_reid_enabled && reid_config_path.size() > 0 &&
+    if (_reid_enabled && not_empty(reid_config) &&
         reid_onnx_model_path.size() > 0)
-        _reid_model = std::make_unique<ReIDModel>(reid_config_path,
-                                                  reid_onnx_model_path);
+    {
+        auto reid_params =
+                fetch_config<ReIDParams>(reid_config, ReIDParams::load_config);
+        _reid_model =
+                std::make_unique<ReIDModel>(reid_params, reid_onnx_model_path);
+    }
     else
     {
         std::cout << "Re-ID module disabled" << std::endl;
         _reid_enabled = false;
     }
 
-
     // Global motion compensation module
-    if (_gmc_enabled && gmc_config_path.size() > 0)
-        _gmc_algo = std::make_unique<GlobalMotionCompensation>(
-                GlobalMotionCompensation::GMC_method_map[_gmc_method_name],
-                gmc_config_path);
+    if (_gmc_enabled && not_empty(gmc_config))
+    {
+        auto gmc_params = fetch_config<
+                GMC_Params>(gmc_config, [this](const std::string &config_path) {
+            return GMC_Params::load_config(
+                    GlobalMotionCompensation::GMC_method_map[_gmc_method_name],
+                    config_path);
+        });
+        _gmc_algo = std::make_unique<GlobalMotionCompensation>(gmc_params);
+    }
     else
     {
         std::cout << "GMC disabled" << std::endl;
@@ -506,39 +554,18 @@ void BoTSORT::_remove_duplicate_tracks(
     }
 }
 
-
-void BoTSORT::_load_params_from_config(const std::string &config_path)
+void BoTSORT::_load_params_from_config(const TrackerParams &config)
 {
-    const std::string tracker_name = "BoTSORT";
-
-    INIReader tracker_config(config_path);
-    if (tracker_config.ParseError() < 0)
-    {
-        std::cout << "Can't load " << config_path << std::endl;
-        exit(1);
-    }
-
-    _reid_enabled =
-            tracker_config.GetBoolean(tracker_name, "enable_reid", false);
-    _gmc_enabled = tracker_config.GetBoolean(tracker_name, "enable_gmc", false);
-    _track_high_thresh =
-            tracker_config.GetFloat(tracker_name, "track_high_thresh", 0.6F);
-    _track_low_thresh =
-            tracker_config.GetFloat(tracker_name, "track_low_thresh", 0.1F);
-    _new_track_thresh =
-            tracker_config.GetFloat(tracker_name, "new_track_thresh", 0.7F);
-
-    _track_buffer = tracker_config.GetInteger(tracker_name, "track_buffer", 30);
-
-    _match_thresh = tracker_config.GetFloat(tracker_name, "match_thresh", 0.7F);
-    _proximity_thresh =
-            tracker_config.GetFloat(tracker_name, "proximity_thresh", 0.5F);
-    _appearance_thresh =
-            tracker_config.GetFloat(tracker_name, "appearance_thresh", 0.25F);
-
-    _gmc_method_name =
-            tracker_config.Get(tracker_name, "gmc_method", "sparseOptFlow");
-
-    _frame_rate = tracker_config.GetInteger(tracker_name, "frame_rate", 30);
-    _lambda = tracker_config.GetFloat(tracker_name, "lambda", 0.985F);
+    _reid_enabled = config.reid_enabled;
+    _gmc_enabled = config.gmc_enabled;
+    _track_high_thresh = config.track_high_thresh;
+    _track_low_thresh = config.track_low_thresh;
+    _new_track_thresh = config.new_track_thresh;
+    _track_buffer = config.track_buffer;
+    _match_thresh = config.match_thresh;
+    _proximity_thresh = config.proximity_thresh;
+    _appearance_thresh = config.appearance_thresh;
+    _gmc_method_name = config.gmc_method_name;
+    _frame_rate = config.frame_rate;
+    _lambda = config.lambda;
 }

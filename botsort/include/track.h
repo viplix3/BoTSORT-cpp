@@ -78,6 +78,13 @@ public:
     float get_score() const;
 
     /**
+     * @brief Get the class ID of the track
+     * 
+     * @return uint8_t Class ID of the track
+     */
+    uint8_t get_class_id() const;
+
+    /**
      * @brief Activates the track
      * 
      * @param kalman_filter Kalman filter object for the track

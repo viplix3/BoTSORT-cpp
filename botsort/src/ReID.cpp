@@ -2,11 +2,11 @@
 
 #include "INIReader.h"
 
-ReIDModel::ReIDModel(const std::string &config_path,
+ReIDModel::ReIDModel(const ReIDParams &params,
                      const std::string &onnx_model_path)
 {
     std::cout << "Initializing ReID model" << std::endl;
-    _load_params_from_config(config_path);
+    _load_params_from_config(params);
 
     _onnx_model_path = onnx_model_path;
     _trt_inference_engine =
@@ -44,35 +44,17 @@ void ReIDModel::pre_process(cv::Mat &image)
         cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
 }
 
-
-void ReIDModel::_load_params_from_config(const std::string &config_path)
+void ReIDModel::_load_params_from_config(const ReIDParams &params)
 {
-    const std::string section_name = "ReID";
-    INIReader reid_config(config_path);
-    if (reid_config.ParseError() < 0)
-    {
-        std::cout << "Can't load " << config_path << std::endl;
-        exit(1);
-    }
-
-    _distance_metric =
-            reid_config.Get(section_name, "distance_metric", "euclidean");
-    _trt_logging_level =
-            reid_config.GetInteger(section_name, "trt_log_level", 1);
-
-    _model_optimization_params.batch_size =
-            reid_config.GetInteger(section_name, "batch_size", 1);
-    _model_optimization_params.fp16 =
-            reid_config.GetBoolean(section_name, "enable_FP16", true);
-    _model_optimization_params.tf32 =
-            reid_config.GetBoolean(section_name, "enable_TF32", true);
-
-    _model_optimization_params.input_layer_name =
-            reid_config.Get(section_name, "input_layer_name", "");
+    _distance_metric = params.distance_metric;
+    _trt_logging_level = params.trt_logging_level;
+    _model_optimization_params.batch_size = static_cast<int>(params.batch_size);
+    _model_optimization_params.fp16 = params.enable_fp16;
+    _model_optimization_params.tf32 = params.enable_tf32;
+    _model_optimization_params.input_layer_name = params.input_layer_name;
 
     std::cout << "Trying to get input dims" << std::endl;
-    std::vector<int> input_dims =
-            reid_config.GetList<int>(section_name, "input_layer_dimensions");
+    const auto &input_dims = params.input_layer_dimensions;
     _input_size = cv::Size(input_dims[3], input_dims[2]);
 
     std::cout << "Read input dims" << std::endl;
@@ -81,10 +63,7 @@ void ReIDModel::_load_params_from_config(const std::string &config_path)
 
     _model_optimization_params.input_dims = nvinfer1::Dims4{
             input_dims[0], input_dims[1], input_dims[2], input_dims[3]};
-    _model_optimization_params.swapRB =
-            reid_config.GetBoolean(section_name, "swapRB", false);
+    _model_optimization_params.swapRB = params.swap_rb;
 
-    _model_optimization_params.output_layer_names =
-            reid_config.GetList<std::string>(section_name,
-                                             "output_layer_names");
+    _model_optimization_params.output_layer_names = params.output_layer_names;
 }
