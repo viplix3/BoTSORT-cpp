@@ -1,19 +1,26 @@
 #pragma once
 
 #include <string>
+#include <variant>
 
 #include "GlobalMotionCompensation.h"
+#include "GmcParams.h"
 #include "ReID.h"
+#include "ReIDParams.h"
+#include "TrackerParams.h"
 #include "track.h"
 
+template<typename T>
+using Config = std::variant<T, std::string, std::monostate>;
 
 class BoTSORT
 {
 public:
-    explicit BoTSORT(const std::string &tracker_config_path,
-                     const std::string &gmc_config_path = "",
-                     const std::string &reid_config_path = "",
+    explicit BoTSORT(const Config<TrackerParams> &tracker_config,
+                     const Config<GMC_Params> &gmc_config = {},
+                     const Config<ReIDParams> &reid_config = {},
                      const std::string &reid_onnx_model_path = "");
+
     ~BoTSORT() = default;
 
 
@@ -79,14 +86,12 @@ private:
             std::vector<std::shared_ptr<Track>> &tracks_list_a,
             std::vector<std::shared_ptr<Track>> &tracks_list_b);
 
-
     /**
-     * @brief Load tracker parameters from the given config file
+     * @brief Load tracker parameters from the given config
      * 
-     * @param config_path Path to the config directory
+     * @param config Configuration to load
      */
-    void _load_params_from_config(const std::string &config_path);
-
+    void _load_params_from_config(const TrackerParams &config);
 
 private:
     std::string _gmc_method_name;

@@ -228,6 +228,11 @@ float Track::get_score() const
     return _score;
 }
 
+uint8_t Track::get_class_id() const
+{
+    return _class_id;
+}
+
 void Track::_update_class_id(uint8_t class_id, float score)
 {
     if (!_class_hist.empty())

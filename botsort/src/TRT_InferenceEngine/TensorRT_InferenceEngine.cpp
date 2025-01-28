@@ -2,6 +2,23 @@
 
 #include <NvOnnxParser.h>
 
+namespace
+{
+std::string get_devicename_from_deviceid(int device_id)
+{
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, device_id);
+    auto device_name = std::string(prop.name);
+
+    // Remove spaces from device name
+    device_name.erase(
+            std::remove_if(device_name.begin(), device_name.end(), ::isspace),
+            device_name.end());
+
+    return device_name;
+}
+}// namespace
+
 inference_backend::TensorRTInferenceEngine::TensorRTInferenceEngine(
         TRTOptimizerParams &optimization_params, u_int8_t logging_level)
 {
@@ -52,6 +69,21 @@ bool inference_backend::TensorRTInferenceEngine::load_model(
         return false;
     }
 
+    // Ensure gpu_id is valid
+    int numGPUs{0};
+    cudaGetDeviceCount(&numGPUs);
+    if (_optimization_params.gpu_id >= numGPUs)
+    {
+        int numGPUs{0};
+        cudaGetDeviceCount(&numGPUs);
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     ("Unable to set GPU device index to: " +
+                      std::to_string(_optimization_params.gpu_id) +
+                      ". Note, your device has " + std::to_string(numGPUs) +
+                      " CUDA-capable GPU(s).")
+                             .c_str());
+    }
+
     // Check if engine exists, if not build it
     std::string engine_path = get_engine_path(onnx_model_path);
     if (!file_exists(engine_path))
@@ -61,6 +93,16 @@ bool inference_backend::TensorRTInferenceEngine::load_model(
                              .append(engine_path)
                              .c_str());
         _build_engine(onnx_model_path);
+    }
+
+    // Set device index
+    if (auto ret = cudaSetDevice(_optimization_params.gpu_id); ret != 0)
+    {
+        _logger->log(nvinfer1::ILogger::Severity::kERROR,
+                     ("Failed to set device index to: " +
+                      std::to_string(_optimization_params.gpu_id))
+                             .c_str());
+        return false;
     }
 
     // Deserialize engine
@@ -99,6 +141,9 @@ std::string inference_backend::TensorRTInferenceEngine::get_engine_path(
     gethostname(hostname, sizeof(hostname));
     std::string suffix(hostname);
 
+    suffix.append("_GPU_" +
+                  get_devicename_from_deviceid(_optimization_params.gpu_id));
+
     // TensorRT version
     suffix.append("_TRT" + std::to_string(NV_TENSORRT_VERSION));
 
@@ -119,7 +164,7 @@ std::string inference_backend::TensorRTInferenceEngine::get_engine_path(
                                   : suffix.append("_FP32");
     }
 
-    // Engine path = parent_dir/model_name_hostname_TRT_version_CUDA_version_batch_size_int8_fp16_fp32.engine
+    // Engine path = parent_dir/model_name_hostname_GPU_device_name_TRT_version_CUDA_version_batch_size_int8_fp16_fp32.engine
     engine_path.append("_" + suffix + ".engine");
     return engine_path;
 }

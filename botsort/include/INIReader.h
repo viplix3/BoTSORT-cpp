@@ -359,45 +359,74 @@ public:
     }
 
     // Return the list of sections found in ini file
-    const std::set<std::string> &Sections() const;
+    [[nodiscard]] const std::set<std::string> &Sections() const;
 
     // Get a string value from INI file, returning default_value if not found.
-    std::string Get(const std::string &section, const std::string &name,
-                    const std::string &default_value) const;
+    [[nodiscard]] std::string Get(const std::string &section,
+                                  const std::string &name,
+                                  const std::string &default_value) const;
 
 
     // Get a string value from INI file, return nullopt if not found.
-    std::optional<std::string> Get(const std::string &section,
-                                   const std::string &name) const;
+    [[nodiscard]] std::optional<std::string> Get(const std::string &section,
+                                                 const std::string &name) const;
 
 
     // Get an integer (long) value from INI file, returning default_value if
     // not found or not a valid integer (decimal "1234", "-1234", or hex "0x4d2").
-    long GetInteger(const std::string &section, const std::string &name,
-                    long default_value) const;
+    [[nodiscard]] long GetInteger(const std::string &section,
+                                  const std::string &name,
+                                  long default_value) const;
 
     // Get a real (floating point double) value from INI file, returning
     // default_value if not found or not a valid floating point value
     // according to strtod().
-    double GetReal(const std::string &section, const std::string &name,
-                   double default_value) const;
+    [[nodiscard]] double GetReal(const std::string &section,
+                                 const std::string &name,
+                                 double default_value) const;
 
     // Get a single precision floating point number value from INI file, returning
     // default_value if not found or not a valid floating point value
     // according to strtof().
-    float GetFloat(const std::string &section, const std::string &name,
-                   float default_value) const;
+    [[nodiscard]] float GetFloat(const std::string &section,
+                                 const std::string &name,
+                                 float default_value) const;
 
     // Get a boolean value from INI file, returning default_value if not found or if
     // not a valid true/false value. Valid true values are "true", "yes", "on", "1",
     // and valid false values are "false", "no", "off", "0" (not case sensitive).
-    bool GetBoolean(const std::string &section, const std::string &name,
-                    bool default_value) const;
+    [[nodiscard]] bool GetBoolean(const std::string &section,
+                                  const std::string &name,
+                                  bool default_value) const;
 
     template<typename T>
-    std::vector<T> GetList(const std::string &section,
-                           const std::string &name) const;
+    [[nodiscard]] std::vector<T> GetList(const std::string &section,
+                                         const std::string &name) const;
 
+    // Load a string value from INI file, returning its value if successfully
+    // loaded, or leave value unchanged
+    void LoadString(const std::string &section, const std::string &name,
+                    std::string &value) const;
+
+    // Load an integer (long) value from INI file, returning its value if
+    // successfully loaded, or leave value unchanged
+    void LoadInteger(const std::string &section, const std::string &name,
+                     long &value) const;
+
+    // Load a real (floating point double) value from INI file, returning its
+    // value if successfully loaded, or leave value unchanged
+    void LoadReal(const std::string &section, const std::string &name,
+                  double &value) const;
+
+    // Load a single precision floating point number value from INI file, returning
+    // its value if successfully loaded, or leave value unchanged
+    void LoadFloat(const std::string &section, const std::string &name,
+                   float &value) const;
+
+    // Load a boolean value from INI file, returning its value if successfully
+    // loaded, or leave value unchanged
+    void LoadBoolean(const std::string &section, const std::string &name,
+                     bool &value) const;
 
 protected:
     int _error;
@@ -566,6 +595,37 @@ std::vector<T> INIReader::GetList(const std::string &section,
         }
     }
     return list_items;
+}
+
+inline void INIReader::LoadString(const std::string &section,
+                                  const std::string &name,
+                                  std::string &value) const
+{
+    value = Get(section, name, value);
+}
+
+inline void INIReader::LoadInteger(const std::string &section,
+                                   const std::string &name, long &value) const
+{
+    value = GetInteger(section, name, value);
+}
+
+inline void INIReader::LoadReal(const std::string &section,
+                                const std::string &name, double &value) const
+{
+    value = GetReal(section, name, value);
+}
+
+inline void INIReader::LoadFloat(const std::string &section,
+                                 const std::string &name, float &value) const
+{
+    value = GetFloat(section, name, value);
+}
+
+inline void INIReader::LoadBoolean(const std::string &section,
+                                   const std::string &name, bool &value) const
+{
+    value = GetBoolean(section, name, value);
 }
 
 #endif// __INIREADER__

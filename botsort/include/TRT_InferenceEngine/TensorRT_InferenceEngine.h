@@ -2,11 +2,11 @@
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
+#include <fstream>
 #include <memory>
 #include <numeric>
 #include <string>
 #include <vector>
-#include <fstream>
 
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
@@ -55,6 +55,7 @@ struct TRTOptimizerParams
 {
     TRTOptimizerParams() = default;
 
+    int gpu_id = 0;
     int batch_size = 1;
     bool fp16 = true;
     bool int8 = false;
@@ -69,7 +70,8 @@ struct TRTOptimizerParams
 
     std::string toStr()
     {
-        std::string str = "batch_size: " + std::to_string(batch_size) + "\n";
+        std::string str = "gpu_id:" + std::to_string(gpu_id) + "\n";
+        str += "batch_size: " + std::to_string(batch_size) + "\n";
         str += "fp16: " + std::to_string(fp16) + "\n";
         str += "int8: " + std::to_string(int8) + "\n";
         str += "tf32: " + std::to_string(tf32) + "\n";
