@@ -312,9 +312,9 @@ bool inference_backend::TensorRTInferenceEngine::_deserialize_engine(
     engine_file.close();
 
     // Deserialize engine
-    std::unique_ptr<nvinfer1::IRuntime> runtime{
-            nvinfer1::createInferRuntime(*_logger)};
-    _engine = makeUnique(runtime->deserializeCudaEngine(
+    // Runtime must outlive the engine. Keep it as a member
+    _runtime = makeUnique(nvinfer1::createInferRuntime(*_logger));
+    _engine = makeUnique(_runtime->deserializeCudaEngine(
             trt_model_stream.data(), trt_model_stream.size()));
     if (!_engine)
     {

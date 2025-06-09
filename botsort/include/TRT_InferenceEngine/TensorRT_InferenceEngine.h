@@ -98,6 +98,8 @@ private:
     nvinfer1::ILogger::Severity _logSeverity =
             nvinfer1::ILogger::Severity::kWARNING;
     TRTOptimizerParams _optimization_params;
+    // Runtime must outlive the engine and execution context.
+    TRTUniquePtr<nvinfer1::IRuntime> _runtime{nullptr};
     TRTUniquePtr<nvinfer1::ICudaEngine> _engine{nullptr};
     TRTUniquePtr<nvinfer1::IExecutionContext> _context{nullptr};
     std::unique_ptr<TRTLogger> _logger{nullptr};
