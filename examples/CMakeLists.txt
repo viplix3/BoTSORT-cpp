@@ -16,6 +16,11 @@ endif()
 # Define the executable
 add_executable(${PROJECT_NAME} botsort_tracking_example.cpp)
 
+if(MSVC)
+    target_link_options(${PROJECT_NAME} PRIVATE "/NODEFAULTLIB:LIBCMT")
+endif()
+
+
 # Find and link OpenCV
 find_package(OpenCV REQUIRED)
 target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS})

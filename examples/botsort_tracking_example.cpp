@@ -326,7 +326,7 @@ int main(int argc, char **argv)
         // Read filenames in labels dir
         for (const auto &entry: std::filesystem::directory_iterator(source))
         {
-            image_filepaths.push_back(entry.path());
+            image_filepaths.push_back(entry.path().string());
         }
         std::sort(image_filepaths.begin(), image_filepaths.end());
     }

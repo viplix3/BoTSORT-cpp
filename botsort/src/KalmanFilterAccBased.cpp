@@ -1,6 +1,6 @@
 #include "KalmanFilterAccBased.h"
 
-#include <eigen3/Eigen/Cholesky>
+#include <Eigen/Cholesky>
 
 namespace acc_kalman
 {
