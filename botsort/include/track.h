@@ -5,8 +5,10 @@
 
 #include "KalmanFilter.h"
 #include "KalmanFilterAccBased.h"
+#include "PitchKalmanFilter.h"
 
 using KalmanFilter = bot_kalman::KalmanFilter;
+using PitchKalmanFilter = bot_kalman::PitchKalmanFilter;
 
 enum TrackState
 {
@@ -144,6 +146,38 @@ public:
     void update(KalmanFilter &kalman_filter, Track &new_track,
                 uint32_t frame_id);
 
+    /// Phase E.2: initialize (or re-initialize) the metre-space Kalman
+    /// from a pitch-projected foot-point measurement. Always overwrites
+    /// any existing metre state and marks the track as metre-initialized;
+    /// callers who only want to seed when empty should use `update_pitch`,
+    /// which lazy-activates on first use.
+    void activate_pitch(const PitchKalmanFilter& pitch_kf,
+                        const bot_kalman::PKFMeasVec& measurement);
+
+    /// Phase E.2: constant-velocity predict on the metre state. Caller
+    /// must check `pitch_kf_initialized()` first.
+    void predict_pitch(const PitchKalmanFilter& pitch_kf);
+
+    /// Phase E.2: Kalman update on the metre state from a pitch-projected
+    /// foot-point measurement. Lazily activates if not yet initialized.
+    void update_pitch(const PitchKalmanFilter& pitch_kf,
+                      const bot_kalman::PKFMeasVec& measurement);
+
+    /// Phase E.2: read-only accessor for the gate logic in BoTSORT.
+    [[nodiscard]] bool pitch_kf_initialized() const noexcept {
+        return _pitch_kf_initialized;
+    }
+
+    /// Phase E.2: read-only mean (state vector) — used by the metre gate.
+    [[nodiscard]] const bot_kalman::PKFStateVec& pitch_mean() const noexcept {
+        return _pitch_mean;
+    }
+
+    /// Phase E.2: read-only covariance — used by the metre gate.
+    [[nodiscard]] const bot_kalman::PKFStateMat& pitch_covariance() const noexcept {
+        return _pitch_covariance;
+    }
+
 private:
     /**
      * @brief Updates visual feature vector and feature history
@@ -204,4 +238,11 @@ private:
 
     int _feat_history_size;
     std::deque<std::shared_ptr<FeatureVector>> _feat_history;
+
+    // Phase E.2 — metre-space Kalman state (parallel to mean / covariance).
+    // Lazily initialized: stays default-constructed until the first matched
+    // detection on a frame where the host's homography is valid.
+    bot_kalman::PKFStateVec _pitch_mean      = bot_kalman::PKFStateVec::Zero();
+    bot_kalman::PKFStateMat _pitch_covariance = bot_kalman::PKFStateMat::Zero();
+    bool _pitch_kf_initialized = false;
 };

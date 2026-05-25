@@ -266,3 +266,31 @@ void Track::_update_class_id(uint8_t class_id, float score)
         _class_id = class_id;
     }
 }
+
+// ─── Phase E.2 — Metre-space Kalman lifecycle ────────────────────────────────
+
+void Track::activate_pitch(const PitchKalmanFilter& pitch_kf,
+                           const bot_kalman::PKFMeasVec& measurement) {
+    auto [pkf_mean, pkf_cov] = pitch_kf.init(measurement);
+    _pitch_mean       = pkf_mean;
+    _pitch_covariance = pkf_cov;
+    _pitch_kf_initialized = true;
+}
+
+void Track::predict_pitch(const PitchKalmanFilter& pitch_kf) {
+    if (!_pitch_kf_initialized) {
+        return;
+    }
+    pitch_kf.predict(_pitch_mean, _pitch_covariance);
+}
+
+void Track::update_pitch(const PitchKalmanFilter& pitch_kf,
+                         const bot_kalman::PKFMeasVec& measurement) {
+    if (!_pitch_kf_initialized) {
+        activate_pitch(pitch_kf, measurement);
+        return;
+    }
+    auto [pkf_mean, pkf_cov] = pitch_kf.update(_pitch_mean, _pitch_covariance, measurement);
+    _pitch_mean       = pkf_mean;
+    _pitch_covariance = pkf_cov;
+}

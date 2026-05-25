@@ -1,9 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <optional>
 #include <tuple>
+#include <vector>
 
 #include "DataType.h"
+#include "PitchKalmanFilter.h"
 #include "track.h"
 
 /**
@@ -72,6 +75,38 @@ void fuse_motion(const KalmanFilter &KF, CostMatrix &cost_matrix,
                  const std::vector<std::shared_ptr<Track>> &tracks,
                  const std::vector<std::shared_ptr<Track>> &detections,
                  float lambda = 0.98F, bool only_position = false);
+
+/**
+ * @brief Phase E.2 (OpticXI) — additive metre-space Mahalanobis gate.
+ *
+ * For each (track i, detection j) where TRACK has pitch_kf_initialized()
+ * AND DETECTION has a metre measurement (the optional at
+ * metre_measurements[j] is engaged), compute the metre Mahalanobis
+ * distance via @p pitch_kf and override cost_matrix(i, j) to +infinity
+ * if it exceeds PitchKalmanFilter::chi2inv95. Cells where either side
+ * lacks metre state are LEFT UNCHANGED, so the upstream pixel gate's
+ * decision stands.
+ *
+ * No-ops (returns early) when the input matrices are empty or when the
+ * metre_measurements vector size doesn't match detections.size() (caller
+ * contract violation — fail-safe to leave the cost matrix untouched).
+ *
+ * @param pitch_kf            The metre-space KF (caller owns).
+ * @param cost_matrix         In/out. Same shape as tracks × detections.
+ * @param tracks              The tracks rows correspond to.
+ * @param detections          The detections cols correspond to (only the
+ *                            size is checked here; the measurement values
+ *                            come from metre_measurements).
+ * @param metre_measurements  Parallel to detections (size must equal
+ *                            detections.size()). std::nullopt entries
+ *                            are skipped (cell left unchanged).
+ */
+void fuse_motion_pitch(
+    const PitchKalmanFilter &pitch_kf,
+    CostMatrix &cost_matrix,
+    const std::vector<std::shared_ptr<Track>> &tracks,
+    const std::vector<std::shared_ptr<Track>> &detections,
+    const std::vector<std::optional<bot_kalman::PKFMeasVec>> &metre_measurements);
 
 /**
  * @brief Fuse IoU distance with embedding distance keeping the mask in mind
